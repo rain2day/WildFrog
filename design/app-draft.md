@@ -2,7 +2,7 @@
 
 ## Draft Goal
 
-This first app draft turns the P0 brief into a clickable mobile-first prototype. It is a product design draft, not a production Expo app.
+This first app draft turns the P0 brief into a clickable mobile-first prototype. It is a product design draft, not a production Expo or iOS native app.
 
 The core loop is:
 
@@ -23,12 +23,13 @@ The core loop is:
 - `Explore`: map-style regional checkpoint draft.
 - `Records`: private check-in history and summary metrics.
 - `Profile`: total records, top mountain records, privacy toggle.
+- `Language`: Traditional Chinese default UI with English toggle in the prototype shell.
 
 ## Visual System
 
 - Tone: refined outdoor field log.
 - Palette: daylight field-log neutrals, white/map-paper surfaces, moss green, trail orange, and smaller deep-green anchors.
-- Typography: system-native Hong Kong/iOS-friendly stack with strong weights and compact labels.
+- Typography: system-native Hong Kong/iOS-friendly stack with strong weights, compact labels, and Traditional Chinese as the default draft language.
 - Components: mountain image cards, metric rows, leaderboard rows, GPS info panel, photo proof selector, stamped-photo preview, bottom nav.
 - Border radius: compact `8px` panels and controls.
 - Motion: subtle screen fade-in only.

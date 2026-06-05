@@ -13,11 +13,13 @@ Open `index.html` in a browser to review the first app direction. No backend, au
 - Explore map draft.
 - Records/history draft.
 - Profile and privacy draft.
+- Traditional Chinese default copy with English toggle.
 
 ## Prototype Boundaries
 
 - Sample data only.
 - Generated mountain imagery only.
+- Static web prototype only; no iOS native shell is present yet.
 - Server-side check-in validation is represented in UI, not implemented here.
 - Take-photo and upload-photo choices are UI-only, and are shown only after the prototype's valid location state.
 - The stamped-photo preview demonstrates the intended official overlay: logo, mountain name, height, region/checkpoint label, check-in count, and coarse date.
