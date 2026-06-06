@@ -1,0 +1,459 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0E00D28CB7BC9BE04BE1A582 /* RecordsCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20B579DFF0F858858406436 /* RecordsCalendarView.swift */; };
+		16F867A7AFB70C1DA8B771A1 /* MountainDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */; };
+		3806A07E31B047FB446ED6FB /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50BC49F234A7FC776EB856B4 /* ProfileView.swift */; };
+		833EEC77112F9C18DA7386DE /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 84C53A24FFE544CAB9AE5EE3 /* FirebaseCore */; };
+		5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */; };
+		49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 52847F8A6EBB329550A69056 /* Assets.xcassets */; };
+		665B2CB3494988CC0259CF7E /* MountainPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093DD82643FC8812EB3E887B /* MountainPhoto.swift */; };
+		71E83E3CD4A758FC3ACFDB91 /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */; };
+		A18AAA85EBE65F04DE3A8860 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */; };
+		A39697D84939F8CF817011F4 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C9A208A94DEEB854D6CFF2AE /* FirebaseAuth */; };
+		BABD5E28BE6553575EB54020 /* ProfileAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */; };
+		B540CE4DD26C65E9B3819386 /* WildFrogRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */; };
+		B5A24300016C74DBF86696E7 /* CheckInCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */; };
+		BF8E87849CA3D87AD857D148 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F03F5A280CF251A80908152 /* Foundation.framework */; };
+		DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6441CFCB65614B5EB60E9C /* Mountain.swift */; };
+		E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */; };
+		ED0FE6ACC5ECB5340D0482A9 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B042D4E250FA2146378FC0 /* Theme.swift */; };
+		F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		093DD82643FC8812EB3E887B /* MountainPhoto.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainPhoto.swift; sourceTree = "<group>"; };
+		0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInCameraView.swift; sourceTree = "<group>"; };
+		0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
+		1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileAuthService.swift; sourceTree = "<group>"; };
+		3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HomeMapListView.swift; sourceTree = "<group>"; };
+		4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainDetailView.swift; sourceTree = "<group>"; };
+		4CE39EE12F9218B47E286134 /* WildFrogNative.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WildFrogNative.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		50BC49F234A7FC776EB856B4 /* ProfileView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		52847F8A6EBB329550A69056 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogNativeApp.swift; sourceTree = "<group>"; };
+		84A431EB3110467D0BCDBA30 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogRootView.swift; sourceTree = "<group>"; };
+		FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = WildFrogNative.entitlements; sourceTree = "<group>"; };
+		8F03F5A280CF251A80908152 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		A20B579DFF0F858858406436 /* RecordsCalendarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RecordsCalendarView.swift; sourceTree = "<group>"; };
+		B8B042D4E250FA2146378FC0 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		DF6441CFCB65614B5EB60E9C /* Mountain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mountain.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CB9180D260419EBF3F5C90AC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF8E87849CA3D87AD857D148 /* Foundation.framework in Frameworks */,
+				833EEC77112F9C18DA7386DE /* FirebaseCore in Frameworks */,
+				A39697D84939F8CF817011F4 /* FirebaseAuth in Frameworks */,
+				5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3AB8056BBC21B5F4E74DB598 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A32DAB70F6EC994B2B097A0E /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7E507AE904A6AFFBA2758324 = {
+			isa = PBXGroup;
+			children = (
+				EE05A65EB6E233A3FCC8399F /* Products */,
+				3AB8056BBC21B5F4E74DB598 /* Frameworks */,
+				C03E06C409DD5430D0F57BF7 /* WildFrogNative */,
+			);
+			sourceTree = "<group>";
+		};
+		A32DAB70F6EC994B2B097A0E /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				8F03F5A280CF251A80908152 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		C03E06C409DD5430D0F57BF7 /* WildFrogNative */ = {
+			isa = PBXGroup;
+			children = (
+				0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */,
+				3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */,
+				DF6441CFCB65614B5EB60E9C /* Mountain.swift */,
+				4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */,
+				A20B579DFF0F858858406436 /* RecordsCalendarView.swift */,
+				B8B042D4E250FA2146378FC0 /* Theme.swift */,
+				620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */,
+				838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */,
+				093DD82643FC8812EB3E887B /* MountainPhoto.swift */,
+				52847F8A6EBB329550A69056 /* Assets.xcassets */,
+				0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */,
+				50BC49F234A7FC776EB856B4 /* ProfileView.swift */,
+				3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */,
+				84A431EB3110467D0BCDBA30 /* Info.plist */,
+				FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */,
+				1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */,
+			);
+			name = WildFrogNative;
+			path = Sources/WildFrogNative;
+			sourceTree = "<group>";
+		};
+		EE05A65EB6E233A3FCC8399F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4CE39EE12F9218B47E286134 /* WildFrogNative.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E274215E7C1F68276494571D /* WildFrogNative */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2FB2AFF5F9FB654801F9FB1F /* Build configuration list for PBXNativeTarget "WildFrogNative" */;
+			buildPhases = (
+				7EF617AFA016EBC0EC032367 /* Sources */,
+				CB9180D260419EBF3F5C90AC /* Frameworks */,
+				ABF7A322F569D32E0AC21352 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WildFrogNative;
+			packageProductDependencies = (
+				84C53A24FFE544CAB9AE5EE3 /* FirebaseCore */,
+				C9A208A94DEEB854D6CFF2AE /* FirebaseAuth */,
+				B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */,
+			);
+			productName = WildFrogNative;
+			productReference = 4CE39EE12F9218B47E286134 /* WildFrogNative.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		888FCF4DC7670D318E2ABAB9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					E274215E7C1F68276494571D = {
+						SystemCapabilities = {
+							com.apple.Push = {
+								enabled = 1;
+							};
+							com.apple.SignInWithApple = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = 332097D04318A2A3830979DD /* Build configuration list for PBXProject "WildFrogNative" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 7E507AE904A6AFFBA2758324;
+			minimizedProjectReferenceProxies = 0;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = EE05A65EB6E233A3FCC8399F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			packageReferences = (
+				DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				5387444EE3BA9289EA43C9A9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
+			targets = (
+				E274215E7C1F68276494571D /* WildFrogNative */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		ABF7A322F569D32E0AC21352 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */,
+				A18AAA85EBE65F04DE3A8860 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7EF617AFA016EBC0EC032367 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B5A24300016C74DBF86696E7 /* CheckInCameraView.swift in Sources */,
+				F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */,
+				DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */,
+				16F867A7AFB70C1DA8B771A1 /* MountainDetailView.swift in Sources */,
+				0E00D28CB7BC9BE04BE1A582 /* RecordsCalendarView.swift in Sources */,
+				ED0FE6ACC5ECB5340D0482A9 /* Theme.swift in Sources */,
+				E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */,
+				BABD5E28BE6553575EB54020 /* ProfileAuthService.swift in Sources */,
+				B540CE4DD26C65E9B3819386 /* WildFrogRootView.swift in Sources */,
+				665B2CB3494988CC0259CF7E /* MountainPhoto.swift in Sources */,
+				71E83E3CD4A758FC3ACFDB91 /* LeaderboardView.swift in Sources */,
+				3806A07E31B047FB446ED6FB /* ProfileView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0AD2A1D9AA3EB7E627994A2E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = Sources/WildFrogNative/WildFrogNative.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N6972VY494;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1;
+				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4210CF5CB031B7B9195CF883 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		7F455D25E56E9A96C5E0B4C6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A27995D7604A8994A2448B8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = Sources/WildFrogNative/WildFrogNative.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N6972VY494;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1;
+				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2FB2AFF5F9FB654801F9FB1F /* Build configuration list for PBXNativeTarget "WildFrogNative" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0AD2A1D9AA3EB7E627994A2E /* Release */,
+				A27995D7604A8994A2448B8F /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		332097D04318A2A3830979DD /* Build configuration list for PBXProject "WildFrogNative" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7F455D25E56E9A96C5E0B4C6 /* Debug */,
+				4210CF5CB031B7B9195CF883 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
+		5387444EE3BA9289EA43C9A9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		84C53A24FFE544CAB9AE5EE3 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		C9A208A94DEEB854D6CFF2AE /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5387444EE3BA9289EA43C9A9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 888FCF4DC7670D318E2ABAB9 /* Project object */;
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>WildFrog</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>FirebaseAuthPhoneRecaptcha</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-932138130032-ios-47a9cedb72ccb9a63632b5</string>
+				<string>com.googleusercontent.apps.932138130032-721p02dn7vrsugpog1tf9thuibpnaa27</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>WildFrog uses the camera to capture summit check-in proof photos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>WildFrog uses your location to verify summit check-ins near mountain checkpoints.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>用於將打卡水印圖儲存到相簿。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>WildFrog lets you choose photos for summit proof and watermark export.</string>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+</dict>
+</plist>

@@ -1,4 +1,8 @@
 .DS_Store
 .playwright-mcp/
 prototype/qa/
-
+**/.build/
+**/.swiftpm/
+**/*.xcodeproj/xcuserdata/
+**/*.xcodeproj/project.xcworkspace/xcuserdata/
+**/*.xcworkspace/xcuserdata/
