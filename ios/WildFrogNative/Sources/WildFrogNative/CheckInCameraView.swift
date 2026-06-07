@@ -1,10 +1,21 @@
 import CoreLocation
+import MapKit
 import PhotosUI
 import SwiftUI
 #if canImport(UIKit)
 import Photos
 import UIKit
 #endif
+
+/// Whether this check-in is also recording the hike that led to the summit.
+private enum CheckInMode {
+    /// Initial fork: the user has not yet chosen 開始行程 vs 直接打卡.
+    case choosing
+    /// Fast path — photo + GPS gating only, no track.
+    case directCheckIn
+    /// Live recording — `TrackRecorder` runs, and the finished track is bound to the check-in.
+    case recording
+}
 
 struct CheckInCameraView: View {
     let mountain: Mountain
@@ -13,6 +24,13 @@ struct CheckInCameraView: View {
     @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var checkInStore: CheckInStore
+
+    // MARK: - Flow state
+    @State private var mode: CheckInMode = .choosing
+    @StateObject private var recorder = TrackRecorder()
+    @State private var trackCameraPosition: MapCameraPosition = .userLocation(
+        fallback: .automatic
+    )
 
     // MARK: - Photo state
     @State private var capturedImage: UIImage?
@@ -93,6 +111,9 @@ struct CheckInCameraView: View {
                 VStack(spacing: 18) {
                     checkInTopBar(topInset: proxy.safeAreaInsets.top)
                     statusStrip
+                    if mode == .recording {
+                        recordingBanner
+                    }
                     Spacer()
                     photoActionRow
                         .padding(.horizontal, FrogSpace.screenPadding)
@@ -100,6 +121,10 @@ struct CheckInCameraView: View {
                         .padding(.bottom, 98)
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
+
+                if mode == .choosing {
+                    modeChooserOverlay(topInset: proxy.safeAreaInsets.top)
+                }
             }
         }
         .hiddenNavigationBar()
@@ -110,6 +135,9 @@ struct CheckInCameraView: View {
         }
         .onDisappear {
             locationManager.stopUpdating()
+            if recorder.isRecording {
+                recorder.stop()
+            }
         }
         .fullScreenCover(isPresented: $showCamera) {
             #if canImport(UIKit)
@@ -196,6 +224,166 @@ struct CheckInCameraView: View {
             CheckInStatusChip(systemImage: "mountain.2", title: "\(mountain.height)m", subtitle: "summit")
             CheckInStatusChip(systemImage: "sun.max", title: "Weather", subtitle: "Clear")
         }
+    }
+
+    // MARK: - Mode chooser (開始行程 vs 直接打卡)
+
+    private func modeChooserOverlay(topInset: CGFloat) -> some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+                .onTapGesture { dismiss() } // Tap backdrop to back out of the picker.
+
+            VStack(alignment: .leading, spacing: 16) {
+                Capsule()
+                    .fill(FrogTheme.line)
+                    .frame(width: 46, height: 5)
+                    .frame(maxWidth: .infinity)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(mountain.nameZh)
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(FrogTheme.ink)
+                    Text("點樣打卡呢座山？")
+                        .font(.frogCaption.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                }
+
+                Button {
+                    startRecordingMode()
+                } label: {
+                    modeOptionLabel(
+                        systemImage: "figure.hiking",
+                        title: "開始行程（記軌跡）",
+                        subtitle: "沿途記錄路線、距離、時間、爬升，到山頂打卡綁埋",
+                        background: FrogTheme.orange,
+                        foreground: .white
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    mode = .directCheckIn
+                } label: {
+                    modeOptionLabel(
+                        systemImage: "bolt.fill",
+                        title: "直接打卡",
+                        subtitle: "已喺山頂／唔記全程，直接影相打卡",
+                        background: Color.white,
+                        foreground: FrogTheme.ink
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 14)
+            .padding(.bottom, 40)
+            .frame(maxWidth: .infinity)
+            .background(FrogTheme.warmPaper)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .shadow(color: Color.black.opacity(0.2), radius: 20, y: -6)
+        }
+    }
+
+    private func modeOptionLabel(
+        systemImage: String,
+        title: String,
+        subtitle: String,
+        background: Color,
+        foreground: Color
+    ) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.system(size: 22, weight: .black))
+                .foregroundStyle(foreground)
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .foregroundStyle(foreground)
+                Text(subtitle)
+                    .font(.frogCaption.weight(.semibold))
+                    .foregroundStyle(foreground.opacity(0.78))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: background == Color.white ? 1 : 0)
+        )
+    }
+
+    // MARK: - Recording banner (live Map + stats while hiking to summit)
+
+    private var recordingBanner: some View {
+        VStack(spacing: 12) {
+            Map(position: $trackCameraPosition) {
+                UserAnnotation()
+                Marker(mountain.nameZh, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
+                    .tint(FrogTheme.orange)
+                if recorder.points.count > 1 {
+                    MapPolyline(coordinates: recorder.points.map(\.coordinate))
+                        .stroke(FrogTheme.orange, lineWidth: 5)
+                }
+            }
+            .mapControlVisibility(.hidden)
+            .frame(height: 150)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            HStack(spacing: 0) {
+                recordingStat(value: TrackFormat.distance(recorder.distanceMeters), label: "距離")
+                recordingDivider
+                recordingStat(value: TrackFormat.duration(recorder.elapsedSeconds), label: "時間")
+                recordingDivider
+                recordingStat(value: "\(Int(recorder.ascentMeters))m", label: "爬升")
+            }
+
+            HStack(spacing: 7) {
+                Image(systemName: "record.circle.fill")
+                    .foregroundStyle(FrogTheme.orange)
+                Text("行程記錄中 · 行到\(mountain.nameZh)山頂影相即綁埋")
+                    .font(.frogCaption.weight(.bold))
+                    .foregroundStyle(FrogTheme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+        }
+        .padding(14)
+        .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: 1)
+        )
+    }
+
+    private var recordingDivider: some View {
+        Rectangle()
+            .fill(FrogTheme.line)
+            .frame(width: 1, height: 32)
+    }
+
+    private func recordingStat(value: String, label: String) -> some View {
+        VStack(spacing: 3) {
+            Text(value)
+                .font(.system(size: 22, weight: .black, design: .rounded))
+                .foregroundStyle(FrogTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(label)
+                .font(.frogCaption.weight(.semibold))
+                .foregroundStyle(FrogTheme.muted)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func startRecordingMode() {
+        mode = .recording
+        recorder.start()
     }
 
     // MARK: - Photo action row
@@ -443,12 +631,18 @@ struct CheckInCameraView: View {
         isSavingWatermark = true
         saveMessage = nil
 
+        // Finalise the recorded hike (if any) before persisting so the track
+        // is bound to this check-in. Captured on the main actor up-front.
+        let trackSummary: TrackSummary? = recorder.isRecording
+            ? recorder.stop().map(TrackSummary.init(track:))
+            : nil
+
         Task {
             // 1. Save original photo to Documents and get filename
             let filename = await savePhotoToDocuments(capturedImage)
 
-            // 2. Write to local CheckInStore (account-bound)
-            checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename)
+            // 2. Write to local CheckInStore (account-bound), binding the track
+            checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
 
             // 3. Best-effort Firestore write — failure does not block local success
             Task {

@@ -1,16 +1,48 @@
 import Foundation
 
+/// A recorded hike snapshot bound to a single check-in: the GPS path plus its
+/// derived statistics. Persisted alongside the check-in so the proof of the
+/// climb travels with it.
+struct TrackSummary: Codable, Equatable {
+    var coordinates: [TrackPoint]
+    var distanceMeters: Double
+    var durationSeconds: Double
+    var ascentMeters: Double
+
+    init(coordinates: [TrackPoint], distanceMeters: Double, durationSeconds: Double, ascentMeters: Double) {
+        self.coordinates = coordinates
+        self.distanceMeters = distanceMeters
+        self.durationSeconds = durationSeconds
+        self.ascentMeters = ascentMeters
+    }
+
+    init(track: Track) {
+        self.coordinates = track.points
+        self.distanceMeters = track.distanceMeters
+        self.durationSeconds = track.durationSeconds
+        self.ascentMeters = track.ascentMeters
+    }
+}
+
 struct CheckInRecord: Codable, Identifiable, Equatable {
     let id: UUID
     let mountainId: String
     let date: Date
     var photoFilename: String?
+    var track: TrackSummary?
 
-    init(id: UUID = UUID(), mountainId: String, date: Date, photoFilename: String? = nil) {
+    init(
+        id: UUID = UUID(),
+        mountainId: String,
+        date: Date,
+        photoFilename: String? = nil,
+        track: TrackSummary? = nil
+    ) {
         self.id = id
         self.mountainId = mountainId
         self.date = date
         self.photoFilename = photoFilename
+        self.track = track
     }
 }
 
@@ -52,15 +84,19 @@ final class CheckInStore: ObservableObject {
         // Guard against a race where the account changed while awaiting.
         guard currentUserId == uid else { return }
 
-        let localPhotosById = Dictionary(
-            records.map { ($0.id, $0.photoFilename) },
+        let localById = Dictionary(
+            records.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
 
         let reconciled = remote.map { record -> CheckInRecord in
             var record = record
-            if record.photoFilename == nil, let localPhoto = localPhotosById[record.id] ?? nil {
+            let local = localById[record.id]
+            if record.photoFilename == nil, let localPhoto = local?.photoFilename {
                 record.photoFilename = localPhoto
+            }
+            if record.track == nil, let localTrack = local?.track {
+                record.track = localTrack
             }
             return record
         }
@@ -71,9 +107,14 @@ final class CheckInStore: ObservableObject {
 
     // MARK: - Mutations
 
-    func addCheckIn(mountainId: String, photoFilename: String? = nil) {
+    func addCheckIn(mountainId: String, photoFilename: String? = nil, track: TrackSummary? = nil) {
         guard let currentUserId else { return }
-        let record = CheckInRecord(mountainId: mountainId, date: Date(), photoFilename: photoFilename)
+        let record = CheckInRecord(
+            mountainId: mountainId,
+            date: Date(),
+            photoFilename: photoFilename,
+            track: track
+        )
         records.append(record)
         saveCache(for: currentUserId)
     }

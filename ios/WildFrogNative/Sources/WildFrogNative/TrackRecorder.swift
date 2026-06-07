@@ -20,6 +20,13 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
     /// Discards fixes that are too inaccurate or stale to trust for distance math.
     private let horizontalAccuracyThreshold: CLLocationAccuracy = 50
 
+    /// True when `UIBackgroundModes` declares `location`, gating background updates
+    /// so we never call `allowsBackgroundLocationUpdates = true` without the entitlement.
+    private static let backgroundLocationDeclared: Bool = {
+        (Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String])?
+            .contains("location") ?? false
+    }()
+
     override init() {
         super.init()
         manager.delegate = self
@@ -35,6 +42,14 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
 
         if manager.authorizationStatus == .notDetermined {
             manager.requestWhenInUseAuthorization()
+        }
+
+        // Keep recording with the screen off / app backgrounded. Only enable when
+        // the `location` background mode is declared, otherwise iOS raises.
+        if Self.backgroundLocationDeclared {
+            manager.allowsBackgroundLocationUpdates = true
+            manager.pausesLocationUpdatesAutomatically = false
+            manager.showsBackgroundLocationIndicator = true
         }
 
         distanceMeters = 0
@@ -56,6 +71,9 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         guard isRecording else { return nil }
         isRecording = false
         manager.stopUpdatingLocation()
+        if Self.backgroundLocationDeclared {
+            manager.allowsBackgroundLocationUpdates = false
+        }
         timer?.invalidate()
         timer = nil
 
