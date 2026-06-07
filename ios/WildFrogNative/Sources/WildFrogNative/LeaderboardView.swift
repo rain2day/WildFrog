@@ -3,6 +3,7 @@ import SwiftUI
 struct LeaderboardView: View {
     @State private var scope = LeaderboardScope.month
     @State private var showAllLeaderboard = false
+    @EnvironmentObject private var checkInStore: CheckInStore
 
     private enum LeaderboardScope: String, CaseIterable, Identifiable {
         case month = "今月"
@@ -11,23 +12,24 @@ struct LeaderboardView: View {
         var id: String { rawValue }
     }
 
-    private let users: [LeaderboardUser] = [
+    // Demo cross-user data — rank 18 / checkIns are placeholder until Cloud Function
+    private let demoUsers: [LeaderboardUser] = [
         LeaderboardUser(rank: 1, name: "Kin", subtitle: "九龍 · 連續 21 日", checkIns: 58, climbed: 83, avatarMountainId: "tai-mo-shan"),
         LeaderboardUser(rank: 2, name: "Mandy", subtitle: "新界 · 週末登山", checkIns: 46, climbed: 79, avatarMountainId: "sunset-peak"),
         LeaderboardUser(rank: 3, name: "阿峯", subtitle: "港島 · 清晨路線", checkIns: 41, climbed: 74, avatarMountainId: "lion-rock"),
-        LeaderboardUser(rank: 18, name: "你", subtitle: "WildFrog Draft", checkIns: 36, climbed: 14, avatarMountainId: "victoria-peak"),
         LeaderboardUser(rank: 21, name: "Aud", subtitle: "大嶼山 · 日落線", checkIns: 29, climbed: 21, avatarMountainId: "lantau-peak"),
     ]
 
-    private var currentUser: LeaderboardUser {
-        users.first { $0.name == "你" } ?? users[0]
-    }
+    /// Real personal stats from CheckInStore (true data, personal only).
+    private var myTotalCheckIns: Int { checkInStore.totalCheckIns }
+    private var myDistinctMountains: Int { checkInStore.distinctMountainCount }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 leaderboardHeader
                 scopeSelector
+                crossUserDisclaimer
                 myRankCard
                 podiumPanel
                 topUsers
@@ -103,34 +105,56 @@ struct LeaderboardView: View {
     }
 
 
+    private var crossUserDisclaimer: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "info.circle")
+                .font(.frogMicro.weight(.semibold))
+            Text("示範資料 · 真實排行榜需要伺服器（即將推出）")
+                .font(.frogMicro)
+        }
+        .foregroundStyle(FrogTheme.muted)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
     private var myRankCard: some View {
         ZStack(alignment: .bottomTrailing) {
             HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("我的排名")
+                    Text("我的紀錄")
                         .font(.frogTitle)
                         .foregroundStyle(FrogTheme.forest)
-                    Text("#\(currentUser.rank)")
+                    Text("\(myTotalCheckIns)")
                         .font(.system(size: 72, weight: .black, design: .rounded))
                         .foregroundStyle(FrogTheme.forest)
                         .lineLimit(1)
                     HStack(spacing: 5) {
-                        Text("本月累積")
+                        Text("總打卡")
                             .font(.frogCaption.weight(.semibold))
                             .foregroundStyle(FrogTheme.ink)
-                        Text("\(currentUser.checkIns)")
+                        Text("\(myDistinctMountains)")
                             .font(.frogTitle)
                             .foregroundStyle(FrogTheme.orange)
-                        Text("次登頂")
+                        Text("座山")
                             .font(.frogCaption.weight(.semibold))
                             .foregroundStyle(FrogTheme.ink)
+                    }
+                    HStack(spacing: 5) {
+                        Image(systemName: "flame.fill")
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(FrogTheme.orange)
+                        Text("連續 \(checkInStore.currentStreak) 日")
+                            .font(.frogCaption.weight(.semibold))
+                            .foregroundStyle(FrogTheme.muted)
                     }
                 }
 
                 Spacer()
 
                 ZStack(alignment: .top) {
-                    MountainPhoto(mountain: MountainCatalog.mountain(id: currentUser.avatarMountainId), dimming: 0.05)
+                    MountainPhoto(mountain: MountainCatalog.mountain(id: "victoria-peak"), dimming: 0.05)
                         .frame(width: 126, height: 112)
                         .clipShape(RoundedRectangle(cornerRadius: 2, style: .continuous))
                         .overlay(
@@ -167,7 +191,7 @@ struct LeaderboardView: View {
     private var podiumPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Top 5")
+                Text("Top 3")
                     .font(.headline.weight(.black))
                     .foregroundStyle(FrogTheme.forest)
                 Rectangle()
@@ -177,7 +201,7 @@ struct LeaderboardView: View {
             }
 
             HStack(alignment: .bottom, spacing: 10) {
-                ForEach(Array(users.prefix(3))) { user in
+                ForEach(Array(demoUsers.prefix(3))) { user in
                     PodiumCard(user: user, height: user.rank == 1 ? 132 : 112)
                 }
             }
@@ -187,7 +211,7 @@ struct LeaderboardView: View {
     private var topUsers: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("好友排行榜")
+                Text("排行榜（示範）")
                     .font(.headline.weight(.black))
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
@@ -205,8 +229,8 @@ struct LeaderboardView: View {
             }
 
             VStack(spacing: 0) {
-                ForEach(users) { user in
-                    LeaderboardRow(user: user, isCurrentUser: user.name == "你")
+                ForEach(demoUsers) { user in
+                    LeaderboardRow(user: user, isCurrentUser: false)
                 }
             }
             .cardStyle()
