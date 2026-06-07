@@ -1,4 +1,3 @@
-import CoreLocation
 import SwiftUI
 
 enum RecordsSegment: String, CaseIterable, Identifiable {
@@ -10,7 +9,7 @@ enum RecordsSegment: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .passport: "打卡日曆"
-        case .tracks: "我的軌跡"
+        case .tracks: "我嘅行程"
         }
     }
 }
@@ -91,7 +90,7 @@ struct RecordsCalendarView: View {
                     calendarPanel
                     selectedRecordCard
                 case .tracks:
-                    TracksSection()
+                    TripsSection()
                 }
             }
             .padding(FrogSpace.screenPadding)
@@ -478,32 +477,26 @@ private struct StampTimelineCard: View {
     }
 }
 
-// MARK: - Tracks section ("我的軌跡")
+// MARK: - Trips section ("我嘅行程")
 
-private struct TracksSection: View {
-    @EnvironmentObject private var trackStore: TrackStore
+/// Lists every completed check-in (newest first). Each row is one trip: summit
+/// photo, mountain, date, and a track badge (distance/time) or a 打卡 tag.
+private struct TripsSection: View {
+    @EnvironmentObject private var checkInStore: CheckInStore
+
+    private var trips: [CheckInRecord] {
+        checkInStore.records.sorted { $0.date > $1.date }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-            NearestCheckpointBanner()
-
-            NavigationLink(value: NativeRoute.trackRecording(nil)) {
-                Label("開始記錄軌跡", systemImage: "record.circle.fill")
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(FrogTheme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            }
-            .buttonStyle(.plain)
-
-            if trackStore.tracks.isEmpty {
+            if trips.isEmpty {
                 emptyState
             } else {
                 VStack(spacing: 10) {
-                    ForEach(trackStore.tracks) { track in
-                        NavigationLink(value: NativeRoute.trackDetail(track.id)) {
-                            TrackRow(track: track)
+                    ForEach(trips) { record in
+                        NavigationLink(value: NativeRoute.tripDetail(record.id)) {
+                            TripRow(record: record)
                         }
                         .buttonStyle(.plain)
                     }
@@ -517,10 +510,10 @@ private struct TracksSection: View {
             Image(systemName: "figure.hiking")
                 .font(.system(size: 30, weight: .regular))
                 .foregroundStyle(FrogTheme.muted)
-            Text("仲未有軌跡紀錄")
+            Text("仲未有打卡，去打返座山！")
                 .font(.frogRow)
                 .foregroundStyle(FrogTheme.ink)
-            Text("按上面開始記錄，行山時會即時畫出路線同距離。")
+            Text("完成打卡後，每次行程都會收錄喺呢度，有記軌跡仲會顯示路線同距離。")
                 .font(.frogCaption)
                 .foregroundStyle(FrogTheme.muted)
         }
@@ -530,32 +523,28 @@ private struct TracksSection: View {
     }
 }
 
-private struct TrackRow: View {
-    let track: Track
+private struct TripRow: View {
+    let record: CheckInRecord
+
+    @State private var thumbnail: UIImage?
+
+    private var mountain: Mountain {
+        MountainCatalog.mountain(id: record.mountainId)
+    }
 
     var body: some View {
         HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(FrogTheme.mapWash)
-                TrackRowSparkline(coordinates: track.coordinates)
-                    .stroke(FrogTheme.orange, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-                    .padding(8)
-            }
-            .frame(width: 66, height: 66)
+            thumbnailView
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(track.name)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(mountain.nameZh)
                     .font(.system(size: 16, weight: .black, design: .rounded))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
-                HStack(spacing: 10) {
-                    Label(TrackFormat.distance(track.distanceMeters), systemImage: "ruler")
-                    Label(TrackFormat.duration(track.durationSeconds), systemImage: "clock")
-                    Label("\(Int(track.ascentMeters))m", systemImage: "arrow.up.forward")
-                }
-                .font(.frogMicro.weight(.semibold))
-                .foregroundStyle(FrogTheme.muted)
+                Text(record.date.formatted(date: .abbreviated, time: .shortened))
+                    .font(.frogCaption.weight(.semibold))
+                    .foregroundStyle(FrogTheme.muted)
+                badge
             }
 
             Spacer()
@@ -570,32 +559,61 @@ private struct TrackRow: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(FrogTheme.line, lineWidth: 1)
         )
+        .onAppear { loadThumbnail() }
     }
-}
 
-private struct TrackRowSparkline: Shape {
-    let coordinates: [CLLocationCoordinate2D]
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        guard coordinates.count > 1 else { return path }
-        let lats = coordinates.map(\.latitude)
-        let lons = coordinates.map(\.longitude)
-        guard let minLat = lats.min(), let maxLat = lats.max(),
-              let minLon = lons.min(), let maxLon = lons.max() else { return path }
-        let latRange = max(maxLat - minLat, 0.0001)
-        let lonRange = max(maxLon - minLon, 0.0001)
-
-        func point(_ coordinate: CLLocationCoordinate2D) -> CGPoint {
-            let x = rect.width * CGFloat((coordinate.longitude - minLon) / lonRange)
-            let y = rect.height * CGFloat(1 - (coordinate.latitude - minLat) / latRange)
-            return CGPoint(x: x, y: y)
+    @ViewBuilder
+    private var thumbnailView: some View {
+        Group {
+            if let thumbnail {
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                MountainPhoto(mountain: mountain, dimming: 0.1)
+            }
         }
+        .frame(width: 66, height: 66)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: 1)
+        )
+    }
 
-        path.move(to: point(coordinates[0]))
-        for coordinate in coordinates.dropFirst() {
-            path.addLine(to: point(coordinate))
+    @ViewBuilder
+    private var badge: some View {
+        if let track = record.track {
+            HStack(spacing: 10) {
+                Label(TrackFormat.distance(track.distanceMeters), systemImage: "ruler")
+                Label(TrackFormat.duration(track.durationSeconds), systemImage: "clock")
+            }
+            .font(.frogMicro.weight(.bold))
+            .foregroundStyle(FrogTheme.moss)
+        } else {
+            Text("打卡")
+                .font(.frogMicro.weight(.black))
+                .foregroundStyle(FrogTheme.orange)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(FrogTheme.orangeSoft, in: Capsule())
         }
-        return path
+    }
+
+    private func loadThumbnail() {
+        #if os(iOS)
+        guard thumbnail == nil, let filename = record.photoFilename, !filename.isEmpty else { return }
+        Task {
+            let image = await Task.detached(priority: .utility) { () -> UIImage? in
+                guard let url = FileManager.default
+                    .urls(for: .documentDirectory, in: .userDomainMask)
+                    .first?
+                    .appendingPathComponent(filename),
+                      let data = try? Data(contentsOf: url) else { return nil }
+                return UIImage(data: data)
+            }.value
+            await MainActor.run { thumbnail = image }
+        }
+        #endif
     }
 }

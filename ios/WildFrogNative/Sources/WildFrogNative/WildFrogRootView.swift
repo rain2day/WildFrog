@@ -4,8 +4,7 @@ import SwiftUI
 enum NativeRoute: Hashable {
     case mountainDetail(String)
     case checkIn(String)
-    case trackRecording(String?)
-    case trackDetail(UUID)
+    case tripDetail(UUID)
     case routeToCheckpoint(String)
 }
 
@@ -154,10 +153,8 @@ private extension View {
                 MountainDetailView(mountain: MountainCatalog.mountain(id: id))
             case .checkIn(let id):
                 CheckInCameraView(mountain: MountainCatalog.mountain(id: id))
-            case .trackRecording(let mountainId):
-                TrackRecordingView(mountainId: mountainId)
-            case .trackDetail(let id):
-                TrackDetailView(trackId: id)
+            case .tripDetail(let id):
+                TripDetailView(recordId: id)
             case .routeToCheckpoint(let id):
                 RouteToCheckpointView(mountain: MountainCatalog.mountain(id: id))
             }
