@@ -58,5 +58,12 @@
 
 ## Status
 - ✅ B0 commit 現狀保命（38490a4）
-- 🔄 B1 Foundation
-- ⬜ B2-B7
+- ✅ B1 Foundation（c9bdb2d）— LocationManager/CheckInStore/FirestoreService/FirebaseFirestore
+- ✅ B2 GPS gating + picker（ae2ed80）
+- ✅ B3 真相機 + watermark（e394710）
+- ✅ B4 完成打卡寫入 + 統計/日曆接真（2a90771）
+- ✅ B5 軌跡系統 + 路線導航（dee2d73）
+- ✅ B6 dead buttons wiring（4ed8e14）
+- ✅ B7 排名誠實化（b68e280）
+- 🔄 Final QA + device install
+- ⬜ External：Cloud Function 真 cross-user 排名（需 Blaze plan，用戶決定）
