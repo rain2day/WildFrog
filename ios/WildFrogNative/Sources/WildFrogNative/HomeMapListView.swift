@@ -7,6 +7,9 @@ struct HomeMapListView: View {
     @State private var searchText = ""
     @State private var selectedRegion = "全部"
     @State private var sortMode = SortMode.rank
+    @State private var showNotifications = false
+    @State private var mapStyleHybrid = false
+    @State private var displayedCount = 40
     @State private var mapPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 22.34, longitude: 114.16),
@@ -80,22 +83,28 @@ struct HomeMapListView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                topHeader
-                mapOverview
-                progressCard
-                recommendedCard
-                featuredRail
-                searchAndFilters
-                directoryList
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                    topHeader
+                    mapOverview(scrollProxy: proxy)
+                    progressCard
+                    recommendedCard
+                    featuredRail(scrollProxy: proxy)
+                    searchAndFilters
+                    directoryList
+                        .id("directoryAnchor")
+                }
+                .padding(FrogSpace.screenPadding)
+                .padding(.top, 12)
+                .padding(.bottom, 110)
             }
-            .padding(FrogSpace.screenPadding)
-            .padding(.top, 12)
-            .padding(.bottom, 110)
         }
         .nativeInlineTitle()
         .appPageBackground(FrogTheme.warmPaper)
+        .sheet(isPresented: $showNotifications) {
+            NotificationsView()
+        }
     }
 
     private var topHeader: some View {
@@ -113,7 +122,7 @@ struct HomeMapListView: View {
 
             Spacer()
 
-            Button {} label: {
+            Button { showNotifications = true } label: {
                 Image(systemName: "bell")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(FrogTheme.forest)
@@ -126,71 +135,7 @@ struct HomeMapListView: View {
         }
     }
 
-    private func hero(topInset: CGFloat) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0.16)
-                .frame(height: 315 + topInset)
-
-            LinearGradient(
-                colors: [
-                    FrogTheme.forest.opacity(0.18),
-                    .clear,
-                    FrogTheme.forest.opacity(0.7),
-                    FrogTheme.forest
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            VStack(alignment: .leading, spacing: 18) {
-                HStack {
-                    brandLockup
-                    Spacer()
-                    Button {} label: {
-                        Image(systemName: "bell")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(FrogTheme.ink)
-                            .frame(width: 42, height: 42)
-                            .background(Color.white.opacity(0.92), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("通知")
-                }
-
-                Spacer(minLength: 28)
-
-                HStack(spacing: 10) {
-                    HeroMetric(value: "\(checkInStore.distinctMountainCount)", label: "Peaks\nChecked In", systemImage: "mountain.2.fill", tint: FrogTheme.leaf)
-                    HeroMetric(value: "\(checkInStore.currentStreak)", label: "Day\nStreak", systemImage: "flame.fill", tint: FrogTheme.orange)
-                    HeroMetric(value: summitPoints.formatted(), label: "Summit\nPoints", systemImage: "scope", tint: FrogTheme.leaf)
-                }
-            }
-            .padding(.horizontal, FrogSpace.screenPadding)
-            .padding(.top, topInset + 8)
-            .padding(.bottom, 20)
-        }
-        .frame(height: 315 + topInset)
-    }
-
-    private var brandLockup: some View {
-        HStack(spacing: 8) {
-            WildFrogBrandMark(size: 34, cornerRadius: 9)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text("WILDFROG")
-                    .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(FrogTheme.forest)
-                Text("EXPLORE · CHECK IN · CONQUER")
-                    .font(.system(size: 6.5, weight: .black))
-                    .foregroundStyle(FrogTheme.orange)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(Color.white.opacity(0.9), in: Capsule())
-    }
-
-    private var mapOverview: some View {
+    private func mapOverview(scrollProxy: ScrollViewProxy) -> some View {
         ZStack(alignment: .topLeading) {
             Map(position: $mapPosition) {
                 ForEach(mapMountains) { mountain in
@@ -198,6 +143,7 @@ struct HomeMapListView: View {
                         .tint(mountain.checkIns > 0 ? FrogTheme.orange : FrogTheme.leaf)
                 }
             }
+            .mapStyle(mapStyleHybrid ? .hybrid : .standard)
             .mapControlVisibility(.hidden)
             .frame(height: 410)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -222,7 +168,11 @@ struct HomeMapListView: View {
             VStack {
                 Spacer()
                 HStack(alignment: .bottom) {
-                    Button {} label: {
+                    Button {
+                        withAnimation {
+                            scrollProxy.scrollTo("directoryAnchor", anchor: .top)
+                        }
+                    } label: {
                         Text("VIEW ALL PEAKS")
                             .font(.frogMicro.weight(.bold))
                             .foregroundStyle(.white)
@@ -235,8 +185,28 @@ struct HomeMapListView: View {
                     Spacer()
 
                     VStack(spacing: 10) {
-                        MapFloatingButton(systemImage: "location.north.fill")
-                        MapFloatingButton(systemImage: "square.3.layers.3d")
+                        Button {
+                            withAnimation {
+                                mapPosition = .region(
+                                    MKCoordinateRegion(
+                                        center: CLLocationCoordinate2D(latitude: 22.34, longitude: 114.16),
+                                        span: MKCoordinateSpan(latitudeDelta: 0.36, longitudeDelta: 0.54)
+                                    )
+                                )
+                            }
+                        } label: {
+                            MapFloatingButton(systemImage: "location.north.fill")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("重置地圖")
+
+                        Button {
+                            mapStyleHybrid.toggle()
+                        } label: {
+                            MapFloatingButton(systemImage: mapStyleHybrid ? "map.fill" : "square.3.layers.3d")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(mapStyleHybrid ? "標準地圖" : "衛星地圖")
                     }
                 }
                 .padding(12)
@@ -319,16 +289,23 @@ struct HomeMapListView: View {
         .buttonStyle(.plain)
     }
 
-    private var featuredRail: some View {
+    private func featuredRail(scrollProxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
                 Text("NEARBY HIGHLIGHTS")
                     .font(.frogMicro.weight(.bold))
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
-                Text("SEE ALL")
-                    .font(.frogMicro.weight(.bold))
-                    .foregroundStyle(FrogTheme.orange)
+                Button {
+                    withAnimation {
+                        scrollProxy.scrollTo("directoryAnchor", anchor: .top)
+                    }
+                } label: {
+                    Text("SEE ALL")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.orange)
+                }
+                .buttonStyle(.plain)
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -397,44 +374,35 @@ struct HomeMapListView: View {
             }
             .padding(12)
 
-            ForEach(filteredMountains.prefix(40)) { mountain in
+            ForEach(filteredMountains.prefix(displayedCount)) { mountain in
                 NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
                     MountainDirectoryRow(mountain: mountain)
                 }
                 .buttonStyle(.plain)
             }
-        }
-        .cardStyle()
-    }
-}
 
-private struct HeroMetric: View {
-    let value: String
-    let label: String
-    let systemImage: String
-    let tint: Color
-
-    var body: some View {
-        HStack(spacing: 7) {
-            Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(tint)
-                .frame(width: 24, height: 24)
-                .background(tint.opacity(0.16), in: Circle())
-
-            VStack(alignment: .leading, spacing: 0) {
-                Text(value)
-                    .font(.system(size: 17, weight: .black, design: .rounded))
-                Text(label)
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.74))
-                    .fixedSize(horizontal: false, vertical: true)
+            if filteredMountains.count > displayedCount {
+                Button {
+                    displayedCount += 40
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("顯示更多")
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(FrogTheme.forest)
+                        Text("(\(filteredMountains.count - displayedCount) 座)")
+                            .font(.frogMicro)
+                            .foregroundStyle(FrogTheme.muted)
+                        Image(systemName: "chevron.down")
+                            .font(.frogMicro.weight(.bold))
+                            .foregroundStyle(FrogTheme.orange)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                }
+                .buttonStyle(.plain)
             }
         }
-        .foregroundStyle(.white)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(9)
-        .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .cardStyle()
     }
 }
 

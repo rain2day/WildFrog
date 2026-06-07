@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LeaderboardView: View {
     @State private var scope = LeaderboardScope.month
+    @State private var showAllLeaderboard = false
 
     private enum LeaderboardScope: String, CaseIterable, Identifiable {
         case month = "今月"
@@ -37,6 +38,18 @@ struct LeaderboardView: View {
         }
         .hiddenNavigationBar()
         .appPageBackground(FrogTheme.warmPaper)
+        .sheet(isPresented: $showAllLeaderboard) {
+            NavigationStack {
+                AllLeaderboardView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("完成") { showAllLeaderboard = false }
+                                .font(.frogCaption.weight(.bold))
+                                .foregroundStyle(FrogTheme.orange)
+                        }
+                    }
+            }
+        }
     }
 
     private var leaderboardHeader: some View {
@@ -178,12 +191,17 @@ struct LeaderboardView: View {
                     .font(.headline.weight(.black))
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
-                Text("查看全部")
-                    .font(.frogCaption.weight(.semibold))
-                    .foregroundStyle(FrogTheme.muted)
-                Image(systemName: "chevron.right")
-                    .font(.frogCaption.weight(.bold))
-                    .foregroundStyle(FrogTheme.muted)
+                Button { showAllLeaderboard = true } label: {
+                    HStack(spacing: 4) {
+                        Text("查看全部")
+                            .font(.frogCaption.weight(.semibold))
+                            .foregroundStyle(FrogTheme.muted)
+                        Image(systemName: "chevron.right")
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(FrogTheme.muted)
+                    }
+                }
+                .buttonStyle(.plain)
             }
 
             VStack(spacing: 0) {
@@ -202,12 +220,17 @@ struct LeaderboardView: View {
                     .font(.headline.weight(.black))
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
-                Text("查看全部")
-                    .font(.frogCaption.weight(.semibold))
-                    .foregroundStyle(FrogTheme.muted)
-                Image(systemName: "chevron.right")
-                    .font(.frogCaption.weight(.bold))
-                    .foregroundStyle(FrogTheme.muted)
+                Button { showAllLeaderboard = true } label: {
+                    HStack(spacing: 4) {
+                        Text("查看全部")
+                            .font(.frogCaption.weight(.semibold))
+                            .foregroundStyle(FrogTheme.muted)
+                        Image(systemName: "chevron.right")
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(FrogTheme.muted)
+                    }
+                }
+                .buttonStyle(.plain)
             }
 
             ScrollView(.horizontal, showsIndicators: false) {

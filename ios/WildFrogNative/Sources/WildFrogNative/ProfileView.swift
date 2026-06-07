@@ -14,6 +14,9 @@ struct ProfileView: View {
     @State private var selectedAvatar: PhotosPickerItem?
     @State private var avatarData: Data
     @State private var activeSheet: ProfileAuthSheet?
+    @State private var showCertificateShare = false
+    @State private var showAllAchievements = false
+    @State private var renderedCertificate: UIImage?
 
     init() {
         let storedAvatar = UserDefaults.standard.data(forKey: Self.avatarStorageKey) ?? Data()
@@ -66,6 +69,25 @@ struct ProfileView: View {
                 PhoneAuthSheet()
                     .presentationDetents([.medium])
             }
+        }
+        .sheet(isPresented: $showAllAchievements) {
+            NavigationStack {
+                AllAchievementsView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("完成") { showAllAchievements = false }
+                                .font(.frogCaption.weight(.bold))
+                                .foregroundStyle(FrogTheme.orange)
+                        }
+                    }
+            }
+        }
+        .sheet(isPresented: $showCertificateShare, onDismiss: { renderedCertificate = nil }) {
+            CertificateShareSheet(
+                mountainCount: checkInStore.distinctMountainCount,
+                onDismiss: { showCertificateShare = false }
+            )
+            .environmentObject(checkInStore)
         }
         .onChange(of: selectedAvatar) { _, item in
             Task {
@@ -242,7 +264,7 @@ struct ProfileView: View {
 
             Spacer()
 
-            Button {} label: {
+            Button { showCertificateShare = true } label: {
                 Text("VIEW & SHARE")
                     .font(.frogMicro.weight(.bold))
                     .foregroundStyle(.white)
@@ -264,9 +286,12 @@ struct ProfileView: View {
                     .font(.frogCaption.weight(.semibold))
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
-                Text("View All")
-                    .font(.frogMicro.weight(.bold))
-                    .foregroundStyle(FrogTheme.orange)
+                Button { showAllAchievements = true } label: {
+                    Text("View All")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.orange)
+                }
+                .buttonStyle(.plain)
             }
 
             HStack(spacing: 10) {

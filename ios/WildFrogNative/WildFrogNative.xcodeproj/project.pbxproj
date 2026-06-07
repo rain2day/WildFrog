@@ -37,6 +37,9 @@
 		E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */; };
 		ED0FE6ACC5ECB5340D0482A9 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B042D4E250FA2146378FC0 /* Theme.swift */; };
 		F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */; };
+		B6001A0000000001 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000000 /* NotificationsView.swift */; };
+		B6001A0000000011 /* AllAchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000010 /* AllAchievementsView.swift */; };
+		B6001A0000000021 /* CertificateShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000020 /* CertificateShareSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +72,9 @@
 		A20B579DFF0F858858406436 /* RecordsCalendarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RecordsCalendarView.swift; sourceTree = "<group>"; };
 		B8B042D4E250FA2146378FC0 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		DF6441CFCB65614B5EB60E9C /* Mountain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mountain.swift; sourceTree = "<group>"; };
+		B6001A0000000000 /* NotificationsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		B6001A0000000010 /* AllAchievementsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AllAchievementsView.swift; sourceTree = "<group>"; };
+		B6001A0000000020 /* CertificateShareSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CertificateShareSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,6 +145,9 @@
 				0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */,
 				50BC49F234A7FC776EB856B4 /* ProfileView.swift */,
 				3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */,
+				B6001A0000000000 /* NotificationsView.swift */,
+				B6001A0000000010 /* AllAchievementsView.swift */,
+				B6001A0000000020 /* CertificateShareSheet.swift */,
 				84A431EB3110467D0BCDBA30 /* Info.plist */,
 				FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */,
 				1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */,
@@ -266,6 +275,9 @@
 				665B2CB3494988CC0259CF7E /* MountainPhoto.swift in Sources */,
 				71E83E3CD4A758FC3ACFDB91 /* LeaderboardView.swift in Sources */,
 				3806A07E31B047FB446ED6FB /* ProfileView.swift in Sources */,
+				B6001A0000000001 /* NotificationsView.swift in Sources */,
+				B6001A0000000011 /* AllAchievementsView.swift in Sources */,
+				B6001A0000000021 /* CertificateShareSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
