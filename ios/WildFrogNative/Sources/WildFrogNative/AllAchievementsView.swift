@@ -56,12 +56,12 @@ struct AllAchievementsView: View {
                     ForEach(achievements) { badge in
                         let unlocked = checkInStore.distinctMountainCount >= badge.threshold
                         VStack(spacing: 10) {
-                            Image(systemName: badge.systemImage)
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundStyle(unlocked ? .white : FrogTheme.muted)
-                                .frame(width: 58, height: 58)
-                                .background(unlocked ? badge.tint : Color.black.opacity(0.07), in: Circle())
-                                .overlay(Circle().stroke(unlocked ? badge.tint.opacity(0.3) : FrogTheme.line, lineWidth: 1))
+                            StampBadge(
+                                systemImage: badge.systemImage,
+                                tint: badge.tint,
+                                isUnlocked: unlocked,
+                                size: 64
+                            )
 
                             VStack(spacing: 3) {
                                 Text(badge.title)

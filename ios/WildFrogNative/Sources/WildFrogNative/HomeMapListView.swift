@@ -83,22 +83,30 @@ struct HomeMapListView: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                    topHeader
-                    mapOverview(scrollProxy: proxy)
-                    progressCard
-                    recommendedCard
-                    featuredRail(scrollProxy: proxy)
-                    searchAndFilters
-                    directoryList
-                        .id("directoryAnchor")
+        GeometryReader { outer in
+            let topInset = outer.safeAreaInsets.top
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        heroBanner(topInset: topInset)
+
+                        VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                            mapOverview(scrollProxy: proxy)
+                            progressCard
+                            recommendedCard
+                            featuredRail(scrollProxy: proxy)
+                            searchAndFilters
+                            directoryList
+                                .id("directoryAnchor")
+                        }
+                        .padding(FrogSpace.screenPadding)
+                        .padding(.top, FrogSpace.cardGap)
+                        .padding(.bottom, 110)
+                    }
                 }
-                .padding(FrogSpace.screenPadding)
-                .padding(.top, 12)
-                .padding(.bottom, 110)
             }
+            .ignoresSafeArea(edges: .top)
         }
         .nativeInlineTitle()
         .appPageBackground(FrogTheme.warmPaper)
@@ -107,32 +115,72 @@ struct HomeMapListView: View {
         }
     }
 
-    private var topHeader: some View {
-        HStack(spacing: 12) {
-            WildFrogBrandMark(size: 46, cornerRadius: 12)
+    private func heroBanner(topInset: CGFloat) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("WildFrog")
-                    .font(.system(size: 30, weight: .black, design: .rounded))
-                    .foregroundStyle(FrogTheme.forest)
-                Text("探索香港山峰，完成你的 Peak Passport")
-                    .font(.frogCaption.weight(.semibold))
-                    .foregroundStyle(FrogTheme.muted)
+            LinearGradient(
+                colors: [
+                    FrogTheme.forest.opacity(0.34),
+                    FrogTheme.forest.opacity(0.06),
+                    FrogTheme.forest.opacity(0.62),
+                    FrogTheme.forest.opacity(0.95)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top) {
+                    Label("HONG KONG · 330 PEAKS", systemImage: "mountain.2.fill")
+                        .font(.frogMicro.weight(.black))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(Color.white.opacity(0.28), lineWidth: 1))
+
+                    Spacer()
+
+                    Button { showNotifications = true } label: {
+                        Image(systemName: "bell")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(.ultraThinMaterial, in: Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.28), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("通知")
+                }
+                .padding(.top, topInset + 8)
+
+                Spacer(minLength: 12)
+
+                HStack(spacing: 12) {
+                    WildFrogBrandMark(size: 50, cornerRadius: 13)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
+                        )
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("WildFrog")
+                            .font(.system(size: 40, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text("探索香港山峰，完成你的 Peak Passport")
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(.white.opacity(0.88))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                }
             }
-
-            Spacer()
-
-            Button { showNotifications = true } label: {
-                Image(systemName: "bell")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(FrogTheme.forest)
-                    .frame(width: 44, height: 44)
-                    .background(Color.white, in: Circle())
-                    .shadow(color: Color.black.opacity(0.08), radius: 8, y: 3)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("通知")
+            .padding(.horizontal, FrogSpace.screenPadding)
+            .padding(.bottom, 20)
         }
+        .frame(height: topInset + 248)
+        .clipped()
     }
 
     private func mapOverview(scrollProxy: ScrollViewProxy) -> some View {

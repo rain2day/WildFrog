@@ -41,6 +41,29 @@ struct ProfileView: View {
         checkedMountains.first ?? MountainCatalog.mountain(id: "lion-rock")
     }
 
+    /// Subtitle for the signed-in account panel. Never shows a "not signed in"
+    /// string while a session exists — falls back to the account identifier so
+    /// the UI can't contradict the signed-in header.
+    private var accountStatusMessage: String {
+        guard let session = authService.session else {
+            return authService.statusMessage
+        }
+
+        let raw = authService.statusMessage
+        let staleStates = ["未登入", "已登出", "已回到訪客模式"]
+        if !raw.isEmpty, !staleStates.contains(raw) {
+            return raw
+        }
+
+        if let email = session.email, !email.isEmpty {
+            return "已登入 · \(email)"
+        }
+        if let phone = session.phoneNumber, !phone.isEmpty {
+            return "已登入 · \(phone)"
+        }
+        return "已以\(session.providerLabel)登入，紀錄已雲端同步。"
+    }
+
     var body: some View {
         Group {
             if authService.isSignedIn {
@@ -315,9 +338,9 @@ struct ProfileView: View {
 
             HStack(spacing: 10) {
                 AchievementBadge(title: "Trail", systemImage: "figure.hiking", tint: FrogTheme.moss)
-                AchievementBadge(title: "Summit", systemImage: "mountain.2.fill", tint: FrogTheme.gold)
-                AchievementBadge(title: "Photo", systemImage: "camera.fill", tint: FrogTheme.slate)
-                AchievementBadge(title: "10+", systemImage: "checkmark.seal.fill", tint: FrogTheme.orange)
+                AchievementBadge(title: "Summit", systemImage: "mountain.2.fill", tint: FrogTheme.forest)
+                AchievementBadge(title: "Sunrise", systemImage: "sun.max.fill", tint: FrogTheme.orange)
+                AchievementBadge(title: "10+", systemImage: "checkmark.seal.fill", tint: FrogTheme.gold)
             }
         }
     }
@@ -333,7 +356,7 @@ struct ProfileView: View {
                     Text(authService.session?.statusTitle ?? "已登入")
                         .font(.frogTitle)
                         .foregroundStyle(FrogTheme.ink)
-                    Text(authService.statusMessage)
+                    Text(accountStatusMessage)
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                         .lineLimit(2)
@@ -563,22 +586,53 @@ private struct CompletionRing: View {
 private struct AchievementBadge: View {
     let title: String
     let systemImage: String
-    let tint: Color
+    var tint: Color = FrogTheme.forest
+    var isUnlocked: Bool = true
 
     var body: some View {
-        VStack(spacing: 5) {
-            Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 42, height: 42)
-                .background(tint, in: Circle())
-                .overlay(Circle().stroke(FrogTheme.forest.opacity(0.18), lineWidth: 1))
+        VStack(spacing: 6) {
+            StampBadge(systemImage: systemImage, tint: tint, isUnlocked: isUnlocked, size: 52)
 
             Text(title)
                 .font(.frogMicro.weight(.bold))
-                .foregroundStyle(FrogTheme.forest)
+                .foregroundStyle(isUnlocked ? FrogTheme.forest : FrogTheme.muted)
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// Vintage "passport stamp" badge that matches WildFrogStampSheet — a double-ring
+/// engraved frame on cream paper, used so achievements share the stamp visual language.
+struct StampBadge: View {
+    let systemImage: String
+    var tint: Color = FrogTheme.forest
+    var isUnlocked: Bool = true
+    var size: CGFloat = 52
+
+    private var frameColor: Color { isUnlocked ? tint : FrogTheme.muted }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(isUnlocked ? FrogTheme.passport : Color.black.opacity(0.04))
+
+            Circle()
+                .stroke(frameColor.opacity(isUnlocked ? 0.85 : 0.4), lineWidth: 2)
+                .padding(2)
+
+            Circle()
+                .stroke(
+                    frameColor.opacity(isUnlocked ? 0.5 : 0.3),
+                    style: StrokeStyle(lineWidth: 1, dash: [2, 3])
+                )
+                .padding(6)
+
+            Image(systemName: systemImage)
+                .font(.system(size: size * 0.36, weight: .bold))
+                .foregroundStyle(frameColor)
+        }
+        .frame(width: size, height: size)
+        .opacity(isUnlocked ? 1 : 0.7)
     }
 }
 

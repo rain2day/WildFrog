@@ -42,8 +42,7 @@ struct CheckInPickerView: View {
             }
         }
         .background(FrogTheme.paper.ignoresSafeArea())
-        .navigationTitle("打卡")
-        .nativeInlineTitle()
+        .hiddenNavigationBar()
         .withNativeRoutes()
         .onAppear {
             locationManager.requestAuthorization()

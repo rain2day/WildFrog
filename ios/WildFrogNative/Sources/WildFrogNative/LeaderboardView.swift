@@ -55,26 +55,16 @@ struct LeaderboardView: View {
     }
 
     private var leaderboardHeader: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("排行榜")
-                    .font(.system(size: 38, weight: .black, design: .rounded))
-                    .foregroundStyle(FrogTheme.forest)
-                Rectangle()
-                    .fill(FrogTheme.orange)
-                    .frame(width: 34, height: 3)
-                    .clipShape(Capsule())
-            }
-
-            Spacer()
-
-            Image("WildFrogBrandMark")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 72, height: 72)
-                .opacity(0.16)
-                .clipShape(Circle())
+        VStack(alignment: .leading, spacing: 3) {
+            Text("排行榜")
+                .font(.system(size: 38, weight: .black, design: .rounded))
+                .foregroundStyle(FrogTheme.forest)
+            Rectangle()
+                .fill(FrogTheme.orange)
+                .frame(width: 34, height: 3)
+                .clipShape(Capsule())
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 12)
     }
 

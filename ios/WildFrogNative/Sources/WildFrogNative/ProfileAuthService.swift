@@ -475,13 +475,18 @@ final class ProfileAuthService {
             return
         }
 
-        session = ProfileAuthSession(
+        let newSession = ProfileAuthSession(
             uid: user.uid,
             email: user.email,
             phoneNumber: user.phoneNumber,
             displayName: user.displayName,
             providerLabel: Self.providerLabel(for: user)
         )
+        session = newSession
+
+        if statusMessage.isEmpty || statusMessage == "未登入" {
+            statusMessage = "已以\(newSession.providerLabel)登入，紀錄已雲端同步。"
+        }
     }
 
     private static func providerLabel(for user: User) -> String {
