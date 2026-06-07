@@ -195,18 +195,12 @@ struct CheckInCameraView: View {
 
             Spacer()
 
-            HStack(spacing: 9) {
-                WildFrogBrandMark(size: 32, cornerRadius: 9)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("WildFrog")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(FrogTheme.forest)
-                    Text("山系足跡 · 香港山峰護照")
-                        .font(.frogCaption.weight(.semibold))
-                        .foregroundStyle(FrogTheme.forest.opacity(0.72))
-                }
-            }
-            .padding(.top, 6)
+            Image("WildFrogWordmark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 218, height: 72)
+                .padding(.top, 1)
+                .accessibilityLabel("WildFrog 山系足跡")
 
             Spacer()
 
