@@ -1,4 +1,3 @@
-import PhotosUI
 import SwiftUI
 #if canImport(UIKit)
 import Photos
@@ -8,219 +7,199 @@ import UIKit
 struct CheckInCameraView: View {
     let mountain: Mountain
 
-    @State private var proofMode = ProofMode.camera
-    @State private var selectedPhoto: PhotosPickerItem?
+    @Environment(\.dismiss) private var dismiss
     @State private var isSavingWatermark = false
     @State private var saveMessage: String?
 
-    private enum ProofMode: String, CaseIterable, Identifiable {
-        case camera = "即場拍照"
-        case upload = "上載相片"
-
-        var id: String { rawValue }
-    }
-
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                titleBlock
-                gpsPanel
-                cameraPreview
-                proofControls
-                safetyPanel
+        GeometryReader { proxy in
+            ZStack(alignment: .bottom) {
+                MountainPhoto(mountain: mountain, dimming: 0)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .ignoresSafeArea()
+
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.22),
+                        Color.black.opacity(0.02),
+                        Color.black.opacity(0.18)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                VStack(spacing: 18) {
+                    checkInTopBar(topInset: proxy.safeAreaInsets.top)
+                    statusStrip
+                    Spacer()
+                    checkInBottomSheet
+                        .padding(.bottom, 98)
+                }
+                .padding(.horizontal, FrogSpace.screenPadding)
             }
-            .padding(18)
-            .padding(.bottom, 110)
         }
-        .navigationTitle("GPS 打卡")
-        .nativeInlineTitle()
-        .background(FrogTheme.paper)
+        .hiddenNavigationBar()
+        .background(FrogTheme.warmPaper)
     }
 
-    private var titleBlock: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(mountain.displayName)
-                .font(.system(size: 30, weight: .black, design: .rounded))
-                .foregroundStyle(FrogTheme.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.68)
-            Text("\(mountain.region) · \(mountain.height)m · \(mountain.rankText)")
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(FrogTheme.muted)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
+    private func checkInTopBar(topInset: CGFloat) -> some View {
+        HStack(alignment: .top) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(width: 54, height: 54)
+                    .background(Color.white.opacity(0.22), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.34), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("關閉")
+
+            Spacer()
+
+            HStack(spacing: 9) {
+                WildFrogBrandMark(size: 32, cornerRadius: 9)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("WildFrog")
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(FrogTheme.forest)
+                    Text("山系足跡 · 香港山峰護照")
+                        .font(.frogCaption.weight(.semibold))
+                        .foregroundStyle(FrogTheme.forest.opacity(0.72))
+                }
+            }
+            .padding(.top, 6)
+
+            Spacer()
+
+            Color.clear
+                .frame(width: 54, height: 54)
         }
+        .padding(.top, topInset + 8)
     }
 
-    private var gpsPanel: some View {
+    private var statusStrip: some View {
         HStack(spacing: 10) {
-            GPSChip(value: "良好", label: "GPS 狀態", systemImage: "location.fill")
-            GPSChip(value: "38m", label: "距離檢查點", systemImage: "scope")
-            GPSChip(value: "60m", label: "有效半徑", systemImage: "dot.scope")
+            CheckInStatusChip(systemImage: "mappin.circle.fill", title: "GPS Ready", subtitle: nil)
+            CheckInStatusChip(systemImage: "mountain.2", title: "\(mountain.height)m", subtitle: "summit")
+            CheckInStatusChip(systemImage: "sun.max", title: "Weather", subtitle: "Clear")
         }
     }
 
-    private var cameraPreview: some View {
-        ZStack(alignment: .topLeading) {
-            MountainPhoto(mountain: mountain, dimming: 0.42)
-                .frame(maxWidth: .infinity)
-
-            LinearGradient(
-                colors: [.black.opacity(0.58), .black.opacity(0.1), .black.opacity(0.76)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Label("WildFrog", systemImage: "mountain.2.fill")
-                        .font(.system(size: 24, weight: .black, design: .rounded))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    Spacer()
-                    Text("\(mountain.nameZh) · \(mountain.height)m")
-                        .font(.headline.weight(.black))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.black.opacity(0.28))
-                        .clipShape(Capsule())
-                }
-
-                Spacer()
-
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("MOUNTAINEER / HONG KONG")
-                            .font(.caption.weight(.heavy))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.68)
-                        Text("挑戰紀錄 · \(max(1, mountain.checkIns + 1))/100 mt.")
-                            .font(.headline.weight(.black))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.62)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.26))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    Spacer()
-                    Image(systemName: "location.circle.fill")
-                        .font(.system(size: 44, weight: .bold))
-                }
+    private var watermarkPreview: some View {
+        ZStack(alignment: .bottomLeading) {
+            MountainPhoto(mountain: mountain, dimming: 0.34)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("WILDFROG")
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                Text("\(mountain.nameZh) · \(mountain.height)m")
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .foregroundStyle(.white)
-            .padding(18)
-
-            VStack {
-                HStack {
-                    Spacer()
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 5, height: 82)
-                }
-                Spacer()
-                HStack {
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 5, height: 82)
-                    Spacer()
-                }
-            }
-            .padding(18)
+            .padding(8)
         }
-        .frame(height: 430)
-        .frame(maxWidth: .infinity)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .frame(width: 154, height: 102)
+        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .stroke(Color.white.opacity(0.24), lineWidth: 1)
         )
     }
 
-    private var proofControls: some View {
-        VStack(spacing: 12) {
-            Picker("相片證明方式", selection: $proofMode) {
-                ForEach(ProofMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
+    private var checkInBottomSheet: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Capsule()
+                .fill(FrogTheme.line)
+                .frame(width: 46, height: 5)
+                .frame(maxWidth: .infinity)
 
-            if proofMode == .upload {
-                PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                    Label("選擇相片並加水印", systemImage: "photo.badge.plus")
-                        .font(.headline.weight(.black))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(FrogTheme.orange)
-            } else {
-                Button {} label: {
-                    Label("即場拍照並加水印", systemImage: "camera.fill")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(FrogTheme.orange)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                }
-                .buttonStyle(.plain)
-            }
+            HStack(alignment: .top, spacing: 18) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Text(mountain.nameZh)
+                            .font(.system(size: 36, weight: .black, design: .rounded))
+                            .foregroundStyle(FrogTheme.ink)
+                            .lineLimit(1)
+                        Image(systemName: "mountain.2.circle")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(FrogTheme.slate)
+                    }
 
-            Button {} label: {
-                Label("立即完成有效打卡", systemImage: "checkmark.seal.fill")
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(FrogTheme.ink)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(FrogTheme.line, lineWidth: 1)
-                    )
+                    Text(mountain.nameEn)
+                        .font(.frogTitle)
+                        .foregroundStyle(FrogTheme.forest)
+                        .lineLimit(1)
+                    Text("\(mountain.height)m")
+                        .font(.frogTitle)
+                        .foregroundStyle(FrogTheme.forest)
+
+                    HStack(spacing: 8) {
+                        CheckInConfidencePill(systemImage: "checkmark.shield.fill", text: "位置吻合")
+                        Text("·")
+                            .foregroundStyle(FrogTheme.muted)
+                        Text("信心度")
+                            .font(.frogCaption.weight(.semibold))
+                            .foregroundStyle(FrogTheme.muted)
+                        Text("高")
+                            .font(.frogCaption.weight(.black))
+                            .foregroundStyle(FrogTheme.moss)
+                    }
+                    .padding(.top, 6)
+
+                    Text("根據 GPS、海拔及方向核對")
+                        .font(.frogCaption.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+
+                Spacer()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Watermark Preview")
+                        .font(.frogCaption.weight(.black))
+                        .foregroundStyle(FrogTheme.forest)
+                    watermarkPreview
+                }
             }
-            .buttonStyle(.plain)
 
             Button {
                 saveWatermarkImage()
             } label: {
-                Label(isSavingWatermark ? "正在儲存..." : "下載水印圖", systemImage: "square.and.arrow.down.fill")
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(FrogTheme.ink)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(FrogTheme.orangeSoft)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(FrogTheme.orange.opacity(0.45), lineWidth: 1)
-                    )
+                HStack(spacing: 16) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 28, weight: .black))
+                        .frame(width: 46, height: 46)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                    Text(isSavingWatermark ? "正在儲存..." : "完成打卡")
+                        .font(.system(size: 27, weight: .black, design: .rounded))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 66)
+                .primaryCTAStyle(cornerRadius: 24)
             }
             .buttonStyle(.plain)
             .disabled(isSavingWatermark)
 
-            if let saveMessage {
-                Text(saveMessage)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(FrogTheme.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                Text(saveMessage ?? "打卡後將生成水印圖並儲存到相簿")
             }
-        }
-        .padding(14)
-        .cardStyle()
-    }
-
-    private var safetyPanel: some View {
-        Label("離開有效半徑時，此步驟會保持鎖定。危險地形上不要邊行邊用手機。", systemImage: "lock.shield")
-            .font(.footnote.weight(.semibold))
+            .font(.frogCaption.weight(.semibold))
             .foregroundStyle(FrogTheme.muted)
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .cardStyle()
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 10)
+        .padding(.bottom, 18)
+        .background(FrogTheme.warmPaper.opacity(0.96))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .shadow(color: Color.black.opacity(0.16), radius: 18, y: -4)
     }
 
     @MainActor
@@ -383,24 +362,70 @@ private struct CheckInWatermarkExportView: View {
     }
 }
 
-private struct GPSChip: View {
-    let value: String
-    let label: String
+private struct CheckInStatusChip: View {
     let systemImage: String
+    let title: String
+    let subtitle: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        HStack(spacing: 8) {
             Image(systemName: systemImage)
-                .foregroundStyle(FrogTheme.orange)
-            Text(value)
-                .font(.headline.weight(.black))
-            Text(label)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(FrogTheme.muted)
-                .lineLimit(2)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(FrogTheme.forest)
+                .frame(width: 26)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.frogCaption.weight(.bold))
+                    .foregroundStyle(FrogTheme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.frogMicro.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+            }
+
+            if subtitle == nil {
+                Circle()
+                    .fill(FrogTheme.forest)
+                    .frame(width: 7, height: 7)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .cardStyle()
+        .frame(maxWidth: .infinity, minHeight: 58, alignment: .center)
+        .padding(.horizontal, 12)
+        .background(Color.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.white.opacity(0.45), lineWidth: 1)
+        )
+    }
+}
+
+private struct CheckInConfidencePill: View {
+    let systemImage: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: systemImage)
+                .font(.system(size: 13, weight: .black))
+                .foregroundStyle(.white)
+                .frame(width: 22, height: 22)
+                .background(FrogTheme.forest, in: Circle())
+
+            Text(text)
+                .font(.frogCaption.weight(.bold))
+                .foregroundStyle(FrogTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(FrogTheme.mapWash.opacity(0.7), in: Capsule())
     }
 }

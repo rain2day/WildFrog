@@ -19,20 +19,47 @@ struct ProfileView: View {
         _avatarData = State(initialValue: storedAvatar)
     }
 
+    private var checkedMountains: [Mountain] {
+        MountainCatalog.mountains.filter { $0.checkIns > 0 }
+    }
+
+    private var totalCheckIns: Int {
+        MountainCatalog.mountains.reduce(0) { $0 + $1.checkIns }
+    }
+
+    private var completionRatio: Double {
+        guard MountainCatalog.catalogCount > 0 else { return 0 }
+        return min(1, Double(checkedMountains.count) / Double(MountainCatalog.catalogCount))
+    }
+
+    private var completionPercentText: String {
+        let percent = Int((completionRatio * 100).rounded())
+        return "\(max(percent, checkedMountains.isEmpty ? 0 : 1))%"
+    }
+
+    private var recentMountain: Mountain {
+        checkedMountains.first ?? MountainCatalog.mountain(id: "lion-rock")
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                profileHeader
-                statsStrip
-                signInPanel
+            VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                profileHero
+                peakPassportCard
+                recentCheckInCard
+                certificateCard
+                achievementsPanel
+                if !authService.isSignedIn {
+                    signInPanel
+                }
                 accountPanel
             }
-            .padding(18)
+            .padding(.horizontal, FrogSpace.screenPadding)
+            .padding(.top, 12)
             .padding(.bottom, 110)
         }
-        .navigationTitle("個人")
-        .nativeInlineTitle()
-        .background(FrogTheme.paper)
+        .hiddenNavigationBar()
+        .background(FrogTheme.passport)
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .email:
@@ -50,58 +77,215 @@ struct ProfileView: View {
         }
     }
 
-    private var profileHeader: some View {
+    private var profileHero: some View {
         let currentAvatarData = avatarData
 
-        return HStack(alignment: .center, spacing: 14) {
-            PhotosPicker(selection: $selectedAvatar, matching: .images) {
-                ZStack(alignment: .bottomTrailing) {
-                    ProfileAvatarContent(avatarData: currentAvatarData)
-                        .frame(width: 84, height: 84)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 4))
-                        .shadow(color: Color.black.opacity(0.12), radius: 16, x: 0, y: 8)
+        return ZStack(alignment: .bottomLeading) {
+            MountainPhoto(mountain: MountainCatalog.mountain(id: "sunset-peak"), dimming: 0.5)
+                .overlay {
+                    LinearGradient(
+                        colors: [FrogTheme.forest.opacity(0.25), FrogTheme.forest.opacity(0.96)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
 
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 13, weight: .black))
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 8) {
+                            WildFrogBrandMark(size: 30, cornerRadius: 8)
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("WILDFROG")
+                                    .font(.system(size: 15, weight: .black, design: .rounded))
+                                Text("PEAK PASSPORT")
+                                    .font(.system(size: 8, weight: .black))
+                                    .foregroundStyle(FrogTheme.orange)
+                            }
+                        }
                         .foregroundStyle(.white)
-                        .frame(width: 30, height: 30)
-                        .background(FrogTheme.orange)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+
+                HStack(alignment: .center, spacing: 15) {
+                    PhotosPicker(selection: $selectedAvatar, matching: .images) {
+                        ZStack(alignment: .bottomTrailing) {
+                            ProfileAvatarContent(avatarData: currentAvatarData)
+                                .frame(width: 82, height: 82)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white, lineWidth: 4))
+
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 12, weight: .black))
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+                                .background(FrogTheme.orange)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("更換頭像")
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(authService.isSignedIn ? authService.profileLine : "FrogWalker")
+                            .font(.system(size: 22, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        Text(authService.isSignedIn ? "Keep exploring" : "Guest passport")
+                            .font(.frogCaption)
+                            .foregroundStyle(.white.opacity(0.74))
+
+                        HStack(spacing: 12) {
+                            PassportMiniMetric(value: "\(totalCheckIns)", label: "PEAKS")
+                            PassportMiniMetric(value: "\(checkedMountains.count)", label: "CHECK-INS")
+                            PassportMiniMetric(value: "\(max(1, checkedMountains.count / 2))", label: "STREAK")
+                        }
+                    }
+
+                    Spacer()
+
+                    CompletionRing(value: completionRatio, label: completionPercentText)
                 }
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("更換頭像")
+            .padding(18)
+        }
+        .frame(height: 236)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: Color.black.opacity(0.2), radius: 16, y: 8)
+    }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("個人")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
-                    .foregroundStyle(FrogTheme.ink)
-                Text(authService.profileLine)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(FrogTheme.muted)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.78)
+    private var peakPassportCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Peak Passport", systemImage: "mountain.2.circle")
+                    .font(.frogTitle)
+                    .foregroundStyle(FrogTheme.forest)
+                Spacer()
+                Text("\(checkedMountains.count) / \(MountainCatalog.catalogCount) Peaks")
+                    .font(.frogCaption.weight(.semibold))
+                    .foregroundStyle(FrogTheme.orange)
             }
 
-            Spacer(minLength: 0)
+            Image("WildFrogStampSheet")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .padding(FrogSpace.cardPadding)
+        .background(FrogTheme.passport)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(FrogTheme.forest.opacity(0.14), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 10, y: 4)
+    }
+
+    private var recentCheckInCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label("Recent Check-in", systemImage: "mountain.2.fill")
+                    .font(.frogCaption.weight(.semibold))
+                    .foregroundStyle(FrogTheme.forest)
+                Spacer()
+                Text("View All")
+                    .font(.frogMicro.weight(.bold))
+                    .foregroundStyle(FrogTheme.orange)
+            }
+
+            NavigationLink(value: NativeRoute.mountainDetail(recentMountain.id)) {
+                ZStack(alignment: .bottomLeading) {
+                    MountainPhoto(mountain: recentMountain, dimming: 0.15)
+                        .frame(height: 150)
+                    LinearGradient(
+                        colors: [.clear, Color.black.opacity(0.72)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(recentMountain.displayName)
+                            .font(.frogTitle)
+                        Text("\(recentMountain.height)m · \(recentMountain.region) · \(recentMountain.checkIns) 次")
+                            .font(.frogCaption)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(14)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
         }
     }
 
-    private var statsStrip: some View {
-        HStack(spacing: 10) {
-            StatCard(value: "86", label: "有效打卡", systemImage: "checkmark.seal")
-            StatCard(value: "14", label: "已到訪山峰", systemImage: "mountain.2")
-            StatCard(value: "#18", label: "我的排名", systemImage: "trophy")
+    private var certificateCard: some View {
+        HStack(spacing: 12) {
+            Image("WildFrogBrandMark")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 64, height: 46)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .opacity(0.82)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Peak Explorer Certificate")
+                    .font(.frogRow)
+                    .foregroundStyle(FrogTheme.forest)
+                Text("You've completed \(checkedMountains.count) Hong Kong peaks.")
+                    .font(.frogCaption)
+                    .foregroundStyle(FrogTheme.muted)
+            }
+
+            Spacer()
+
+            Button {} label: {
+                Text("VIEW & SHARE")
+                    .font(.frogMicro.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(FrogTheme.orange, in: Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(FrogSpace.cardPadding)
+        .background(Color(red: 247 / 255, green: 240 / 255, blue: 210 / 255))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var achievementsPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Achievements", systemImage: "trophy.fill")
+                    .font(.frogCaption.weight(.semibold))
+                    .foregroundStyle(FrogTheme.forest)
+                Spacer()
+                Text("View All")
+                    .font(.frogMicro.weight(.bold))
+                    .foregroundStyle(FrogTheme.orange)
+            }
+
+            HStack(spacing: 10) {
+                AchievementBadge(title: "Trail", systemImage: "figure.hiking", tint: FrogTheme.moss)
+                AchievementBadge(title: "Summit", systemImage: "mountain.2.fill", tint: FrogTheme.gold)
+                AchievementBadge(title: "Photo", systemImage: "camera.fill", tint: FrogTheme.slate)
+                AchievementBadge(title: "10+", systemImage: "checkmark.seal.fill", tint: FrogTheme.orange)
+            }
         }
     }
 
     private var signInPanel: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("登入")
-                .font(.headline.weight(.black))
-                .foregroundStyle(FrogTheme.ink)
+                .font(.frogTitle)
+                .foregroundStyle(FrogTheme.forest)
 
             VStack(spacing: 10) {
                 AuthProviderButton(
@@ -145,7 +329,7 @@ struct ProfileView: View {
             .disabled(authService.isBusy)
             .opacity(authService.isBusy ? 0.58 : 1)
         }
-        .padding(14)
+        .padding(FrogSpace.cardPadding)
         .cardStyle()
     }
 
@@ -158,10 +342,10 @@ struct ProfileView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(authService.session?.statusTitle ?? "訪客模式")
-                        .font(.headline.weight(.black))
+                        .font(.frogTitle)
                         .foregroundStyle(FrogTheme.ink)
                     Text(authService.statusMessage)
-                        .font(.caption.weight(.semibold))
+                        .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                         .lineLimit(2)
                         .minimumScaleFactor(0.78)
@@ -178,7 +362,7 @@ struct ProfileView: View {
                 }
             }
         }
-        .padding(14)
+        .padding(FrogSpace.cardPadding)
         .cardStyle()
     }
 
@@ -213,6 +397,69 @@ struct ProfileView: View {
         #endif
     }
 
+}
+
+private struct PassportMiniMetric: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(value)
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+            Text(label)
+                .font(.system(size: 7, weight: .bold))
+                .foregroundStyle(.white.opacity(0.62))
+        }
+    }
+}
+
+private struct CompletionRing: View {
+    let value: Double
+    let label: String
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.white.opacity(0.18), lineWidth: 6)
+            Circle()
+                .trim(from: 0, to: value)
+                .stroke(FrogTheme.orange, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 0) {
+                Text(label)
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                Text("COMPLETE")
+                    .font(.system(size: 6.5, weight: .black))
+                    .foregroundStyle(.white.opacity(0.62))
+            }
+            .foregroundStyle(.white)
+        }
+        .frame(width: 68, height: 68)
+    }
+}
+
+private struct AchievementBadge: View {
+    let title: String
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
+        VStack(spacing: 5) {
+            Image(systemName: systemImage)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 42, height: 42)
+                .background(tint, in: Circle())
+                .overlay(Circle().stroke(FrogTheme.forest.opacity(0.18), lineWidth: 1))
+
+            Text(title)
+                .font(.frogMicro.weight(.bold))
+                .foregroundStyle(FrogTheme.forest)
+        }
+        .frame(maxWidth: .infinity)
+    }
 }
 
 private enum ProfileAuthSheet: Identifiable {

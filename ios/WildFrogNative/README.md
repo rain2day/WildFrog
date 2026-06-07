@@ -29,5 +29,5 @@ xcodebuild -project ios/WildFrogNative/WildFrogNative.xcodeproj \
 Notes:
 
 - The current package is a compileable native SwiftUI foundation and now also includes a generated Xcode app project.
-- `MountainCatalog` uses a representative native sample list. The web prototype still contains the fuller TimHiking list; the next step is to move that into shared JSON or generated Swift data.
+- `MountainCatalog` uses a representative native sample list. The web prototype still contains the fuller legacy mountain list; the next step is to move that into shared JSON or generated Swift data.
 - GPS permissions, live camera capture, MapKit clustering, and real photo export are intentionally left for the next native phase.

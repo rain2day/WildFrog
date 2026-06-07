@@ -13,10 +13,18 @@ struct MountainPhoto: View {
                     endPoint: .bottomTrailing
                 )
 
-                Image(mountain.imageName)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: proxy.size.width, height: proxy.size.height)
+                if !mountain.imageName.isEmpty {
+                    Image(mountain.imageName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                } else {
+                    Image("WildFrogBrandMark")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .opacity(0.34)
+                }
 
                 Color.black.opacity(dimming)
             }

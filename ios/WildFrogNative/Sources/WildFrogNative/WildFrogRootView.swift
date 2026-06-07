@@ -7,8 +7,8 @@ enum NativeRoute: Hashable {
 
 enum AppTab: String, CaseIterable, Identifiable {
     case home
-    case checkIn
     case records
+    case checkIn
     case leaderboard
     case profile
 
@@ -16,23 +16,25 @@ enum AppTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "首頁"
-        case .checkIn: "打卡"
+        case .home: "探索"
         case .records: "紀錄"
+        case .checkIn: "打卡"
         case .leaderboard: "排行"
-        case .profile: "個人"
+        case .profile: "我的"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .home: "mountain.2"
-        case .checkIn: "location.circle.fill"
-        case .records: "chart.bar"
-        case .leaderboard: "trophy"
-        case .profile: "person"
+        case .home: "map.fill"
+        case .records: "book.closed.fill"
+        case .checkIn: "checkmark.seal.fill"
+        case .leaderboard: "chart.bar.fill"
+        case .profile: "person.fill"
         }
     }
+
+    var isCenterCTA: Bool { self == .checkIn }
 }
 
 struct WildFrogRootView: View {
@@ -50,43 +52,92 @@ struct WildFrogRootView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack {
-                HomeMapListView()
-                    .withNativeRoutes()
+        ZStack(alignment: .bottom) {
+            Group {
+                switch selectedTab {
+                case .home:
+                    NavigationStack { HomeMapListView().withNativeRoutes() }
+                case .records:
+                    NavigationStack { RecordsCalendarView().withNativeRoutes() }
+                case .checkIn:
+                    NavigationStack { CheckInCameraView(mountain: MountainCatalog.mountain(id: "lion-rock")) }
+                case .leaderboard:
+                    NavigationStack { LeaderboardView().withNativeRoutes() }
+                case .profile:
+                    NavigationStack { ProfileView() }
+                }
             }
-            .tabItem { Label(AppTab.home.title, systemImage: AppTab.home.systemImage) }
-            .tag(AppTab.home)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            NavigationStack {
-                CheckInCameraView(mountain: MountainCatalog.mountain(id: "tai-mo-shan"))
-            }
-            .tabItem { Label(AppTab.checkIn.title, systemImage: AppTab.checkIn.systemImage) }
-            .tag(AppTab.checkIn)
-
-            NavigationStack {
-                RecordsCalendarView()
-                    .withNativeRoutes()
-            }
-            .tabItem { Label(AppTab.records.title, systemImage: AppTab.records.systemImage) }
-            .tag(AppTab.records)
-
-            NavigationStack {
-                LeaderboardView()
-                    .withNativeRoutes()
-            }
-            .tabItem { Label(AppTab.leaderboard.title, systemImage: AppTab.leaderboard.systemImage) }
-            .tag(AppTab.leaderboard)
-
-            NavigationStack {
-                ProfileView()
-            }
-            .tabItem { Label(AppTab.profile.title, systemImage: AppTab.profile.systemImage) }
-            .tag(AppTab.profile)
+            FrogTabBar(selectedTab: $selectedTab)
         }
-        .tint(FrogTheme.orange)
         .preferredColorScheme(.light)
         .background(FrogTheme.paper.ignoresSafeArea())
+    }
+}
+
+private struct FrogTabBar: View {
+    @Binding var selectedTab: AppTab
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 0) {
+            ForEach(AppTab.allCases) { tab in
+                Button {
+                    selectedTab = tab
+                } label: {
+                    if tab.isCenterCTA {
+                        centerItem(tab)
+                    } else {
+                        flatItem(tab)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tab.title)
+                .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
+        .background {
+            Color.white.opacity(0.94)
+                .ignoresSafeArea(edges: .bottom)
+                .shadow(color: Color.black.opacity(0.12), radius: 18, x: 0, y: -6)
+        }
+    }
+
+    private func flatItem(_ tab: AppTab) -> some View {
+        let active = selectedTab == tab
+        return VStack(spacing: 4) {
+            Image(systemName: tab.systemImage)
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(active ? FrogTheme.orange : FrogTheme.muted)
+            Text(tab.title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(active ? FrogTheme.ink : FrogTheme.muted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 3)
+        .contentShape(Rectangle())
+    }
+
+    private func centerItem(_ tab: AppTab) -> some View {
+        let active = selectedTab == tab
+        return VStack(spacing: 4) {
+            Image(systemName: tab.systemImage)
+                .font(.system(size: 22, weight: .black))
+                .foregroundStyle(.white)
+                .frame(width: 56, height: 56)
+                .background(FrogTheme.orange, in: Circle())
+                .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                .shadow(color: FrogTheme.orange.opacity(active ? 0.44 : 0.28), radius: 12, y: 5)
+            Text(tab.title)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(active ? FrogTheme.orange : FrogTheme.muted)
+        }
+        .frame(maxWidth: .infinity)
+        .offset(y: -16)
+        .contentShape(Rectangle())
     }
 }
 
@@ -107,17 +158,22 @@ struct StatCard: View {
     let value: String
     let label: String
     let systemImage: String
+    var tint: Color = FrogTheme.orange
+
+    private var isEmpty: Bool {
+        value == "—" || value == "0"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(FrogTheme.orange)
+                .foregroundStyle(isEmpty ? FrogTheme.muted : tint)
             Text(value)
-                .font(.system(size: 22, weight: .black, design: .rounded))
-                .foregroundStyle(FrogTheme.ink)
+                .font(.system(size: 22, weight: isEmpty ? .semibold : .bold, design: .rounded))
+                .foregroundStyle(isEmpty ? FrogTheme.muted : FrogTheme.ink)
             Text(label)
-                .font(.caption2.weight(.semibold))
+                .font(.frogMicro)
                 .foregroundStyle(FrogTheme.muted)
                 .lineLimit(2)
                 .minimumScaleFactor(0.78)
@@ -125,7 +181,5 @@ struct StatCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .cardStyle()
-        .lineLimit(2)
-        .minimumScaleFactor(0.78)
     }
 }

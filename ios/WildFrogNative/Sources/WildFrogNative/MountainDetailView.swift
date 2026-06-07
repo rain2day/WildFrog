@@ -4,16 +4,21 @@ import SwiftUI
 struct MountainDetailView: View {
     let mountain: Mountain
 
+    private var hasCheckedIn: Bool {
+        mountain.checkIns > 0
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
                 hero
                 recordPanel
-                certificatePreview
                 checkInAction
+                trailFactsPanel
                 checkpointMap
+                certificatePreview
             }
-            .padding(18)
+            .padding(FrogSpace.screenPadding)
             .padding(.bottom, 110)
         }
         .navigationTitle(mountain.nameZh)
@@ -22,8 +27,35 @@ struct MountainDetailView: View {
     }
 
     private var hero: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
+        ZStack(alignment: .bottomLeading) {
+            MountainPhoto(mountain: mountain, dimming: 0.1)
+
+            LinearGradient(
+                colors: [
+                    .black.opacity(0.08),
+                    .black.opacity(0.22),
+                    FrogTheme.forest.opacity(0.88)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .top) {
+                    WildFrogBrandMark(size: 38, cornerRadius: 10)
+
+                    Spacer()
+
+                    Text(hasCheckedIn ? "已完成" : "未打卡")
+                        .font(.frogMicro.weight(.black))
+                        .foregroundStyle(hasCheckedIn ? FrogTheme.forest : .white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(hasCheckedIn ? FrogTheme.leaf : Color.black.opacity(0.48), in: Capsule())
+                }
+
+                Spacer(minLength: 44)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text(mountain.rankText)
                         .font(.caption.weight(.black))
@@ -47,21 +79,15 @@ struct MountainDetailView: View {
                         .minimumScaleFactor(0.72)
                 }
 
-                Spacer()
+                HStack(spacing: 8) {
+                    DetailStatusPill(value: "\(mountain.totalCheckIns)", label: "全站打卡")
+                    DetailStatusPill(value: mountain.checkIns > 0 ? "\(mountain.checkIns)" : "0", label: "我的紀錄")
+                    DetailStatusPill(value: "\(mountain.height)m", label: "海拔")
+                }
             }
+            .padding(18)
         }
-        .frame(maxWidth: .infinity, minHeight: 230, alignment: .bottomLeading)
-        .padding(18)
-        .background(
-            ZStack {
-                MountainPhoto(mountain: mountain, dimming: 0.22)
-                LinearGradient(
-                    colors: [.black.opacity(0.02), .black.opacity(0.74)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-        )
+        .frame(height: 330)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
@@ -132,7 +158,7 @@ struct MountainDetailView: View {
 
     private var checkInAction: some View {
         NavigationLink(value: NativeRoute.checkIn(mountain.id)) {
-            Label("立即打卡", systemImage: "location.circle.fill")
+            Label(hasCheckedIn ? "再次打卡" : "開始有效打卡", systemImage: "location.circle.fill")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -141,6 +167,28 @@ struct MountainDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    private var trailFactsPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("路線摘要", systemImage: "figure.hiking")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(FrogTheme.ink)
+                Spacer()
+                Text(hasCheckedIn ? "PASSPORT SAVED" : "READY")
+                    .font(.frogMicro.weight(.black))
+                    .foregroundStyle(FrogTheme.orange)
+            }
+
+            HStack(spacing: 10) {
+                DetailFact(value: mountain.rankText, label: "300峰排名", systemImage: "trophy.fill", tint: FrogTheme.gold)
+                DetailFact(value: "\(mountain.height)m", label: "山峰海拔", systemImage: "triangle.fill", tint: FrogTheme.moss)
+                DetailFact(value: "60m", label: "有效半徑", systemImage: "scope", tint: FrogTheme.orange)
+            }
+        }
+        .padding(FrogSpace.cardPadding)
+        .cardStyle()
     }
 
     private var checkpointMap: some View {
@@ -167,5 +215,59 @@ struct MountainDetailView: View {
         }
         .padding(14)
         .cardStyle()
+    }
+}
+
+private struct DetailStatusPill: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(value)
+                .font(.frogCaption.weight(.black))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+            Text(label)
+                .font(.frogMicro)
+                .foregroundStyle(.white.opacity(0.66))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(9)
+        .background(Color.black.opacity(0.38), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct DetailFact: View {
+    let value: String
+    let label: String
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(tint)
+            Text(value)
+                .font(.frogTitle)
+                .foregroundStyle(FrogTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(label)
+                .font(.frogMicro)
+                .foregroundStyle(FrogTheme.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(11)
+        .background(FrogTheme.paper, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: 1)
+        )
     }
 }
