@@ -50,6 +50,8 @@ struct WildFrogNativeApp: App {
     @UIApplicationDelegateAdaptor(WildFrogAppDelegate.self) private var appDelegate
     #endif
     @State private var authService: ProfileAuthService
+    @StateObject private var locationManager = LocationManager()
+    @StateObject private var checkInStore = CheckInStore()
 
     init() {
         _authService = State(initialValue: ProfileAuthService(activateFirebase: false))
@@ -59,8 +61,13 @@ struct WildFrogNativeApp: App {
         WindowGroup {
             WildFrogRootView()
                 .environment(authService)
+                .environmentObject(locationManager)
+                .environmentObject(checkInStore)
                 .task { @MainActor in
                     authService.activate()
+                }
+                .task(id: authService.session?.uid) {
+                    await checkInStore.configure(for: authService.session?.uid)
                 }
                 .onOpenURL { url in
                     WildFrogFirebaseBootstrap.handleOpenURL(url)
