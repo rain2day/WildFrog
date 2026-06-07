@@ -13,7 +13,7 @@ struct ProfileView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
     @State private var selectedAvatar: PhotosPickerItem?
     @State private var avatarData: Data
-    @State private var activeSheet: ProfileAuthSheet?
+    @State private var showProviderPicker = false
     @State private var showCertificateShare = false
     @State private var showAllAchievements = false
     @State private var renderedCertificate: UIImage?
@@ -42,33 +42,18 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                profileHero
-                peakPassportCard
-                recentCheckInCard
-                certificateCard
-                achievementsPanel
-                if !authService.isSignedIn {
-                    signInPanel
-                }
-                accountPanel
+        Group {
+            if authService.isSignedIn {
+                signedInProfile
+            } else {
+                GuestOnboardingView(onStart: { showProviderPicker = true })
             }
-            .padding(.horizontal, FrogSpace.screenPadding)
-            .padding(.top, 12)
-            .padding(.bottom, 110)
         }
         .hiddenNavigationBar()
-        .background(FrogTheme.passport)
-        .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .email:
-                EmailAuthSheet()
-                    .presentationDetents([.medium])
-            case .phone:
-                PhoneAuthSheet()
-                    .presentationDetents([.medium])
-            }
+        .sheet(isPresented: $showProviderPicker) {
+            ProviderPickerSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showAllAchievements) {
             NavigationStack {
@@ -96,6 +81,25 @@ struct ProfileView: View {
         }
     }
 
+    // MARK: - Signed-in passport
+
+    private var signedInProfile: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                profileHero
+                peakPassportCard
+                recentCheckInCard
+                certificateCard
+                achievementsPanel
+                accountPanel
+            }
+            .padding(.horizontal, FrogSpace.screenPadding)
+            .padding(.top, 12)
+            .padding(.bottom, 110)
+        }
+        .background(FrogTheme.passport)
+    }
+
     private var profileHero: some View {
         let currentAvatarData = avatarData
 
@@ -111,34 +115,31 @@ struct ProfileView: View {
 
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
-                            WildFrogBrandMark(size: 30, cornerRadius: 8)
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text("WILDFROG")
-                                    .font(.system(size: 15, weight: .black, design: .rounded))
-                                Text("PEAK PASSPORT")
-                                    .font(.system(size: 8, weight: .black))
-                                    .foregroundStyle(FrogTheme.orange)
-                            }
+                    HStack(spacing: 8) {
+                        WildFrogBrandMark(size: 30, cornerRadius: 8)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("WILDFROG")
+                                .font(.system(size: 15, weight: .black, design: .rounded))
+                            Text("PEAK PASSPORT")
+                                .font(.system(size: 8, weight: .black))
+                                .foregroundStyle(FrogTheme.orange)
                         }
-                        .foregroundStyle(.white)
                     }
+                    .foregroundStyle(.white)
 
                     Spacer()
 
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.9))
+                    syncChip
                 }
 
                 HStack(alignment: .center, spacing: 15) {
                     PhotosPicker(selection: $selectedAvatar, matching: .images) {
                         ZStack(alignment: .bottomTrailing) {
                             ProfileAvatarContent(avatarData: currentAvatarData)
-                                .frame(width: 82, height: 82)
+                                .frame(width: 88, height: 88)
                                 .clipShape(Circle())
                                 .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                                .shadow(color: Color.black.opacity(0.25), radius: 8, y: 4)
 
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 12, weight: .black))
@@ -153,15 +154,19 @@ struct ProfileView: View {
                     .accessibilityLabel("更換頭像")
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(authService.isSignedIn ? authService.profileLine : "FrogWalker")
-                            .font(.system(size: 22, weight: .black, design: .rounded))
+                        Text(authService.profileLine)
+                            .font(.system(size: 23, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                             .lineLimit(1)
-                        Text(authService.isSignedIn ? "Keep exploring" : "Guest passport")
-                            .font(.frogCaption)
-                            .foregroundStyle(.white.opacity(0.74))
+                            .minimumScaleFactor(0.7)
 
-                        HStack(spacing: 12) {
+                        if let providerLabel = authService.session?.providerLabel {
+                            Text("以 \(providerLabel) 登入")
+                                .font(.frogCaption)
+                                .foregroundStyle(.white.opacity(0.74))
+                        }
+
+                        HStack(spacing: 14) {
                             PassportMiniMetric(value: "\(checkInStore.totalCheckIns)", label: "打卡")
                             PassportMiniMetric(value: "\(checkInStore.distinctMountainCount)", label: "山峰")
                             PassportMiniMetric(value: "\(checkInStore.currentStreak)", label: "連續日")
@@ -175,9 +180,23 @@ struct ProfileView: View {
             }
             .padding(18)
         }
-        .frame(height: 236)
+        .frame(height: 240)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: Color.black.opacity(0.2), radius: 16, y: 8)
+    }
+
+    private var syncChip: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "checkmark.icloud.fill")
+                .font(.system(size: 11, weight: .black))
+            Text("已雲端同步")
+                .font(.system(size: 10, weight: .black))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(FrogTheme.moss.opacity(0.92), in: Capsule())
+        .overlay(Capsule().stroke(Color.white.opacity(0.4), lineWidth: 1))
     }
 
     private var peakPassportCard: some View {
@@ -303,67 +322,15 @@ struct ProfileView: View {
         }
     }
 
-    private var signInPanel: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("登入")
-                .font(.frogTitle)
-                .foregroundStyle(FrogTheme.forest)
-
-            VStack(spacing: 10) {
-                AuthProviderButton(
-                    title: "Google",
-                    subtitle: "用 Google 帳戶登入",
-                    mark: .letter("G"),
-                    tint: Color(red: 66 / 255, green: 133 / 255, blue: 244 / 255)
-                ) {
-                    Task {
-                        await authService.signInWithGoogle()
-                    }
-                }
-
-                AuthProviderButton(
-                    title: "Apple ID",
-                    subtitle: "用 Apple ID 登入",
-                    mark: .systemImage("apple.logo"),
-                    tint: FrogTheme.ink
-                ) {
-                    authService.signInWithApple()
-                }
-
-                AuthProviderButton(
-                    title: "電郵",
-                    subtitle: "Email + 密碼",
-                    mark: .systemImage("envelope.fill"),
-                    tint: FrogTheme.orange
-                ) {
-                    activeSheet = .email
-                }
-
-                AuthProviderButton(
-                    title: "電話號碼",
-                    subtitle: "SMS 驗證碼",
-                    mark: .systemImage("phone.fill"),
-                    tint: FrogTheme.moss
-                ) {
-                    activeSheet = .phone
-                }
-            }
-            .disabled(authService.isBusy)
-            .opacity(authService.isBusy ? 0.58 : 1)
-        }
-        .padding(FrogSpace.cardPadding)
-        .cardStyle()
-    }
-
     private var accountPanel: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
-                Image(systemName: authService.isSignedIn ? "checkmark.shield.fill" : "lock.open.fill")
+                Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(authService.isSignedIn ? FrogTheme.orange : FrogTheme.muted)
+                    .foregroundStyle(FrogTheme.orange)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(authService.session?.statusTitle ?? "訪客模式")
+                    Text(authService.session?.statusTitle ?? "已登入")
                         .font(.frogTitle)
                         .foregroundStyle(FrogTheme.ink)
                     Text(authService.statusMessage)
@@ -375,13 +342,11 @@ struct ProfileView: View {
 
                 Spacer()
 
-                if authService.isSignedIn {
-                    Button("登出") {
-                        authService.signOut()
-                    }
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(FrogTheme.orange)
+                Button("登出") {
+                    authService.signOut()
                 }
+                .font(.caption.weight(.black))
+                .foregroundStyle(FrogTheme.orange)
             }
         }
         .padding(FrogSpace.cardPadding)
@@ -421,6 +386,139 @@ struct ProfileView: View {
 
 }
 
+// MARK: - Guest onboarding
+
+private struct GuestOnboardingView: View {
+    let onStart: () -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            let topInset = proxy.safeAreaInsets.top
+
+            ScrollView {
+                ZStack(alignment: .bottom) {
+                    MountainPhoto(mountain: MountainCatalog.mountain(id: "sunset-peak"), dimming: 0)
+                        .frame(height: proxy.size.height * 0.62 + topInset)
+
+                    LinearGradient(
+                        colors: [
+                            FrogTheme.forest.opacity(0),
+                            FrogTheme.forest.opacity(0.55),
+                            FrogTheme.forest.opacity(0.97)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: proxy.size.height * 0.62 + topInset)
+
+                    content
+                }
+            }
+            .background(FrogTheme.forest)
+            .ignoresSafeArea(edges: .top)
+        }
+    }
+
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                WildFrogBrandMark(size: 40, cornerRadius: 11)
+                Text("WILDFROG")
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+            .padding(.bottom, 18)
+
+            Text("記低你行過的\n每一座山")
+                .font(.system(size: 34, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("香港 330 座山峰，等你逐個征服、逐個收藏。")
+                .font(.frogRow)
+                .foregroundStyle(.white.opacity(0.82))
+                .padding(.top, 10)
+                .padding(.bottom, 26)
+
+            VStack(alignment: .leading, spacing: 16) {
+                ValuePropRow(
+                    systemImage: "checkmark.icloud.fill",
+                    title: "雲端同步打卡紀錄",
+                    subtitle: "換機都唔會遺失你的山旅足跡"
+                )
+                ValuePropRow(
+                    systemImage: "rosette",
+                    title: "解鎖紀念證書",
+                    subtitle: "完成里程碑即可生成分享證書"
+                )
+                ValuePropRow(
+                    systemImage: "chart.bar.fill",
+                    title: "加入排行榜",
+                    subtitle: "同其他山友比拼打卡里程"
+                )
+            }
+            .padding(.bottom, 28)
+
+            Button(action: onStart) {
+                HStack(spacing: 8) {
+                    Image(systemName: "figure.hiking")
+                        .font(.system(size: 17, weight: .black))
+                    Text("登入 / 開始記錄")
+                        .font(.system(size: 18, weight: .black, design: .rounded))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(FrogTheme.orange, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: FrogTheme.orange.opacity(0.4), radius: 14, y: 6)
+            }
+            .buttonStyle(.plain)
+
+            Text("免費 · 幾秒搞掂")
+                .font(.frogCaption.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.66))
+                .frame(maxWidth: .infinity)
+                .padding(.top, 12)
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 130)
+    }
+}
+
+private struct ValuePropRow: View {
+    let systemImage: String
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.frogCaption)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+// MARK: - Passport components
+
 private struct PassportMiniMetric: View {
     let value: String
     let label: String
@@ -428,10 +526,10 @@ private struct PassportMiniMetric: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value)
-                .font(.system(size: 13, weight: .black, design: .rounded))
+                .font(.system(size: 14, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
             Text(label)
-                .font(.system(size: 7, weight: .bold))
+                .font(.system(size: 7.5, weight: .bold))
                 .foregroundStyle(.white.opacity(0.62))
         }
     }
@@ -484,23 +582,6 @@ private struct AchievementBadge: View {
     }
 }
 
-private enum ProfileAuthSheet: Identifiable {
-    case email
-    case phone
-
-    var id: String {
-        switch self {
-        case .email: "email"
-        case .phone: "phone"
-        }
-    }
-}
-
-private enum AuthMark {
-    case letter(String)
-    case systemImage(String)
-}
-
 private struct ProfileAvatarContent: View {
     let avatarData: Data
 
@@ -538,219 +619,6 @@ private struct ProfileAvatarContent: View {
     }
 }
 
-private struct AuthProviderButton: View {
-    let title: String
-    let subtitle: String
-    let mark: AuthMark
-    let tint: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                markView
-                    .frame(width: 38, height: 38)
-                    .background(tint.opacity(0.12))
-                    .clipShape(Circle())
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title)
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(FrogTheme.ink)
-                    Text(subtitle)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(FrogTheme.muted)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(FrogTheme.muted)
-            }
-            .padding(12)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(FrogTheme.line, lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private var markView: some View {
-        switch mark {
-        case .letter(let value):
-            Text(value)
-                .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(tint)
-        case .systemImage(let name):
-            Image(systemName: name)
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(tint)
-        }
-    }
-}
-
-private struct EmailAuthSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(ProfileAuthService.self) private var authService
-    @State private var email = ""
-    @State private var password = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Email", text: $email)
-                        .wildFrogEmailInput()
-                    SecureField("密碼", text: $password)
-                }
-
-                Section {
-                    Button("登入") {
-                        Task {
-                            await complete(.signIn)
-                        }
-                    }
-                    .disabled(!canSubmit || authService.isBusy)
-
-                    Button("建立帳戶") {
-                        Task {
-                            await complete(.createAccount)
-                        }
-                    }
-                    .disabled(!canSubmit || authService.isBusy)
-                }
-            }
-            .navigationTitle("Email 登入")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("完成") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-
-    private var canSubmit: Bool {
-        email.trimmingCharacters(in: .whitespacesAndNewlines).contains("@") && password.count >= 6
-    }
-
-    private func complete(_ mode: EmailAuthMode) async {
-        switch mode {
-        case .signIn:
-            await authService.signInWithEmail(email: email, password: password)
-        case .createAccount:
-            await authService.createEmailAccount(email: email, password: password)
-        }
-
-        if authService.isSignedIn {
-            dismiss()
-        }
-    }
-}
-
-private struct PhoneAuthSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(ProfileAuthService.self) private var authService
-    @State private var phone = "+852 "
-    @State private var code = ""
-    @State private var codeSent = false
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("電話號碼", text: $phone)
-                        .wildFrogPhoneInput()
-
-                    if codeSent {
-                        TextField("6 位驗證碼", text: $code)
-                            .wildFrogNumberInput()
-                    }
-                }
-
-                Section {
-                    Button(codeSent ? "完成登入" : "發送驗證碼") {
-                        Task {
-                            if codeSent {
-                                let signedIn = await authService.confirmPhoneCode(code)
-                                if signedIn {
-                                    dismiss()
-                                }
-                            } else {
-                                codeSent = await authService.sendPhoneCode(phoneNumber: phone)
-                            }
-                        }
-                    }
-                    .disabled(!canSubmit || authService.isBusy)
-                } footer: {
-                    Text("使用電話登入可能會收到 SMS，費用依電訊商而定。")
-                }
-            }
-            .navigationTitle("電話登入")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("完成") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-
-    private var canSubmit: Bool {
-        if codeSent {
-            return code.trimmingCharacters(in: .whitespacesAndNewlines).count >= 4
-        }
-
-        return phone.trimmingCharacters(in: .whitespacesAndNewlines).count >= 8
-    }
-}
-
-private enum EmailAuthMode {
-    case signIn
-    case createAccount
-}
-
-private extension View {
-    @ViewBuilder
-    func wildFrogEmailInput() -> some View {
-        #if os(iOS)
-        self
-            .keyboardType(.emailAddress)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-        #else
-        self
-        #endif
-    }
-
-    @ViewBuilder
-    func wildFrogPhoneInput() -> some View {
-        #if os(iOS)
-        self
-            .keyboardType(.phonePad)
-            .textContentType(.telephoneNumber)
-        #else
-        self
-        #endif
-    }
-
-    @ViewBuilder
-    func wildFrogNumberInput() -> some View {
-        #if os(iOS)
-        self.keyboardType(.numberPad)
-        #else
-        self
-        #endif
-    }
-}
-
 #if canImport(UIKit)
 private extension UIImage {
     func wildFrogAvatarJPEGData(maxPixel: CGFloat = 520) -> Data? {
@@ -768,7 +636,7 @@ private extension UIImage {
 }
 #endif
 
-#Preview {
+#Preview("Guest") {
     NavigationStack {
         ProfileView()
     }
