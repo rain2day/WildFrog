@@ -150,7 +150,7 @@ private struct CheckInMapMode: View {
                     selectedMountainId = nil
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
-                .padding(.bottom, 20)
+                .padding(.bottom, 110) // clear the floating tab bar at the check-in tab root
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.spring(response: 0.32, dampingFraction: 0.78), value: selectedMountainId)
             }
