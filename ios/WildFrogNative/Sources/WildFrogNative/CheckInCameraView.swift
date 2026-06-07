@@ -713,7 +713,11 @@ struct CheckInCameraView: View {
         return renderer.uiImage
     }
 
-    private func requestPhotoAddPermission() async -> PHAuthorizationStatus {
+    // `nonisolated`: SwiftUI View methods are implicitly @MainActor, which would
+    // make these completion-handler closures @MainActor-isolated. Photos invokes
+    // them on a background queue, tripping the Swift concurrency isolation check
+    // (EXC_BREAKPOINT). Keeping them nonisolated lets the callbacks run anywhere.
+    nonisolated private func requestPhotoAddPermission() async -> PHAuthorizationStatus {
         await withCheckedContinuation { continuation in
             PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
                 continuation.resume(returning: status)
@@ -721,7 +725,7 @@ struct CheckInCameraView: View {
         }
     }
 
-    private func saveToPhotoLibrary(_ image: UIImage) async throws {
+    nonisolated private func saveToPhotoLibrary(_ image: UIImage) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             PHPhotoLibrary.shared().performChanges {
                 PHAssetChangeRequest.creationRequestForAsset(from: image)
