@@ -15,6 +15,13 @@
 		A1F0E5C2D3B41A0792C5B021 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */; };
 		A1F0E5C2D3B41A0792C5B031 /* CheckInStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */; };
 		A1F0E5C2D3B41A0792C5B041 /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */; };
+		B5A1000000000000000000A1 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000A0 /* Track.swift */; };
+		B5A1000000000000000000B1 /* TrackRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000B0 /* TrackRecorder.swift */; };
+		B5A1000000000000000000C1 /* TrackStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000C0 /* TrackStore.swift */; };
+		B5A1000000000000000000D1 /* TrackRecordingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000D0 /* TrackRecordingView.swift */; };
+		B5A1000000000000000000E1 /* TrackDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000E0 /* TrackDetailView.swift */; };
+		B5A1000000000000000000F1 /* GPXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000F0 /* GPXExporter.swift */; };
+		B5A100000000000000000101 /* RouteToCheckpointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A100000000000000000100 /* RouteToCheckpointView.swift */; };
 		5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */; };
 		49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 52847F8A6EBB329550A69056 /* Assets.xcassets */; };
 		665B2CB3494988CC0259CF7E /* MountainPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093DD82643FC8812EB3E887B /* MountainPhoto.swift */; };
@@ -37,6 +44,13 @@
 		A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInStore.swift; sourceTree = "<group>"; };
 		A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000A0 /* Track.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000B0 /* TrackRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackRecorder.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000C0 /* TrackStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackStore.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000D0 /* TrackRecordingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackRecordingView.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000E0 /* TrackDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackDetailView.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000F0 /* GPXExporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GPXExporter.swift; sourceTree = "<group>"; };
+		B5A100000000000000000100 /* RouteToCheckpointView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RouteToCheckpointView.swift; sourceTree = "<group>"; };
 		0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInCameraView.swift; sourceTree = "<group>"; };
 		C4B3001CB3001CB3001CB300 /* CameraPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
@@ -106,6 +120,13 @@
 				A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */,
 				A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */,
 				A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */,
+				B5A1000000000000000000A0 /* Track.swift */,
+				B5A1000000000000000000B0 /* TrackRecorder.swift */,
+				B5A1000000000000000000C0 /* TrackStore.swift */,
+				B5A1000000000000000000D0 /* TrackRecordingView.swift */,
+				B5A1000000000000000000E0 /* TrackDetailView.swift */,
+				B5A1000000000000000000F0 /* GPXExporter.swift */,
+				B5A100000000000000000100 /* RouteToCheckpointView.swift */,
 				3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */,
 				DF6441CFCB65614B5EB60E9C /* Mountain.swift */,
 				4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */,
@@ -227,6 +248,13 @@
 				A1F0E5C2D3B41A0792C5B021 /* LocationManager.swift in Sources */,
 				A1F0E5C2D3B41A0792C5B031 /* CheckInStore.swift in Sources */,
 				A1F0E5C2D3B41A0792C5B041 /* FirestoreService.swift in Sources */,
+				B5A1000000000000000000A1 /* Track.swift in Sources */,
+				B5A1000000000000000000B1 /* TrackRecorder.swift in Sources */,
+				B5A1000000000000000000C1 /* TrackStore.swift in Sources */,
+				B5A1000000000000000000D1 /* TrackRecordingView.swift in Sources */,
+				B5A1000000000000000000E1 /* TrackDetailView.swift in Sources */,
+				B5A1000000000000000000F1 /* GPXExporter.swift in Sources */,
+				B5A100000000000000000101 /* RouteToCheckpointView.swift in Sources */,
 				F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */,
 				DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */,
 				16F867A7AFB70C1DA8B771A1 /* MountainDetailView.swift in Sources */,

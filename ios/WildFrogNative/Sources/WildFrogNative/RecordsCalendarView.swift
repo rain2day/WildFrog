@@ -1,8 +1,24 @@
+import CoreLocation
 import SwiftUI
+
+enum RecordsSegment: String, CaseIterable, Identifiable {
+    case passport
+    case tracks
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .passport: "打卡日曆"
+        case .tracks: "我的軌跡"
+        }
+    }
+}
 
 struct RecordsCalendarView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
 
+    @State private var segment: RecordsSegment = .passport
     @State private var selectedDay = Calendar.current.component(.day, from: Date())
     @State private var displayedMonth: Date = {
         let calendar = Calendar.current
@@ -65,17 +81,40 @@ struct RecordsCalendarView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                passportCover
-                stampTimeline
-                passportStrip
-                calendarPanel
-                selectedRecordCard
+                segmentControl
+
+                switch segment {
+                case .passport:
+                    passportCover
+                    stampTimeline
+                    passportStrip
+                    calendarPanel
+                    selectedRecordCard
+                case .tracks:
+                    TracksSection()
+                }
             }
             .padding(FrogSpace.screenPadding)
             .padding(.bottom, 110)
         }
         .hiddenNavigationBar()
         .background(FrogTheme.passport)
+    }
+
+    private var segmentControl: some View {
+        HStack(spacing: 8) {
+            ForEach(RecordsSegment.allCases) { item in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) { segment = item }
+                } label: {
+                    Text(item.title)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                        .chipStyle(isSelected: segment == item)
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     private var passportCover: some View {
@@ -436,5 +475,127 @@ private struct StampTimelineCard: View {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .stroke(isSelected ? FrogTheme.orange : FrogTheme.line, lineWidth: isSelected ? 2 : 1)
         )
+    }
+}
+
+// MARK: - Tracks section ("我的軌跡")
+
+private struct TracksSection: View {
+    @EnvironmentObject private var trackStore: TrackStore
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+            NearestCheckpointBanner()
+
+            NavigationLink(value: NativeRoute.trackRecording(nil)) {
+                Label("開始記錄軌跡", systemImage: "record.circle.fill")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(FrogTheme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            if trackStore.tracks.isEmpty {
+                emptyState
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(trackStore.tracks) { track in
+                        NavigationLink(value: NativeRoute.trackDetail(track.id)) {
+                            TrackRow(track: track)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: "figure.hiking")
+                .font(.system(size: 30, weight: .regular))
+                .foregroundStyle(FrogTheme.muted)
+            Text("仲未有軌跡紀錄")
+                .font(.frogRow)
+                .foregroundStyle(FrogTheme.ink)
+            Text("按上面開始記錄，行山時會即時畫出路線同距離。")
+                .font(.frogCaption)
+                .foregroundStyle(FrogTheme.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(FrogSpace.cardPadding)
+        .cardStyle()
+    }
+}
+
+private struct TrackRow: View {
+    let track: Track
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(FrogTheme.mapWash)
+                TrackRowSparkline(coordinates: track.coordinates)
+                    .stroke(FrogTheme.orange, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                    .padding(8)
+            }
+            .frame(width: 66, height: 66)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(track.name)
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundStyle(FrogTheme.ink)
+                    .lineLimit(1)
+                HStack(spacing: 10) {
+                    Label(TrackFormat.distance(track.distanceMeters), systemImage: "ruler")
+                    Label(TrackFormat.duration(track.durationSeconds), systemImage: "clock")
+                    Label("\(Int(track.ascentMeters))m", systemImage: "arrow.up.forward")
+                }
+                .font(.frogMicro.weight(.semibold))
+                .foregroundStyle(FrogTheme.muted)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(FrogTheme.muted)
+        }
+        .padding(12)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: 1)
+        )
+    }
+}
+
+private struct TrackRowSparkline: Shape {
+    let coordinates: [CLLocationCoordinate2D]
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        guard coordinates.count > 1 else { return path }
+        let lats = coordinates.map(\.latitude)
+        let lons = coordinates.map(\.longitude)
+        guard let minLat = lats.min(), let maxLat = lats.max(),
+              let minLon = lons.min(), let maxLon = lons.max() else { return path }
+        let latRange = max(maxLat - minLat, 0.0001)
+        let lonRange = max(maxLon - minLon, 0.0001)
+
+        func point(_ coordinate: CLLocationCoordinate2D) -> CGPoint {
+            let x = rect.width * CGFloat((coordinate.longitude - minLon) / lonRange)
+            let y = rect.height * CGFloat(1 - (coordinate.latitude - minLat) / latRange)
+            return CGPoint(x: x, y: y)
+        }
+
+        path.move(to: point(coordinates[0]))
+        for coordinate in coordinates.dropFirst() {
+            path.addLine(to: point(coordinate))
+        }
+        return path
     }
 }

@@ -229,6 +229,16 @@ struct MountainDetailView: View {
             }
             .font(.caption.weight(.bold))
             .foregroundStyle(FrogTheme.muted)
+
+            NavigationLink(value: NativeRoute.routeToCheckpoint(mountain.id)) {
+                Label("路線 / 導航去呢度", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(FrogTheme.moss, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
         }
         .padding(14)
         .cardStyle()
