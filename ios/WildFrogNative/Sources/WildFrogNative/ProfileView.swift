@@ -1,3 +1,4 @@
+import CoreLocation
 import PhotosUI
 import SwiftUI
 #if canImport(UIKit)
@@ -11,7 +12,11 @@ struct ProfileView: View {
 
     @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var checkInStore: CheckInStore
+    @EnvironmentObject private var locationManager: LocationManager
     @State private var selectedAvatar: PhotosPickerItem?
+    #if DEBUG
+    @State private var showMockPicker = false
+    #endif
     @State private var avatarData: Data
     @State private var showProviderPicker = false
     @State private var showCertificateShare = false
@@ -102,6 +107,14 @@ struct ProfileView: View {
                 await loadAvatar(from: item)
             }
         }
+        #if DEBUG
+        .overlay(alignment: .bottomTrailing) {
+            mockFloatingButton
+        }
+        .sheet(isPresented: $showMockPicker) {
+            MockLocationPickerSheet()
+        }
+        #endif
     }
 
     // MARK: - Signed-in passport
@@ -122,6 +135,103 @@ struct ProfileView: View {
         }
         .background(FrogTheme.passport)
     }
+
+    #if DEBUG
+    // MARK: - Developer location override (DEBUG builds only)
+
+    private var mockFloatingButton: some View {
+        Button {
+            showMockPicker = true
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: locationManager.mockCoordinate == nil ? "hammer.fill" : "location.fill.viewfinder")
+                    .font(.system(size: 13, weight: .black))
+                Text(mockButtonLabel)
+                    .font(.frogCaption.weight(.black))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .frame(height: 40)
+            .background(
+                locationManager.mockCoordinate == nil ? FrogTheme.slate : FrogTheme.orange,
+                in: Capsule()
+            )
+            .shadow(color: Color.black.opacity(0.2), radius: 8, y: 3)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, FrogSpace.screenPadding)
+        .padding(.bottom, 124) // clear the floating tab bar
+        .accessibilityLabel("開發者模擬位置")
+    }
+
+    private var mockButtonLabel: String {
+        guard let mock = locationManager.mockCoordinate else { return "模擬位置" }
+        return "模擬中 · \(mockLabel(for: mock))"
+    }
+
+    private func mockLabel(for coordinate: CLLocationCoordinate2D) -> String {
+        let here = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let nearest = MountainCatalog.mountains.min {
+            CLLocation(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude).distance(from: here) <
+            CLLocation(latitude: $1.coordinate.latitude, longitude: $1.coordinate.longitude).distance(from: here)
+        }
+        if let nearest {
+            return "\(nearest.nameZh) · \(nearest.height)m"
+        }
+        return String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude)
+    }
+
+    private struct MockLocationPickerSheet: View {
+        @EnvironmentObject private var locationManager: LocationManager
+        @Environment(\.dismiss) private var dismiss
+        @State private var search = ""
+
+        private var filtered: [Mountain] {
+            let query = search.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !query.isEmpty else { return MountainCatalog.mountains }
+            return MountainCatalog.mountains.filter {
+                $0.nameZh.localizedCaseInsensitiveContains(query) ||
+                $0.nameEn.localizedCaseInsensitiveContains(query)
+            }
+        }
+
+        var body: some View {
+            NavigationStack {
+                List(filtered) { mountain in
+                    Button {
+                        locationManager.mockCoordinate = mountain.coordinate
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(mountain.nameZh)
+                                    .font(.frogRow.weight(.bold))
+                                    .foregroundStyle(FrogTheme.ink)
+                                Text("\(mountain.nameEn) · \(mountain.height)m · \(mountain.region)")
+                                    .font(.frogCaption)
+                                    .foregroundStyle(FrogTheme.muted)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                            Image(systemName: "scope")
+                                .foregroundStyle(FrogTheme.orange)
+                        }
+                    }
+                }
+                .listStyle(.plain)
+                .searchable(text: $search, prompt: "搜尋山峰名稱")
+                .navigationTitle("傳送到山峰")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("取消") { dismiss() }
+                    }
+                }
+            }
+        }
+    }
+    #endif
 
     private var profileHero: some View {
         let currentAvatarData = avatarData
