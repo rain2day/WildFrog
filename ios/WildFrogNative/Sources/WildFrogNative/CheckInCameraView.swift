@@ -10,6 +10,7 @@ struct CheckInCameraView: View {
     let mountain: Mountain
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var checkInStore: CheckInStore
 
@@ -21,6 +22,7 @@ struct CheckInCameraView: View {
     // MARK: - Save state
     @State private var isSavingWatermark = false
     @State private var saveMessage: String?
+    @State private var showSignInAlert = false
 
     // MARK: - GPS gating helpers
 
@@ -39,7 +41,7 @@ struct CheckInCameraView: View {
 
     /// True when all conditions for completing a check-in are met.
     private var canCheckIn: Bool {
-        isInRange && capturedImage != nil
+        isInRange && capturedImage != nil && authService.isSignedIn
     }
 
     private var gpsChipTitle: String {
@@ -363,9 +365,13 @@ struct CheckInCameraView: View {
                 }
             }
 
-            // Complete check-in button — gated by in-range AND has photo
+            // Complete check-in button — gated by signed-in AND in-range AND has photo
             Button {
-                saveWatermarkImage()
+                if !authService.isSignedIn {
+                    showSignInAlert = true
+                } else {
+                    performCheckIn()
+                }
             } label: {
                 HStack(spacing: 16) {
                     Image(systemName: "checkmark")
@@ -381,7 +387,12 @@ struct CheckInCameraView: View {
                 .opacity(canCheckIn ? 1 : 0.4)
             }
             .buttonStyle(.plain)
-            .disabled(isSavingWatermark || !canCheckIn)
+            .disabled(isSavingWatermark || (!canCheckIn && authService.isSignedIn))
+            .alert("請先登入", isPresented: $showSignInAlert) {
+                Button("好", role: .cancel) {}
+            } message: {
+                Text("打卡前請先登入（我的）")
+            }
 
             // Status hint
             HStack(spacing: 6) {
@@ -401,7 +412,9 @@ struct CheckInCameraView: View {
     }
 
     private var hintText: String {
-        if capturedImage == nil {
+        if !authService.isSignedIn {
+            return "打卡前請先登入（我的）"
+        } else if capturedImage == nil {
             return "請先影相或揀相"
         } else if !isInRange {
             return gpsChipTitle
@@ -409,16 +422,20 @@ struct CheckInCameraView: View {
         return "打卡後將生成水印圖並儲存到相簿"
     }
 
-    // MARK: - Save watermark
+    // MARK: - Perform check-in (write store + Firestore + save watermark)
 
     @MainActor
-    private func saveWatermarkImage() {
+    private func performCheckIn() {
         #if canImport(UIKit)
         guard let capturedImage else {
             saveMessage = "請先影相或揀相。"
             return
         }
-        guard let image = renderWatermarkImage(userPhoto: capturedImage) else {
+        guard let uid = authService.session?.uid else {
+            saveMessage = "請先登入再打卡。"
+            return
+        }
+        guard let watermarkImage = renderWatermarkImage(userPhoto: capturedImage) else {
             saveMessage = "未能生成水印圖，請再試一次。"
             return
         }
@@ -427,6 +444,22 @@ struct CheckInCameraView: View {
         saveMessage = nil
 
         Task {
+            // 1. Save original photo to Documents and get filename
+            let filename = await savePhotoToDocuments(capturedImage)
+
+            // 2. Write to local CheckInStore (account-bound)
+            checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename)
+
+            // 3. Best-effort Firestore write — failure does not block local success
+            Task {
+                try? await FirestoreService().recordCheckIn(
+                    userId: uid,
+                    mountainId: mountain.id,
+                    date: Date()
+                )
+            }
+
+            // 4. Save watermark image to photo library
             let status = await requestPhotoAddPermission()
             guard status == .authorized || status == .limited else {
                 await MainActor.run {
@@ -437,20 +470,40 @@ struct CheckInCameraView: View {
             }
 
             do {
-                try await saveToPhotoLibrary(image)
+                try await saveToPhotoLibrary(watermarkImage)
                 await MainActor.run {
                     isSavingWatermark = false
-                    saveMessage = "已儲存水印圖到相簿。"
+                    saveMessage = "打卡成功！水印圖已儲存到相簿。"
                 }
             } catch {
                 await MainActor.run {
                     isSavingWatermark = false
-                    saveMessage = "儲存失敗：\(error.localizedDescription)"
+                    saveMessage = "打卡已記錄，但儲存相簿失敗：\(error.localizedDescription)"
                 }
             }
         }
         #else
         saveMessage = "此平台暫不支援儲存到相簿。"
+        #endif
+    }
+
+    /// Saves the original (unwatermarked) photo to the app's Documents directory and returns the filename.
+    private func savePhotoToDocuments(_ image: UIImage) async -> String? {
+        #if canImport(UIKit)
+        return await Task.detached(priority: .utility) {
+            let filename = UUID().uuidString + ".jpg"
+            guard let data = image.jpegData(compressionQuality: 0.85),
+                  let url = FileManager.default
+                      .urls(for: .documentDirectory, in: .userDomainMask)
+                      .first?
+                      .appendingPathComponent(filename) else {
+                return nil
+            }
+            try? data.write(to: url)
+            return filename
+        }.value
+        #else
+        return nil
         #endif
     }
 

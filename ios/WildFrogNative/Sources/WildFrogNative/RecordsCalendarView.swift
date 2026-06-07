@@ -1,7 +1,14 @@
 import SwiftUI
 
 struct RecordsCalendarView: View {
+    @EnvironmentObject private var checkInStore: CheckInStore
+
     @State private var selectedDay = Calendar.current.component(.day, from: Date())
+    @State private var displayedMonth: Date = {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: Date())
+        return calendar.date(from: components) ?? Date()
+    }()
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 7), count: 7)
 
@@ -9,9 +16,39 @@ struct RecordsCalendarView: View {
         MountainCatalog.mountains.filter { $0.checkIns > 0 }
     }
 
+    private var displayedYear: Int {
+        Calendar.current.component(.year, from: displayedMonth)
+    }
+
+    private var displayedMonthNumber: Int {
+        Calendar.current.component(.month, from: displayedMonth)
+    }
+
+    private var displayedMonthLabel: String {
+        "\(displayedYear)年\(displayedMonthNumber)月"
+    }
+
+    /// Days in the displayed month that have at least one check-in.
+    private var activeDays: Set<Int> {
+        checkInStore.days(year: displayedYear, month: displayedMonthNumber)
+    }
+
+    /// Map from active day → first matched Mountain (for calendar tiles and stamp timeline).
     private var activeRecords: [Int: Mountain] {
-        let days = [1, 2, 4, 5, 7, 9, 12, 16, 18, 20, 21, 24, 27, 29]
-        return Dictionary(uniqueKeysWithValues: zip(days, checkedMountains))
+        var result: [Int: Mountain] = [:]
+        for day in activeDays {
+            // Find a mountain checked in on this day in the displayed month
+            let matchingRecord = checkInStore.records.first { record in
+                let cal = Calendar.current
+                let comps = cal.dateComponents([.year, .month, .day], from: record.date)
+                return comps.year == displayedYear && comps.month == displayedMonthNumber && comps.day == day
+            }
+            if let mountainId = matchingRecord?.mountainId,
+               let mountain = MountainCatalog.mountains.first(where: { $0.id == mountainId }) {
+                result[day] = mountain
+            }
+        }
+        return result
     }
 
     private var selectedMountain: Mountain? {
@@ -19,7 +56,10 @@ struct RecordsCalendarView: View {
     }
 
     private var monthDays: [Int] {
-        Array(1...30)
+        if let range = Calendar.current.range(of: .day, in: .month, for: displayedMonth) {
+            return Array(range)
+        }
+        return Array(1...30)
     }
 
     var body: some View {
@@ -68,7 +108,7 @@ struct RecordsCalendarView: View {
 
                     Spacer()
 
-                    Text("2026 JUN")
+                    Text(displayedMonth.formatted(.dateTime.year().month(.abbreviated).locale(Locale(identifier: "en_US"))))
                         .font(.frogMicro.weight(.black))
                         .foregroundStyle(FrogTheme.forest)
                         .padding(.horizontal, 10)
@@ -89,9 +129,9 @@ struct RecordsCalendarView: View {
                 }
 
                 HStack(spacing: 10) {
-                    PassportCoverMetric(value: "\(activeRecords.count)", label: "月內打卡")
-                    PassportCoverMetric(value: "\(checkedMountains.count)", label: "已到山峰")
-                    PassportCoverMetric(value: "\(MountainCatalog.catalogCount)", label: "總山峰")
+                    PassportCoverMetric(value: "\(activeDays.count)", label: "月內打卡日")
+                    PassportCoverMetric(value: "\(checkInStore.distinctMountainCount)", label: "已到山峰")
+                    PassportCoverMetric(value: "\(checkInStore.currentStreak)", label: "連續日")
                 }
             }
             .padding(18)
@@ -112,7 +152,7 @@ struct RecordsCalendarView: View {
                     .font(.frogTitle)
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
-                Text("\(activeRecords.count) DAYS")
+                Text("\(activeDays.count) DAYS")
                     .font(.frogMicro.weight(.black))
                     .foregroundStyle(FrogTheme.orange)
             }
@@ -150,7 +190,7 @@ struct RecordsCalendarView: View {
                     .font(.frogTitle)
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
-                Text("\(checkedMountains.count) / \(MountainCatalog.catalogCount)")
+                Text("\(checkInStore.distinctMountainCount) / \(MountainCatalog.catalogCount)")
                     .font(.frogCaption.weight(.semibold))
                     .foregroundStyle(FrogTheme.orange)
             }
@@ -173,7 +213,7 @@ struct RecordsCalendarView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("2026年6月")
+                    Text(displayedMonthLabel)
                         .font(.frogTitle)
                     Text("打卡相簿")
                         .font(.frogCaption)
@@ -182,7 +222,12 @@ struct RecordsCalendarView: View {
 
                 Spacer()
 
-                Button {} label: {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        displayedMonth = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
+                        selectedDay = 1
+                    }
+                } label: {
                     Image(systemName: "chevron.left")
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.ink)
@@ -191,7 +236,12 @@ struct RecordsCalendarView: View {
                 .buttonStyle(.plain)
                 .controlStyle()
 
-                Button {} label: {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        displayedMonth = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
+                        selectedDay = 1
+                    }
+                } label: {
                     Image(systemName: "chevron.right")
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.ink)
@@ -235,7 +285,7 @@ struct RecordsCalendarView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(selectedDay)")
                         .font(.system(size: 44, weight: .black, design: .rounded))
-                    Text("6月")
+                    Text("\(displayedMonthNumber)月")
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                 }

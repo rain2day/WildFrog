@@ -10,6 +10,7 @@ struct ProfileView: View {
     private static let avatarStorageKey = "wildfrog.profile.avatar.thumbnail"
 
     @Environment(ProfileAuthService.self) private var authService
+    @EnvironmentObject private var checkInStore: CheckInStore
     @State private var selectedAvatar: PhotosPickerItem?
     @State private var avatarData: Data
     @State private var activeSheet: ProfileAuthSheet?
@@ -23,18 +24,14 @@ struct ProfileView: View {
         MountainCatalog.mountains.filter { $0.checkIns > 0 }
     }
 
-    private var totalCheckIns: Int {
-        MountainCatalog.mountains.reduce(0) { $0 + $1.checkIns }
-    }
-
     private var completionRatio: Double {
         guard MountainCatalog.catalogCount > 0 else { return 0 }
-        return min(1, Double(checkedMountains.count) / Double(MountainCatalog.catalogCount))
+        return min(1, Double(checkInStore.distinctMountainCount) / Double(MountainCatalog.catalogCount))
     }
 
     private var completionPercentText: String {
         let percent = Int((completionRatio * 100).rounded())
-        return "\(max(percent, checkedMountains.isEmpty ? 0 : 1))%"
+        return "\(max(percent, checkInStore.distinctMountainCount == 0 ? 0 : 1))%"
     }
 
     private var recentMountain: Mountain {
@@ -143,9 +140,9 @@ struct ProfileView: View {
                             .foregroundStyle(.white.opacity(0.74))
 
                         HStack(spacing: 12) {
-                            PassportMiniMetric(value: "\(totalCheckIns)", label: "PEAKS")
-                            PassportMiniMetric(value: "\(checkedMountains.count)", label: "CHECK-INS")
-                            PassportMiniMetric(value: "\(max(1, checkedMountains.count / 2))", label: "STREAK")
+                            PassportMiniMetric(value: "\(checkInStore.totalCheckIns)", label: "打卡")
+                            PassportMiniMetric(value: "\(checkInStore.distinctMountainCount)", label: "山峰")
+                            PassportMiniMetric(value: "\(checkInStore.currentStreak)", label: "連續日")
                         }
                     }
 
@@ -168,7 +165,7 @@ struct ProfileView: View {
                     .font(.frogTitle)
                     .foregroundStyle(FrogTheme.forest)
                 Spacer()
-                Text("\(checkedMountains.count) / \(MountainCatalog.catalogCount) Peaks")
+                Text("\(checkInStore.distinctMountainCount) / \(MountainCatalog.catalogCount) Peaks")
                     .font(.frogCaption.weight(.semibold))
                     .foregroundStyle(FrogTheme.orange)
             }
@@ -238,7 +235,7 @@ struct ProfileView: View {
                 Text("Peak Explorer Certificate")
                     .font(.frogRow)
                     .foregroundStyle(FrogTheme.forest)
-                Text("You've completed \(checkedMountains.count) Hong Kong peaks.")
+                Text("You've completed \(checkInStore.distinctMountainCount) Hong Kong peaks.")
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
             }

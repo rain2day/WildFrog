@@ -2,6 +2,8 @@ import MapKit
 import SwiftUI
 
 struct HomeMapListView: View {
+    @EnvironmentObject private var checkInStore: CheckInStore
+
     @State private var searchText = ""
     @State private var selectedRegion = "全部"
     @State private var sortMode = SortMode.rank
@@ -30,7 +32,7 @@ struct HomeMapListView: View {
     }
 
     private var totalCheckIns: Int {
-        MountainCatalog.mountains.reduce(0) { $0 + $1.checkIns }
+        checkInStore.totalCheckIns
     }
 
     private var summitPoints: Int {
@@ -158,8 +160,8 @@ struct HomeMapListView: View {
                 Spacer(minLength: 28)
 
                 HStack(spacing: 10) {
-                    HeroMetric(value: "\(checkedMountains.count)", label: "Peaks\nChecked In", systemImage: "mountain.2.fill", tint: FrogTheme.leaf)
-                    HeroMetric(value: "\(max(1, checkedMountains.count / 2))", label: "Day\nStreak", systemImage: "flame.fill", tint: FrogTheme.orange)
+                    HeroMetric(value: "\(checkInStore.distinctMountainCount)", label: "Peaks\nChecked In", systemImage: "mountain.2.fill", tint: FrogTheme.leaf)
+                    HeroMetric(value: "\(checkInStore.currentStreak)", label: "Day\nStreak", systemImage: "flame.fill", tint: FrogTheme.orange)
                     HeroMetric(value: summitPoints.formatted(), label: "Summit\nPoints", systemImage: "scope", tint: FrogTheme.leaf)
                 }
             }
