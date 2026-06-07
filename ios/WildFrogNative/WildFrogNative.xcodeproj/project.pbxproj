@@ -24,6 +24,7 @@
 		BABD5E28BE6553575EB54020 /* ProfileAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */; };
 		B540CE4DD26C65E9B3819386 /* WildFrogRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */; };
 		B5A24300016C74DBF86696E7 /* CheckInCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */; };
+		C4B3001CB3001CB3001CB301 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B3001CB3001CB3001CB300 /* CameraPicker.swift */; };
 		BF8E87849CA3D87AD857D148 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F03F5A280CF251A80908152 /* Foundation.framework */; };
 		DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6441CFCB65614B5EB60E9C /* Mountain.swift */; };
 		E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */; };
@@ -37,6 +38,7 @@
 		A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInStore.swift; sourceTree = "<group>"; };
 		A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 		0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInCameraView.swift; sourceTree = "<group>"; };
+		C4B3001CB3001CB3001CB300 /* CameraPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileAuthService.swift; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */,
+				C4B3001CB3001CB3001CB300 /* CameraPicker.swift */,
 				A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */,
 				A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */,
 				A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */,
@@ -220,6 +223,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5A24300016C74DBF86696E7 /* CheckInCameraView.swift in Sources */,
+				C4B3001CB3001CB3001CB301 /* CameraPicker.swift in Sources */,
 				A1F0E5C2D3B41A0792C5B021 /* LocationManager.swift in Sources */,
 				A1F0E5C2D3B41A0792C5B031 /* CheckInStore.swift in Sources */,
 				A1F0E5C2D3B41A0792C5B041 /* FirestoreService.swift in Sources */,

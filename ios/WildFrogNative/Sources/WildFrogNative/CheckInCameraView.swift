@@ -1,4 +1,5 @@
 import CoreLocation
+import PhotosUI
 import SwiftUI
 #if canImport(UIKit)
 import Photos
@@ -10,6 +11,14 @@ struct CheckInCameraView: View {
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var locationManager: LocationManager
+    @EnvironmentObject private var checkInStore: CheckInStore
+
+    // MARK: - Photo state
+    @State private var capturedImage: UIImage?
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var showCamera = false
+
+    // MARK: - Save state
     @State private var isSavingWatermark = false
     @State private var saveMessage: String?
 
@@ -26,6 +35,11 @@ struct CheckInCameraView: View {
               locationManager.authorizationStatus == .authorizedAlways,
               let d = distanceMetres else { return false }
         return d <= 500
+    }
+
+    /// True when all conditions for completing a check-in are met.
+    private var canCheckIn: Bool {
+        isInRange && capturedImage != nil
     }
 
     private var gpsChipTitle: String {
@@ -60,9 +74,8 @@ struct CheckInCameraView: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .bottom) {
-                MountainPhoto(mountain: mountain, dimming: 0)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .ignoresSafeArea()
+                // Background: captured photo or mountain asset
+                backgroundLayer(size: proxy.size)
 
                 LinearGradient(
                     colors: [
@@ -79,6 +92,8 @@ struct CheckInCameraView: View {
                     checkInTopBar(topInset: proxy.safeAreaInsets.top)
                     statusStrip
                     Spacer()
+                    photoActionRow
+                        .padding(.horizontal, FrogSpace.screenPadding)
                     checkInBottomSheet
                         .padding(.bottom, 98)
                 }
@@ -94,7 +109,44 @@ struct CheckInCameraView: View {
         .onDisappear {
             locationManager.stopUpdating()
         }
+        .fullScreenCover(isPresented: $showCamera) {
+            #if canImport(UIKit)
+            CameraPicker(capturedImage: $capturedImage)
+                .ignoresSafeArea()
+            #endif
+        }
+        .onChange(of: selectedPhoto) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    await MainActor.run {
+                        capturedImage = uiImage
+                    }
+                }
+            }
+        }
     }
+
+    // MARK: - Background
+
+    @ViewBuilder
+    private func backgroundLayer(size: CGSize) -> some View {
+        if let img = capturedImage {
+            Image(uiImage: img)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size.width, height: size.height)
+                .clipped()
+                .ignoresSafeArea()
+        } else {
+            MountainPhoto(mountain: mountain, dimming: 0)
+                .frame(width: size.width, height: size.height)
+                .ignoresSafeArea()
+        }
+    }
+
+    // MARK: - Top bar
 
     private func checkInTopBar(topInset: CGFloat) -> some View {
         HStack(alignment: .top) {
@@ -134,6 +186,8 @@ struct CheckInCameraView: View {
         .padding(.top, topInset + 8)
     }
 
+    // MARK: - Status strip
+
     private var statusStrip: some View {
         HStack(spacing: 10) {
             CheckInStatusChip(systemImage: gpsChipImage, title: gpsChipTitle, subtitle: nil)
@@ -142,9 +196,95 @@ struct CheckInCameraView: View {
         }
     }
 
+    // MARK: - Photo action row
+
+    private var photoActionRow: some View {
+        HStack(spacing: 12) {
+            // 即場拍照
+            Button {
+                #if canImport(UIKit)
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    showCamera = true
+                }
+                #endif
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("即場拍照")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 46)
+                .background(Color.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                )
+                .foregroundStyle(.white)
+            }
+            .buttonStyle(.plain)
+            #if canImport(UIKit)
+            .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+            .opacity(UIImagePickerController.isSourceTypeAvailable(.camera) ? 1 : 0.45)
+            #endif
+            .accessibilityHint(
+                {
+                    #if canImport(UIKit)
+                    UIImagePickerController.isSourceTypeAvailable(.camera)
+                        ? "開啟相機拍攝打卡相"
+                        : "相機喺實機先用到"
+                    #else
+                    "相機喺實機先用到"
+                    #endif
+                }()
+            )
+
+            // 上載相片
+            PhotosPicker(
+                selection: $selectedPhoto,
+                matching: .images,
+                photoLibrary: .shared()
+            ) {
+                HStack(spacing: 8) {
+                    Image(systemName: "photo.fill")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("上載相片")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 46)
+                .background(Color.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                )
+                .foregroundStyle(.white)
+            }
+        }
+    }
+
+    // MARK: - Watermark preview
+
     private var watermarkPreview: some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: mountain, dimming: 0.34)
+            if let img = capturedImage {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .clipped()
+            } else {
+                MountainPhoto(mountain: mountain, dimming: 0.34)
+                    .overlay(
+                        Text("先影相或揀相")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.82))
+                            .padding(6)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .multilineTextAlignment(.center)
+                    )
+            }
+            // Watermark overlay
             VStack(alignment: .leading, spacing: 2) {
                 Text("WILDFROG")
                     .font(.system(size: 9, weight: .black, design: .rounded))
@@ -163,6 +303,8 @@ struct CheckInCameraView: View {
                 .stroke(Color.white.opacity(0.24), lineWidth: 1)
         )
     }
+
+    // MARK: - Bottom sheet
 
     private var checkInBottomSheet: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -221,6 +363,7 @@ struct CheckInCameraView: View {
                 }
             }
 
+            // Complete check-in button — gated by in-range AND has photo
             Button {
                 saveWatermarkImage()
             } label: {
@@ -235,17 +378,18 @@ struct CheckInCameraView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 66)
                 .primaryCTAStyle(cornerRadius: 24)
-                .opacity(isInRange ? 1 : 0.4)
+                .opacity(canCheckIn ? 1 : 0.4)
             }
             .buttonStyle(.plain)
-            .disabled(isSavingWatermark || !isInRange)
+            .disabled(isSavingWatermark || !canCheckIn)
 
+            // Status hint
             HStack(spacing: 6) {
                 Image(systemName: "info.circle")
-                Text(saveMessage ?? (isInRange ? "打卡後將生成水印圖並儲存到相簿" : gpsChipTitle))
+                Text(saveMessage ?? hintText)
             }
             .font(.frogCaption.weight(.semibold))
-            .foregroundStyle(isInRange ? FrogTheme.muted : FrogTheme.orange)
+            .foregroundStyle(canCheckIn ? FrogTheme.muted : FrogTheme.orange)
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal, 24)
@@ -256,10 +400,25 @@ struct CheckInCameraView: View {
         .shadow(color: Color.black.opacity(0.16), radius: 18, y: -4)
     }
 
+    private var hintText: String {
+        if capturedImage == nil {
+            return "請先影相或揀相"
+        } else if !isInRange {
+            return gpsChipTitle
+        }
+        return "打卡後將生成水印圖並儲存到相簿"
+    }
+
+    // MARK: - Save watermark
+
     @MainActor
     private func saveWatermarkImage() {
         #if canImport(UIKit)
-        guard let image = renderWatermarkImage() else {
+        guard let capturedImage else {
+            saveMessage = "請先影相或揀相。"
+            return
+        }
+        guard let image = renderWatermarkImage(userPhoto: capturedImage) else {
             saveMessage = "未能生成水印圖，請再試一次。"
             return
         }
@@ -297,9 +456,10 @@ struct CheckInCameraView: View {
 
     #if canImport(UIKit)
     @MainActor
-    private func renderWatermarkImage() -> UIImage? {
+    private func renderWatermarkImage(userPhoto: UIImage) -> UIImage? {
+        let currentCount = checkInStore.count(for: mountain.id)
         let renderer = ImageRenderer(
-            content: CheckInWatermarkExportView(mountain: mountain)
+            content: CheckInWatermarkExportView(mountain: mountain, userPhoto: userPhoto, checkInCount: currentCount)
                 .frame(width: 1080, height: 1080)
         )
         renderer.scale = 1
@@ -332,22 +492,20 @@ struct CheckInCameraView: View {
     #endif
 }
 
-#if canImport(UIKit)
-private enum WatermarkSaveError: LocalizedError {
-    case unknown
-
-    var errorDescription: String? {
-        "未能寫入相簿。"
-    }
-}
-#endif
+// MARK: - Watermark export view (uses real user photo)
 
 private struct CheckInWatermarkExportView: View {
     let mountain: Mountain
+    let userPhoto: UIImage
+    let checkInCount: Int
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            MountainPhoto(mountain: mountain, dimming: 0.46)
+            // User's actual photo as the background
+            Image(uiImage: userPhoto)
+                .resizable()
+                .scaledToFill()
+                .clipped()
 
             LinearGradient(
                 colors: [.black.opacity(0.72), .black.opacity(0.08), .black.opacity(0.82)],
@@ -380,7 +538,7 @@ private struct CheckInWatermarkExportView: View {
                             .font(.system(size: 52, weight: .black, design: .rounded))
                             .lineLimit(2)
                             .minimumScaleFactor(0.58)
-                        Text("挑戰紀錄 · \(max(1, mountain.checkIns + 1))/100 mt.")
+                        Text("挑戰紀錄 · \(max(1, checkInCount + 1))/100 mt.")
                             .font(.system(size: 40, weight: .black, design: .rounded))
                     }
 
@@ -415,6 +573,18 @@ private struct CheckInWatermarkExportView: View {
         .clipped()
     }
 }
+
+// MARK: - Supporting views
+
+#if canImport(UIKit)
+private enum WatermarkSaveError: LocalizedError {
+    case unknown
+
+    var errorDescription: String? {
+        "未能寫入相簿。"
+    }
+}
+#endif
 
 private struct CheckInStatusChip: View {
     let systemImage: String
