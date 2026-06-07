@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftUI
 
 enum NativeRoute: Hashable {
@@ -39,6 +40,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 struct WildFrogRootView: View {
     @State private var selectedTab: AppTab = .home
+    @EnvironmentObject private var locationManager: LocationManager
 
     init() {
         #if DEBUG
@@ -60,7 +62,7 @@ struct WildFrogRootView: View {
                 case .records:
                     NavigationStack { RecordsCalendarView().withNativeRoutes() }
                 case .checkIn:
-                    NavigationStack { CheckInCameraView(mountain: MountainCatalog.mountain(id: "lion-rock")) }
+                    NavigationStack { CheckInPickerView() }
                 case .leaderboard:
                     NavigationStack { LeaderboardView().withNativeRoutes() }
                 case .profile:
@@ -153,6 +155,160 @@ private extension View {
         }
     }
 }
+
+// MARK: - CheckInPickerView
+
+struct CheckInPickerView: View {
+    @EnvironmentObject private var locationManager: LocationManager
+    @EnvironmentObject private var checkInStore: CheckInStore
+
+    /// Mountains sorted by distance (nearest first). Falls back to alphabetical when no location fix.
+    private var sortedMountains: [Mountain] {
+        MountainCatalog.mountains.sorted { a, b in
+            let da = locationManager.distance(to: a.coordinate)
+            let db = locationManager.distance(to: b.coordinate)
+            switch (da, db) {
+            case let (.some(x), .some(y)): return x < y
+            case (.some, .none): return true
+            case (.none, .some): return false
+            default: return a.nameZh < b.nameZh
+            }
+        }
+    }
+
+    private var hasLocation: Bool {
+        locationManager.authorizationStatus == .authorizedWhenInUse ||
+        locationManager.authorizationStatus == .authorizedAlways
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("選擇要打卡嘅山峰")
+                        .font(.system(size: 26, weight: .black, design: .rounded))
+                        .foregroundStyle(FrogTheme.ink)
+                    Text(hasLocation ? "按距離排列，最近優先" : "開啟定位可按距離排列")
+                        .font(.frogCaption.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                }
+                .padding(.horizontal, FrogSpace.screenPadding)
+                .padding(.top, 16)
+
+                if !hasLocation {
+                    HStack(spacing: 10) {
+                        Image(systemName: "location.slash.fill")
+                            .foregroundStyle(FrogTheme.orange)
+                        Text("允許定位後可睇到最近嘅山峰")
+                            .font(.frogCaption.weight(.semibold))
+                            .foregroundStyle(FrogTheme.muted)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(FrogTheme.mapWash, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding(.horizontal, FrogSpace.screenPadding)
+                }
+
+                LazyVStack(spacing: 10) {
+                    ForEach(sortedMountains) { mountain in
+                        NavigationLink(value: NativeRoute.checkIn(mountain.id)) {
+                            CheckInPickerRow(mountain: mountain,
+                                            distance: locationManager.distance(to: mountain.coordinate),
+                                            visitCount: checkInStore.count(for: mountain.id))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, FrogSpace.screenPadding)
+                .padding(.bottom, 110)
+            }
+        }
+        .background(FrogTheme.paper)
+        .navigationTitle("打卡")
+        .nativeInlineTitle()
+        .withNativeRoutes()
+        .onAppear {
+            locationManager.requestAuthorization()
+            locationManager.startUpdating()
+        }
+    }
+}
+
+private struct CheckInPickerRow: View {
+    let mountain: Mountain
+    let distance: CLLocationDistance?
+    let visitCount: Int
+
+    private var distanceText: String {
+        guard let d = distance else { return "—" }
+        return d < 1000 ? "\(Int(d))m" : String(format: "%.1fkm", d / 1000)
+    }
+
+    private var isVisited: Bool { visitCount > 0 }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            MountainPhoto(mountain: mountain, dimming: 0.08)
+                .frame(width: 66, height: 66)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(mountain.nameZh)
+                        .font(.system(size: 17, weight: .black, design: .rounded))
+                        .foregroundStyle(FrogTheme.ink)
+                        .lineLimit(1)
+                    if isVisited {
+                        Text("已打卡")
+                            .font(.frogMicro.weight(.black))
+                            .foregroundStyle(FrogTheme.forest)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(FrogTheme.leaf, in: Capsule())
+                    }
+                }
+                Text(mountain.nameEn)
+                    .font(.frogCaption)
+                    .foregroundStyle(FrogTheme.forest)
+                    .lineLimit(1)
+                HStack(spacing: 8) {
+                    Label("\(mountain.height)m", systemImage: "triangle.fill")
+                        .font(.frogMicro.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                    Text("·").foregroundStyle(FrogTheme.muted).font(.frogMicro)
+                    Text(mountain.region)
+                        .font(.frogMicro.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(distanceText)
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .foregroundStyle(distance == nil ? FrogTheme.muted : FrogTheme.ink)
+                if isVisited {
+                    Text("\(visitCount)次")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.moss)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(FrogTheme.muted)
+            }
+        }
+        .padding(12)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(isVisited ? FrogTheme.moss.opacity(0.35) : FrogTheme.line, lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - StatCard
 
 struct StatCard: View {
     let value: String

@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftUI
 #if canImport(UIKit)
 import Photos
@@ -8,8 +9,53 @@ struct CheckInCameraView: View {
     let mountain: Mountain
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var locationManager: LocationManager
     @State private var isSavingWatermark = false
     @State private var saveMessage: String?
+
+    // MARK: - GPS gating helpers
+
+    /// Current distance to the mountain summit in metres (nil = no fix yet).
+    private var distanceMetres: Double? {
+        locationManager.distance(to: mountain.coordinate)
+    }
+
+    /// True when the user is authorised AND within 500 m of the summit.
+    private var isInRange: Bool {
+        guard locationManager.authorizationStatus == .authorizedWhenInUse ||
+              locationManager.authorizationStatus == .authorizedAlways,
+              let d = distanceMetres else { return false }
+        return d <= 500
+    }
+
+    private var gpsChipTitle: String {
+        switch locationManager.authorizationStatus {
+        case .notDetermined, .restricted, .denied:
+            return "需要定位權限"
+        case .authorizedWhenInUse, .authorizedAlways:
+            guard let d = distanceMetres else { return "定位中…" }
+            if d <= 500 {
+                return "喺打卡範圍（\(Int(d))m）"
+            } else {
+                let km = d / 1000
+                return String(format: "距離 %.1fkm，行近啲", km)
+            }
+        @unknown default:
+            return "定位中…"
+        }
+    }
+
+    private var gpsChipImage: String {
+        switch locationManager.authorizationStatus {
+        case .notDetermined, .restricted, .denied:
+            return "location.slash.fill"
+        case .authorizedWhenInUse, .authorizedAlways:
+            guard let d = distanceMetres else { return "location.circle" }
+            return d <= 500 ? "mappin.circle.fill" : "location.circle.fill"
+        @unknown default:
+            return "location.circle"
+        }
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -41,6 +87,13 @@ struct CheckInCameraView: View {
         }
         .hiddenNavigationBar()
         .background(FrogTheme.warmPaper)
+        .onAppear {
+            locationManager.requestAuthorization()
+            locationManager.startUpdating()
+        }
+        .onDisappear {
+            locationManager.stopUpdating()
+        }
     }
 
     private func checkInTopBar(topInset: CGFloat) -> some View {
@@ -83,7 +136,7 @@ struct CheckInCameraView: View {
 
     private var statusStrip: some View {
         HStack(spacing: 10) {
-            CheckInStatusChip(systemImage: "mappin.circle.fill", title: "GPS Ready", subtitle: nil)
+            CheckInStatusChip(systemImage: gpsChipImage, title: gpsChipTitle, subtitle: nil)
             CheckInStatusChip(systemImage: "mountain.2", title: "\(mountain.height)m", subtitle: "summit")
             CheckInStatusChip(systemImage: "sun.max", title: "Weather", subtitle: "Clear")
         }
@@ -182,16 +235,17 @@ struct CheckInCameraView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 66)
                 .primaryCTAStyle(cornerRadius: 24)
+                .opacity(isInRange ? 1 : 0.4)
             }
             .buttonStyle(.plain)
-            .disabled(isSavingWatermark)
+            .disabled(isSavingWatermark || !isInRange)
 
             HStack(spacing: 6) {
                 Image(systemName: "info.circle")
-                Text(saveMessage ?? "打卡後將生成水印圖並儲存到相簿")
+                Text(saveMessage ?? (isInRange ? "打卡後將生成水印圖並儲存到相簿" : gpsChipTitle))
             }
             .font(.frogCaption.weight(.semibold))
-            .foregroundStyle(FrogTheme.muted)
+            .foregroundStyle(isInRange ? FrogTheme.muted : FrogTheme.orange)
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal, 24)

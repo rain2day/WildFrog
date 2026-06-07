@@ -4,8 +4,25 @@ import SwiftUI
 struct MountainDetailView: View {
     let mountain: Mountain
 
+    @EnvironmentObject private var locationManager: LocationManager
+
     private var hasCheckedIn: Bool {
         mountain.checkIns > 0
+    }
+
+    private var distanceCaption: String {
+        guard locationManager.authorizationStatus == .authorizedWhenInUse ||
+              locationManager.authorizationStatus == .authorizedAlways else {
+            return "開啟定位睇距離"
+        }
+        guard let d = locationManager.distance(to: mountain.coordinate) else {
+            return "定位中…"
+        }
+        if d < 1000 {
+            return "距離 \(Int(d))m"
+        } else {
+            return String(format: "距離 %.1fkm", d / 1000)
+        }
     }
 
     var body: some View {
@@ -206,9 +223,9 @@ struct MountainDetailView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             HStack {
-                Label("有效半徑 60m", systemImage: "scope")
+                Label("有效半徑 500m", systemImage: "scope")
                 Spacer()
-                Label("GPS 良好", systemImage: "location.fill")
+                Label(distanceCaption, systemImage: "location.fill")
             }
             .font(.caption.weight(.bold))
             .foregroundStyle(FrogTheme.muted)
