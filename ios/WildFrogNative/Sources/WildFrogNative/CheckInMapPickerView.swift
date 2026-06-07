@@ -165,70 +165,73 @@ private struct MapPinCard: View {
     let visitCount: Int
     let onDismiss: () -> Void
 
-    private var distanceText: String {
-        // Access via the environment not available in private struct; computed at call site.
-        // Use mountain coordinate directly is not enough — caller passes precomputed visitCount.
-        // Distance shown only when available (passed via parent state).
-        ""
-    }
-
     var body: some View {
-        HStack(spacing: 12) {
-            MountainPhoto(mountain: mountain, dimming: 0.08)
-                .frame(width: 60, height: 60)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        // The whole card is tappable — tapping anywhere opens check-in.
+        NavigationLink(value: NativeRoute.checkIn(mountain.id)) {
+            HStack(spacing: 12) {
+                MountainPhoto(mountain: mountain, dimming: 0.08)
+                    .frame(width: 60, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(mountain.nameZh)
-                        .font(.system(size: 16, weight: .black, design: .rounded))
-                        .foregroundStyle(FrogTheme.ink)
-                        .lineLimit(1)
-                    if visitCount > 0 {
-                        Label("已打卡", systemImage: "checkmark.seal.fill")
-                            .font(.frogMicro.weight(.black))
-                            .foregroundStyle(FrogTheme.moss)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(FrogTheme.leaf.opacity(0.22), in: Capsule())
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(mountain.nameZh)
+                            .font(.system(size: 16, weight: .black, design: .rounded))
+                            .foregroundStyle(FrogTheme.ink)
                             .lineLimit(1)
+                        if visitCount > 0 {
+                            Label("已打卡", systemImage: "checkmark.seal.fill")
+                                .font(.frogMicro.weight(.black))
+                                .foregroundStyle(FrogTheme.moss)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(FrogTheme.leaf.opacity(0.22), in: Capsule())
+                                .lineLimit(1)
+                        }
                     }
+                    Text(mountain.nameEn.isEmpty ? mountain.region : mountain.nameEn)
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
+                        .lineLimit(1)
+                    Label("\(mountain.height)m · \(mountain.region)", systemImage: "triangle.fill")
+                        .font(.frogMicro.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                        .lineLimit(1)
                 }
-                Text(mountain.nameEn.isEmpty ? mountain.region : mountain.nameEn)
-                    .font(.frogCaption)
-                    .foregroundStyle(FrogTheme.muted)
-                    .lineLimit(1)
-                Label("\(mountain.height)m · \(mountain.region)", systemImage: "triangle.fill")
-                    .font(.frogMicro.weight(.semibold))
-                    .foregroundStyle(FrogTheme.muted)
-                    .lineLimit(1)
-            }
 
-            Spacer(minLength: 4)
+                Spacer(minLength: 4)
 
-            VStack(spacing: 8) {
-                NavigationLink(value: NativeRoute.checkIn(mountain.id)) {
+                // Visual CTA only — the entire card is the tap target.
+                HStack(spacing: 5) {
                     Text("打卡")
                         .font(.frogCaption.weight(.bold))
-                        .primaryCTAStyle(cornerRadius: 12)
-                        .frame(width: 56, height: 34)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
                 }
-                .buttonStyle(.plain)
-
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(FrogTheme.muted)
-                        .frame(width: 28, height: 28)
-                        .background(FrogTheme.line, in: Circle())
-                }
-                .buttonStyle(.plain)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .frame(height: 38)
+                .background(FrogTheme.orange, in: Capsule())
             }
+            .padding(12)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(FrogTheme.line, lineWidth: 1))
+            .shadow(color: Color.black.opacity(0.14), radius: 16, x: 0, y: 6)
         }
-        .padding(12)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(FrogTheme.line, lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.14), radius: 16, x: 0, y: 6)
+        .buttonStyle(.plain)
+        .overlay(alignment: .topTrailing) {
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(FrogTheme.muted)
+                    .frame(width: 26, height: 26)
+                    .background(Color.white, in: Circle())
+                    .overlay(Circle().stroke(FrogTheme.line, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .offset(x: 7, y: -7)
+            .accessibilityLabel("關閉")
+        }
     }
 }
 
