@@ -38,6 +38,7 @@
 		B6001A0000000011 /* AllAchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000010 /* AllAchievementsView.swift */; };
 		B6001A0000000021 /* CertificateShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000020 /* CertificateShareSheet.swift */; };
 		B6001A0000000031 /* ProviderPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000030 /* ProviderPickerSheet.swift */; };
+		CF001A0000000041 /* CheckInMapPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF001A0000000040 /* CheckInMapPickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +68,7 @@
 		A20B579DFF0F858858406436 /* RecordsCalendarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RecordsCalendarView.swift; sourceTree = "<group>"; };
 		B8B042D4E250FA2146378FC0 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		DF6441CFCB65614B5EB60E9C /* Mountain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mountain.swift; sourceTree = "<group>"; };
+		CF001A0000000040 /* CheckInMapPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInMapPickerView.swift; sourceTree = "<group>"; };
 		B6001A0000000000 /* NotificationsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		B6001A0000000010 /* AllAchievementsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AllAchievementsView.swift; sourceTree = "<group>"; };
 		B6001A0000000020 /* CertificateShareSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CertificateShareSheet.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 				B6001A0000000010 /* AllAchievementsView.swift */,
 				B6001A0000000020 /* CertificateShareSheet.swift */,
 				B6001A0000000030 /* ProviderPickerSheet.swift */,
+				CF001A0000000040 /* CheckInMapPickerView.swift */,
 				84A431EB3110467D0BCDBA30 /* Info.plist */,
 				FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */,
 				1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */,
@@ -270,6 +273,7 @@
 				B6001A0000000011 /* AllAchievementsView.swift in Sources */,
 				B6001A0000000021 /* CertificateShareSheet.swift in Sources */,
 				B6001A0000000031 /* ProviderPickerSheet.swift in Sources */,
+				CF001A0000000041 /* CheckInMapPickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
