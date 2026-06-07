@@ -92,8 +92,8 @@ struct HomeMapListView: View {
                         heroBanner(topInset: topInset)
 
                         VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                            statsStrip
                             mapOverview(scrollProxy: proxy)
-                            progressCard
                             recommendedCard
                             featuredRail(scrollProxy: proxy)
                             searchAndFilters
@@ -116,70 +116,84 @@ struct HomeMapListView: View {
     }
 
     private func heroBanner(topInset: CGFloat) -> some View {
-        ZStack(alignment: .bottomLeading) {
+        let ratio = min(1, Double(conqueredCount) / Double(max(1, MountainCatalog.catalogCount)))
+        return ZStack(alignment: .bottomLeading) {
             MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0)
 
             LinearGradient(
                 colors: [
-                    FrogTheme.forest.opacity(0.34),
-                    FrogTheme.forest.opacity(0.06),
-                    FrogTheme.forest.opacity(0.62),
-                    FrogTheme.forest.opacity(0.95)
+                    Color.black.opacity(0.30),
+                    Color.black.opacity(0.10),
+                    Color.black.opacity(0.55),
+                    Color.black.opacity(0.94)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top) {
-                    Label("HONG KONG · 330 PEAKS", systemImage: "mountain.2.fill")
-                        .font(.frogMicro.weight(.black))
+                HStack(alignment: .center) {
+                    WildFrogBrandMark(size: 30, cornerRadius: 8)
+                    Text("WILDFROG")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .tracking(2)
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 7)
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .overlay(Capsule().stroke(Color.white.opacity(0.28), lineWidth: 1))
 
                     Spacer()
 
                     Button { showNotifications = true } label: {
-                        Image(systemName: "bell")
-                            .font(.system(size: 17, weight: .semibold))
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(.white)
-                            .frame(width: 44, height: 44)
+                            .frame(width: 42, height: 42)
                             .background(.ultraThinMaterial, in: Circle())
-                            .overlay(Circle().stroke(Color.white.opacity(0.28), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("通知")
                 }
                 .padding(.top, topInset + 8)
 
-                Spacer(minLength: 12)
+                Spacer(minLength: 18)
 
-                HStack(spacing: 12) {
-                    WildFrogBrandMark(size: 50, cornerRadius: 13)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
-                        )
+                Text("已征服香港山峰")
+                    .font(.frogEyebrow)
+                    .tracking(1.5)
+                    .foregroundStyle(.white.opacity(0.85))
 
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("WildFrog")
-                            .font(.system(size: 40, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
-                        Text("探索香港山峰，完成你的 Peak Passport")
-                            .font(.frogCaption.weight(.bold))
-                            .foregroundStyle(.white.opacity(0.88))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("\(conqueredCount)")
+                        .font(.system(size: 86, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("/ \(MountainCatalog.catalogCount)")
+                        .font(.system(size: 24, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.22))
+                        Capsule().fill(FrogTheme.orange)
+                            .frame(width: max(10, geo.size.width * ratio))
                     }
                 }
+                .frame(height: 10)
+                .padding(.top, 14)
+
+                HStack {
+                    Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
+                        .font(.frogCaption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.82))
+                    Spacer()
+                    Text("\(Int(ratio * 100))%")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(FrogTheme.orange)
+                }
+                .padding(.top, 9)
             }
             .padding(.horizontal, FrogSpace.screenPadding)
-            .padding(.bottom, 20)
+            .padding(.bottom, 22)
         }
-        .frame(height: topInset + 248)
+        .frame(height: topInset + 330)
         .clipped()
     }
 
@@ -263,45 +277,53 @@ struct HomeMapListView: View {
         .paperCardStyle()
     }
 
-    private var progressCard: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .stroke(FrogTheme.line, lineWidth: 10)
-                Circle()
-                    .trim(from: 0, to: max(0.02, Double(checkedMountains.count) / Double(max(1, MountainCatalog.catalogCount))))
-                    .stroke(FrogTheme.leaf, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
+    private var conqueredCount: Int { checkInStore.distinctMountainCount }
 
-                VStack(spacing: 0) {
-                    Text("\(checkedMountains.count)")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                    Text("/\(MountainCatalog.catalogCount)")
-                        .font(.frogCaption.weight(.semibold))
-                        .foregroundStyle(FrogTheme.muted)
-                }
-                .foregroundStyle(FrogTheme.forest)
-            }
-            .frame(width: 96, height: 96)
-
-            Divider()
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("你的山峰護照")
-                    .font(.frogEyebrow)
-                    .tracking(0.5)
-                    .foregroundStyle(FrogTheme.muted)
-                Label("\(MountainCatalog.catalogCount) 座香港山峰", systemImage: "mountain.2.fill")
-                    .font(.frogRow)
-                    .foregroundStyle(FrogTheme.forest)
-                Label("已完成 \(checkedMountains.count) 座", systemImage: "checkmark.seal.fill")
-                    .font(.frogRow)
-                    .foregroundStyle(FrogTheme.moss)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+    /// Cumulative summit elevation across distinct conquered peaks — a "Strava-style"
+    /// flex stat for the bold sporty hero.
+    private var totalAscent: Int {
+        Set(checkInStore.records.map(\.mountainId)).reduce(0) { sum, id in
+            sum + MountainCatalog.mountain(id: id).height
         }
-        .padding(18)
-        .paperCardStyle()
+    }
+
+    private var statsStrip: some View {
+        HStack(spacing: 0) {
+            heroStat(value: totalAscent.formatted(), unit: "m", label: "累計海拔")
+            heroStatDivider
+            heroStat(value: "\(totalCheckIns)", unit: "次", label: "打卡")
+            heroStatDivider
+            heroStat(value: "\(checkInStore.currentStreak)", unit: "日", label: "連續")
+        }
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity)
+        .background(FrogTheme.forest, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .shadow(color: FrogTheme.forest.opacity(0.3), radius: 20, x: 0, y: 12)
+    }
+
+    private func heroStat(value: String, unit: String, label: String) -> some View {
+        VStack(spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 30, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Text(unit)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(FrogTheme.orange)
+            }
+            Text(label)
+                .font(.frogCaption.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var heroStatDivider: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.14))
+            .frame(width: 1, height: 38)
     }
 
     private var recommendedCard: some View {

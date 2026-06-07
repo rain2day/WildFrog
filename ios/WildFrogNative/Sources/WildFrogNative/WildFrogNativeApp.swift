@@ -69,6 +69,13 @@ struct WildFrogNativeApp: App {
                 .task(id: authService.session?.uid) {
                     await checkInStore.configure(for: authService.session?.uid)
                 }
+                #if DEBUG
+                .task {
+                    if ProcessInfo.processInfo.arguments.contains("-qaDemoData") {
+                        checkInStore.seedDemoData()
+                    }
+                }
+                #endif
                 .onOpenURL { url in
                     WildFrogFirebaseBootstrap.handleOpenURL(url)
                 }

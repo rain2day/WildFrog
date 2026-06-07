@@ -54,6 +54,12 @@ final class CheckInStore: ObservableObject {
     private let defaults: UserDefaults
     private let firestoreService: FirestoreService
 
+    #if DEBUG
+    /// When demo data is seeded for screenshots, skip the real account sync so
+    /// the sample records aren't wiped by `configure(for:)`.
+    private(set) var isDemoMode = false
+    #endif
+
     private static let hongKongCalendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Asia/Hong_Kong") ?? .current
@@ -68,6 +74,9 @@ final class CheckInStore: ObservableObject {
     // MARK: - Lifecycle
 
     func configure(for uid: String?) async {
+        #if DEBUG
+        if isDemoMode { return }
+        #endif
         guard let uid else {
             records = []
             currentUserId = nil
@@ -118,6 +127,26 @@ final class CheckInStore: ObservableObject {
         records.append(record)
         saveCache(for: currentUserId)
     }
+
+    #if DEBUG
+    /// Populates in-memory sample check-ins (not persisted) so screenshots show
+    /// realistic numbers. Triggered by the `-qaDemoData` launch argument.
+    func seedDemoData() {
+        isDemoMode = true
+        currentUserId = "demo"
+        let calendar = Self.hongKongCalendar
+        let base = calendar.startOfDay(for: Date())
+        var seeded: [CheckInRecord] = []
+        for (index, mountain) in MountainCatalog.mountains.prefix(16).enumerated() {
+            let day = calendar.date(byAdding: .day, value: -index, to: base) ?? base
+            seeded.append(CheckInRecord(mountainId: mountain.id, date: day))
+        }
+        for mountain in MountainCatalog.mountains.prefix(6) {
+            seeded.append(CheckInRecord(mountainId: mountain.id, date: base))
+        }
+        records = seeded
+    }
+    #endif
 
     // MARK: - Queries
 
