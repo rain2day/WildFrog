@@ -197,12 +197,12 @@ struct HomeMapListView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             HStack {
-                Label("EXPLORE MAP", systemImage: "location.fill")
-                    .font(.frogMicro.weight(.bold))
+                Label("山峰地圖", systemImage: "map.fill")
+                    .font(.frogCaption.weight(.bold))
                     .foregroundStyle(FrogTheme.forest)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(Color.white.opacity(0.86), in: Capsule())
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.92), in: Capsule())
                 Spacer()
                 Text("\(mapMountains.count)")
                     .font(.frogMicro.weight(.bold))
@@ -221,11 +221,11 @@ struct HomeMapListView: View {
                             scrollProxy.scrollTo("directoryAnchor", anchor: .top)
                         }
                     } label: {
-                        Text("VIEW ALL PEAKS")
-                            .font(.frogMicro.weight(.bold))
+                        Text("睇晒全部山峰")
+                            .font(.frogCaption.weight(.bold))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 9)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
                             .background(Color.black.opacity(0.62), in: Capsule())
                     }
                     .buttonStyle(.plain)
@@ -287,12 +287,16 @@ struct HomeMapListView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 12) {
-                Label("\(MountainCatalog.catalogCount) Peaks", systemImage: "mountain.2.fill")
-                    .font(.frogTitle)
+                Text("你的山峰護照")
+                    .font(.frogEyebrow)
+                    .tracking(0.5)
+                    .foregroundStyle(FrogTheme.muted)
+                Label("\(MountainCatalog.catalogCount) 座香港山峰", systemImage: "mountain.2.fill")
+                    .font(.frogRow)
                     .foregroundStyle(FrogTheme.forest)
-                Label("\(checkedMountains.count) Completed", systemImage: "checkmark.circle.fill")
-                    .font(.frogTitle)
-                    .foregroundStyle(FrogTheme.forest)
+                Label("已完成 \(checkedMountains.count) 座", systemImage: "checkmark.seal.fill")
+                    .font(.frogRow)
+                    .foregroundStyle(FrogTheme.moss)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -308,9 +312,10 @@ struct HomeMapListView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("NEXT RECOMMENDED")
-                        .font(.frogMicro.weight(.bold))
-                        .foregroundStyle(FrogTheme.muted)
+                    Text("推薦下一座")
+                        .font(.frogEyebrow)
+                        .tracking(0.5)
+                        .foregroundStyle(FrogTheme.orange)
                     Text(recommendedMountain.displayName)
                         .font(.frogRow)
                         .foregroundStyle(FrogTheme.ink)
@@ -340,17 +345,17 @@ struct HomeMapListView: View {
     private func featuredRail(scrollProxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Text("NEARBY HIGHLIGHTS")
-                    .font(.frogMicro.weight(.bold))
-                    .foregroundStyle(FrogTheme.forest)
+                Text("精選推介")
+                    .font(.frogTitle)
+                    .foregroundStyle(FrogTheme.ink)
                 Spacer()
                 Button {
                     withAnimation {
                         scrollProxy.scrollTo("directoryAnchor", anchor: .top)
                     }
                 } label: {
-                    Text("SEE ALL")
-                        .font(.frogMicro.weight(.bold))
+                    Text("全部")
+                        .font(.frogCaption.weight(.bold))
                         .foregroundStyle(FrogTheme.orange)
                 }
                 .buttonStyle(.plain)

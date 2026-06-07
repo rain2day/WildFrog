@@ -18,19 +18,23 @@ enum FrogTheme {
 }
 
 extension Font {
-    static let frogDisplay: Font = .system(size: 28, weight: .black, design: .rounded)
-    static let frogTitle: Font = .system(size: 18, weight: .bold, design: .rounded)
-    static let frogRow: Font = .system(size: 16, weight: .semibold)
-    static let frogBody: Font = .system(size: 14, weight: .regular)
-    static let frogCaption: Font = .system(size: 12, weight: .medium)
-    static let frogMicro: Font = .system(size: 11, weight: .medium)
+    static let frogDisplay: Font = .system(size: 34, weight: .black, design: .rounded)
+    static let frogTitle: Font = .system(size: 22, weight: .bold, design: .rounded)
+    static let frogRow: Font = .system(size: 17, weight: .semibold)
+    static let frogBody: Font = .system(size: 15, weight: .regular)
+    static let frogCaption: Font = .system(size: 13, weight: .medium)
+    static let frogMicro: Font = .system(size: 11, weight: .semibold)
+    /// Small section label ("eyebrow"). Pair with .tracking + muted colour.
+    static let frogEyebrow: Font = .system(size: 12, weight: .bold)
 }
 
 enum FrogSpace {
-    static let screenPadding: CGFloat = 16
-    static let cardGap: CGFloat = 18
-    static let cardPadding: CGFloat = 14
-    static let rowMinHeight: CGFloat = 62
+    static let screenPadding: CGFloat = 18
+    static let cardGap: CGFloat = 22
+    static let cardPadding: CGFloat = 16
+    static let rowMinHeight: CGFloat = 64
+    /// Generous gap between distinct content sections on a page.
+    static let sectionGap: CGFloat = 30
 }
 
 struct WildFrogBrandMark: View {
@@ -52,26 +56,19 @@ extension View {
         self.background(color.ignoresSafeArea())
     }
 
-    func cardStyle() -> some View {
+    /// Borderless floating surface — depth comes from a soft shadow, not a frame.
+    func cardStyle(cornerRadius: CGFloat = 22) -> some View {
         self
             .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(FrogTheme.line, lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.07), radius: 10, x: 0, y: 4)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .shadow(color: Color.black.opacity(0.06), radius: 18, x: 0, y: 10)
     }
 
-    func paperCardStyle(cornerRadius: CGFloat = 18) -> some View {
+    func paperCardStyle(cornerRadius: CGFloat = 22) -> some View {
         self
-            .background(Color.white.opacity(0.78))
+            .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(FrogTheme.line, lineWidth: 1)
-            )
-            .shadow(color: FrogTheme.forest.opacity(0.08), radius: 12, x: 0, y: 5)
+            .shadow(color: FrogTheme.forest.opacity(0.07), radius: 20, x: 0, y: 12)
     }
 
     func darkCardStyle() -> some View {
@@ -94,23 +91,20 @@ extension View {
 
     func controlStyle() -> some View {
         self
-            .background(FrogTheme.moss.opacity(0.08))
+            .background(FrogTheme.ink.opacity(0.04))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(FrogTheme.line, lineWidth: 1)
-            )
     }
 
+    /// Pill filter chip. Selected uses ink (not orange) — orange stays reserved
+    /// for primary CTAs so the UI doesn't read as noisy.
     func chipStyle(isSelected: Bool) -> some View {
         self
-            .font(.frogCaption)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? FrogTheme.orange : Color.white.opacity(0.86))
-            .foregroundStyle(isSelected ? Color.white : FrogTheme.ink)
+            .font(.frogCaption.weight(.semibold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(isSelected ? FrogTheme.ink : FrogTheme.ink.opacity(0.05))
+            .foregroundStyle(isSelected ? Color.white : FrogTheme.muted)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(isSelected ? FrogTheme.orange : FrogTheme.line, lineWidth: 1))
     }
 
     @ViewBuilder
