@@ -41,6 +41,12 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 struct WildFrogRootView: View {
     @State private var selectedTab: AppTab = .home
+    // One navigation path per tab so the root can tell when a detail is pushed.
+    @State private var homePath = NavigationPath()
+    @State private var recordsPath = NavigationPath()
+    @State private var checkInPath = NavigationPath()
+    @State private var leaderboardPath = NavigationPath()
+    @State private var profilePath = NavigationPath()
     @EnvironmentObject private var locationManager: LocationManager
 
     init() {
@@ -54,26 +60,43 @@ struct WildFrogRootView: View {
         #endif
     }
 
+    /// The floating tab bar only belongs at the root of a tab. Drilling into
+    /// any pushed detail (check-in, mountain detail, trip, route) hides it so
+    /// the content is never covered by the bar.
+    private var isAtTabRoot: Bool {
+        switch selectedTab {
+        case .home: return homePath.isEmpty
+        case .records: return recordsPath.isEmpty
+        case .checkIn: return checkInPath.isEmpty
+        case .leaderboard: return leaderboardPath.isEmpty
+        case .profile: return profilePath.isEmpty
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
                 switch selectedTab {
                 case .home:
-                    NavigationStack { HomeMapListView().withNativeRoutes() }
+                    NavigationStack(path: $homePath) { HomeMapListView().withNativeRoutes() }
                 case .records:
-                    NavigationStack { RecordsCalendarView().withNativeRoutes() }
+                    NavigationStack(path: $recordsPath) { RecordsCalendarView().withNativeRoutes() }
                 case .checkIn:
-                    NavigationStack { CheckInPickerView() }
+                    NavigationStack(path: $checkInPath) { CheckInPickerView() }
                 case .leaderboard:
-                    NavigationStack { LeaderboardView().withNativeRoutes() }
+                    NavigationStack(path: $leaderboardPath) { LeaderboardView().withNativeRoutes() }
                 case .profile:
-                    NavigationStack { ProfileView() }
+                    NavigationStack(path: $profilePath) { ProfileView() }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            FrogTabBar(selectedTab: $selectedTab)
+            if isAtTabRoot {
+                FrogTabBar(selectedTab: $selectedTab)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(.easeInOut(duration: 0.22), value: isAtTabRoot)
         .preferredColorScheme(.light)
         .background(FrogTheme.paper.ignoresSafeArea())
     }

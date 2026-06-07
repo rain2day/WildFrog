@@ -36,7 +36,7 @@ struct MountainDetailView: View {
                 certificatePreview
             }
             .padding(FrogSpace.screenPadding)
-            .padding(.bottom, 124)
+            .padding(.bottom, 32)
         }
         .navigationTitle(mountain.nameZh)
         .nativeInlineTitle()

@@ -118,7 +118,7 @@ struct CheckInCameraView: View {
                     photoActionRow
                         .padding(.horizontal, FrogSpace.screenPadding)
                     checkInBottomSheet
-                        .padding(.bottom, 98)
+                        .padding(.bottom, 16)
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
 

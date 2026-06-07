@@ -47,7 +47,7 @@ struct TripDetailView: View {
                 certificateButton
             }
             .padding(FrogSpace.screenPadding)
-            .padding(.bottom, 110)
+            .padding(.bottom, 32)
         }
         .onAppear {
             fitCamera(to: record, mountain: mountain)

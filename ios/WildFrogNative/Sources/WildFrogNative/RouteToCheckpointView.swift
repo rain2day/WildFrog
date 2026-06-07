@@ -25,7 +25,7 @@ struct RouteToCheckpointView: View {
                 navigateButton
             }
             .padding(FrogSpace.screenPadding)
-            .padding(.bottom, 110)
+            .padding(.bottom, 32)
         }
         .navigationTitle("路線導航")
         .nativeInlineTitle()
