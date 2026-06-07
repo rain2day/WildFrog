@@ -42,4 +42,7 @@
 
 ## Status
 - ✅ Brainstorm approved（軌跡綁打卡）
-- ⬜ TC1 · TC2
+- ✅ TC1（295909f）數據 + 打卡流程整合（開始行程/直接打卡 + recording 一體）
+- ✅ TC2（8476d35）我嘅行程列表 + TripDetailView 睇返 + 移除 free-form 記錄
+- ✅ 打卡揀山 UX（4e14dfa）地圖+列表切換（pin 限 40 + 搜尋 + 分區 filter）
+- ✅ Device install + launch 成功（FyuRa）
