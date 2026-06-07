@@ -227,6 +227,14 @@ struct ProfileView: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("取消") { dismiss() }
                     }
+                    if locationManager.mockCoordinate != nil {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("關閉模擬", role: .destructive) {
+                                locationManager.mockCoordinate = nil
+                                dismiss()
+                            }
+                        }
+                    }
                 }
             }
         }
