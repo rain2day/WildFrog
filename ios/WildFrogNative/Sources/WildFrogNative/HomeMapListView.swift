@@ -34,7 +34,7 @@ struct HomeMapListView: View {
     }
 
     private var recommendedMountain: Mountain {
-        MountainCatalog.featured.first { $0.checkIns == 0 } ?? MountainCatalog.featured.first ?? MountainCatalog.mountain(id: "tai-mo-shan")
+        MountainCatalog.featured.first { !checkInStore.hasVisited(mountainId: $0.id) } ?? MountainCatalog.featured.first ?? MountainCatalog.mountain(id: "tai-mo-shan")
     }
 
     private var filteredMountains: [Mountain] {
@@ -53,9 +53,9 @@ struct HomeMapListView: View {
         case .height:
             return filtered.sorted { $0.height > $1.height }
         case .checked:
-            return filtered.filter { $0.checkIns > 0 }.sorted { $0.checkIns > $1.checkIns }
+            return filtered.filter { checkInStore.count(for: $0.id) > 0 }.sorted { checkInStore.count(for: $0.id) > checkInStore.count(for: $1.id) }
         case .open:
-            return filtered.filter { $0.checkIns == 0 }.sorted { ($0.topRank ?? 9999) < ($1.topRank ?? 9999) }
+            return filtered.filter { !checkInStore.hasVisited(mountainId: $0.id) }.sorted { ($0.topRank ?? 9999) < ($1.topRank ?? 9999) }
         }
     }
 
@@ -208,8 +208,8 @@ struct HomeMapListView: View {
         ZStack(alignment: .topLeading) {
             Map(position: $mapPosition) {
                 ForEach(mapMountains) { mountain in
-                    Marker(mountain.nameZh, systemImage: mountain.checkIns > 0 ? "checkmark.circle.fill" : "mappin", coordinate: mountain.coordinate)
-                        .tint(mountain.checkIns > 0 ? FrogTheme.orange : FrogTheme.moss)
+                    Marker(mountain.nameZh, systemImage: checkInStore.hasVisited(mountainId: mountain.id) ? "checkmark.circle.fill" : "mappin", coordinate: mountain.coordinate)
+                        .tint(checkInStore.hasVisited(mountainId: mountain.id) ? FrogTheme.orange : FrogTheme.moss)
                 }
             }
             .mapStyle(mapStyleHybrid ? .hybrid : .standard)
@@ -537,11 +537,14 @@ private struct FeaturedMountainCard: View {
 
 private struct MountainDirectoryRow: View {
     let mountain: Mountain
+    @EnvironmentObject private var checkInStore: CheckInStore
 
     private var rankLabel: String {
         if let rank = mountain.topRank { return "\(rank)" }
         return "–"
     }
+
+    private var myCheckIns: Int { checkInStore.count(for: mountain.id) }
 
     var body: some View {
         HStack(spacing: 11) {
@@ -565,8 +568,8 @@ private struct MountainDirectoryRow: View {
 
             Spacer()
 
-            if mountain.checkIns > 0 {
-                Text("\(mountain.checkIns) 次")
+            if myCheckIns > 0 {
+                Text("\(myCheckIns) 次")
                     .font(.frogMicro)
                     .foregroundStyle(FrogTheme.moss)
                     .padding(.horizontal, 9)
@@ -600,6 +603,7 @@ private struct MountainDirectoryRow: View {
 /// list pattern). Search + status filter pinned on top; rows grouped into
 /// region sections with sticky headers so a long list stays navigable.
 struct MountainDirectoryView: View {
+    @EnvironmentObject private var checkInStore: CheckInStore
     @State private var searchText = ""
     @State private var status: StatusFilter = .all
 
@@ -614,8 +618,8 @@ struct MountainDirectoryView: View {
             let matchesStatus: Bool
             switch status {
             case .all: matchesStatus = true
-            case .done: matchesStatus = mountain.checkIns > 0
-            case .open: matchesStatus = mountain.checkIns == 0
+            case .done: matchesStatus = checkInStore.hasVisited(mountainId: mountain.id)
+            case .open: matchesStatus = !checkInStore.hasVisited(mountainId: mountain.id)
             }
             let matchesSearch = query.isEmpty ||
                 mountain.nameZh.localizedCaseInsensitiveContains(query) ||

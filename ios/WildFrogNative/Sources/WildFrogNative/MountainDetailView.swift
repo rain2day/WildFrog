@@ -5,10 +5,15 @@ struct MountainDetailView: View {
     let mountain: Mountain
 
     @EnvironmentObject private var locationManager: LocationManager
+    @EnvironmentObject private var checkInStore: CheckInStore
     @Environment(\.dismiss) private var dismiss
 
+    /// The signed-in user's own live check-ins for this peak (account-bound),
+    /// NOT the static catalog seed `mountain.checkIns`.
+    private var myCheckIns: Int { checkInStore.count(for: mountain.id) }
+
     private var hasCheckedIn: Bool {
-        mountain.checkIns > 0
+        myCheckIns > 0
     }
 
     private var distanceCaption: String {
@@ -124,7 +129,7 @@ struct MountainDetailView: View {
 
                 HStack(spacing: 8) {
                     DetailStatusPill(value: "\(mountain.totalCheckIns)", label: "全站打卡")
-                    DetailStatusPill(value: mountain.checkIns > 0 ? "\(mountain.checkIns)" : "0", label: "我的紀錄")
+                    DetailStatusPill(value: "\(myCheckIns)", label: "我的紀錄")
                     DetailStatusPill(value: "\(mountain.height)m", label: "海拔")
                 }
                 .padding(.top, 18)
@@ -139,7 +144,7 @@ struct MountainDetailView: View {
     /// 3-up stat cards (css .statcards) — hairline on surface, one trail-tinted.
     private var statCards: some View {
         HStack(spacing: 10) {
-            DetailStatCard(systemImage: "checkmark.shield.fill", value: "\(mountain.checkIns)", label: "我的打卡", tint: FrogTheme.moss)
+            DetailStatCard(systemImage: "checkmark.shield.fill", value: "\(myCheckIns)", label: "我的打卡", tint: FrogTheme.moss)
             DetailStatCard(systemImage: "trophy.fill", value: mountain.rankText, label: "300峰排名", tint: FrogTheme.gold)
             DetailStatCard(systemImage: "person.2.fill", value: "\(mountain.totalCheckIns)", label: "總打卡", tint: FrogTheme.moss)
         }
@@ -186,7 +191,7 @@ struct MountainDetailView: View {
                         Text("登頂次數")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(FrogTheme.muted)
-                        Text("第 \(max(1, mountain.checkIns)) 次登頂")
+                        Text("第 \(max(1, myCheckIns)) 次登頂")
                             .font(.title3.weight(.black))
                     }
 
