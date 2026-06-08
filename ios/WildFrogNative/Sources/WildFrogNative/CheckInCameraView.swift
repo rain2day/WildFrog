@@ -158,6 +158,11 @@ struct CheckInCameraView: View {
                 capturedImage = UIImage(named: mountain.imageName)
                 showSuccess = true
             }
+            if ProcessInfo.processInfo.arguments.contains("-qaWatermark") {
+                mode = .directCheckIn
+                capturedImage = UIImage(named: mountain.imageName)
+                showEnlargedWatermark = true
+            }
             #endif
         }
         .onDisappear {
@@ -968,7 +973,6 @@ struct CheckInCameraView: View {
         let currentCount = checkInStore.distinctMountainCount
         let renderer = ImageRenderer(
             content: CheckInWatermarkExportView(mountain: mountain, userPhoto: userPhoto, checkInCount: currentCount)
-                .frame(width: 1080, height: 1080)
         )
         renderer.scale = 1
         return renderer.uiImage
@@ -1011,12 +1015,18 @@ private struct CheckInWatermarkExportView: View {
     let userPhoto: UIImage
     let checkInCount: Int
 
+    /// The watermark is always a square — the user's photo (portrait OR
+    /// landscape) is centre-cropped to fill it, so all four corner labels stay
+    /// inside the frame regardless of the source aspect ratio.
+    private let side: CGFloat = 1080
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             // User's actual photo as the background
             Image(uiImage: userPhoto)
                 .resizable()
                 .scaledToFill()
+                .frame(width: side, height: side)
                 .clipped()
 
             // Light top + bottom darkening for corner legibility only — no wash.
@@ -1087,6 +1097,7 @@ private struct CheckInWatermarkExportView: View {
             }
             .padding(48)
         }
+        .frame(width: side, height: side)
         .background(FrogTheme.ink)
         .clipped()
     }
