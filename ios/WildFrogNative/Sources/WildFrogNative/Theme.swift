@@ -63,17 +63,76 @@ enum FrogSpace {
     static let sectionGap: CGFloat = 30
 }
 
+/// Vector mountain mark from the Field Survey design
+/// (svg `M3 19 9.5 6l3.5 7 2.2-4L21 19z`). Solid, tintable, resolution-
+/// independent — replaces the raster brand asset.
+struct WildFrogMark: Shape {
+    func path(in rect: CGRect) -> Path {
+        let s = min(rect.width, rect.height) / 24
+        let ox = rect.minX + (rect.width - 24 * s) / 2
+        let oy = rect.minY + (rect.height - 24 * s) / 2
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: ox + x * s, y: oy + y * s) }
+        var path = Path()
+        path.move(to: pt(3, 19))
+        path.addLine(to: pt(9.5, 6))
+        path.addLine(to: pt(13, 13))
+        path.addLine(to: pt(15.2, 9))
+        path.addLine(to: pt(21, 19))
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// Brand chip — a solid rounded square holding the mountain mark. The simple,
+/// solid-colour logo from the design.
 struct WildFrogBrandMark: View {
     var size: CGFloat = 34
     var cornerRadius: CGFloat = 9
+    var fill: Color = FrogTheme.forest
+    var markColor: Color = .white
 
     var body: some View {
-        Image("WildFrogBrandMark")
-            .resizable()
-            .scaledToFill()
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(fill)
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                WildFrogMark()
+                    .stroke(markColor, style: StrokeStyle(lineWidth: max(1.5, size * 0.072), lineCap: .round, lineJoin: .round))
+                    .padding(size * 0.27)
+            )
             .accessibilityLabel("WildFrog")
+    }
+}
+
+/// Wordmark lockup — brand chip + "WildFrog". Defaults tuned for on-photo
+/// (translucent chip, white text) like the design hero.
+struct WildFrogWordmark: View {
+    var markSize: CGFloat = 30
+    var textColor: Color = .white
+    var onPhoto: Bool = true
+
+    var body: some View {
+        HStack(spacing: 9) {
+            RoundedRectangle(cornerRadius: markSize * 0.3, style: .continuous)
+                .fill(onPhoto ? Color.white.opacity(0.14) : FrogTheme.forest)
+                .frame(width: markSize, height: markSize)
+                .overlay(
+                    RoundedRectangle(cornerRadius: markSize * 0.3, style: .continuous)
+                        .stroke(onPhoto ? Color.white.opacity(0.28) : Color.clear, lineWidth: 1)
+                )
+                .overlay(
+                    WildFrogMark()
+                        .stroke(.white, style: StrokeStyle(lineWidth: max(1.5, markSize * 0.072), lineCap: .round, lineJoin: .round))
+                        .padding(markSize * 0.27)
+                )
+
+            Text("WildFrog")
+                .font(.system(size: markSize * 0.62, weight: .bold))
+                .tracking(0.6)
+                .foregroundStyle(textColor)
+        }
+        .accessibilityElement()
+        .accessibilityLabel("WildFrog")
     }
 }
 

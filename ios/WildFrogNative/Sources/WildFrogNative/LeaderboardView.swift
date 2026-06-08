@@ -161,12 +161,9 @@ struct LeaderboardView: View {
                 }
             }
 
-            Image("WildFrogBrandMark")
-                .resizable()
-                .scaledToFill()
+            WildFrogMark()
+                .stroke(FrogTheme.forest.opacity(0.16), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                 .frame(width: 58, height: 58)
-                .opacity(0.18)
-                .clipShape(Circle())
         }
         .padding(20)
         .background(FrogTheme.surface)

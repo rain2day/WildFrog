@@ -208,10 +208,7 @@ struct CheckInCameraView: View {
 
             Spacer()
 
-            Image("WildFrogWordmark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 218, height: 72)
+            WildFrogWordmark(markSize: 34)
                 .padding(.top, 1)
                 .accessibilityLabel("WildFrog 山系足跡")
 

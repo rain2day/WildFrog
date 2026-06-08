@@ -408,12 +408,7 @@ struct ProfileView: View {
 
     private var certificateCard: some View {
         HStack(spacing: 12) {
-            Image("WildFrogBrandMark")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 64, height: 46)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .opacity(0.82)
+            WildFrogBrandMark(size: 46, cornerRadius: 11)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Peak Explorer Certificate")

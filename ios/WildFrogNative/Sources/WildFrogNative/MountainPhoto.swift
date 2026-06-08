@@ -19,11 +19,9 @@ struct MountainPhoto: View {
                         .scaledToFill()
                         .frame(width: proxy.size.width, height: proxy.size.height)
                 } else {
-                    Image("WildFrogBrandMark")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .opacity(0.34)
+                    WildFrogMark()
+                        .stroke(Color.white.opacity(0.3), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                        .frame(width: proxy.size.width * 0.4, height: proxy.size.width * 0.4)
                 }
 
                 Color.black.opacity(dimming)

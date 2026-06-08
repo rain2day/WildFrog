@@ -5,6 +5,7 @@ enum NativeRoute: Hashable {
     case checkIn(String)
     case tripDetail(UUID)
     case routeToCheckpoint(String)
+    case allMountains
 }
 
 enum AppTab: String, CaseIterable, Identifiable {
@@ -62,6 +63,12 @@ struct WildFrogRootView: View {
            arguments.indices.contains(arguments.index(after: mIndex)) {
             var path = NavigationPath()
             path.append(NativeRoute.mountainDetail(arguments[arguments.index(after: mIndex)]))
+            _homePath = State(initialValue: path)
+            _selectedTab = State(initialValue: .home)
+        }
+        if arguments.contains("-qaDirectory") {
+            var path = NavigationPath()
+            path.append(NativeRoute.allMountains)
             _homePath = State(initialValue: path)
             _selectedTab = State(initialValue: .home)
         }
@@ -191,6 +198,8 @@ extension View {
                 TripDetailView(recordId: id)
             case .routeToCheckpoint(let id):
                 RouteToCheckpointView(mountain: MountainCatalog.mountain(id: id))
+            case .allMountains:
+                MountainDirectoryView()
             }
         }
     }

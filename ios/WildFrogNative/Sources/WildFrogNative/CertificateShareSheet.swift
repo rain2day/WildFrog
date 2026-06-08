@@ -111,11 +111,7 @@ struct CertificateCard: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 10) {
-                Image("WildFrogBrandMark")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 48, height: 48)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                WildFrogBrandMark(size: 48, cornerRadius: 11)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("WildFrog")

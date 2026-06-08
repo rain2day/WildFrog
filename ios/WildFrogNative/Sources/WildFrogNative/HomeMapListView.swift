@@ -9,7 +9,6 @@ struct HomeMapListView: View {
     @State private var sortMode = SortMode.rank
     @State private var showNotifications = false
     @State private var mapStyleHybrid = false
-    @State private var displayedCount = 40
     @State private var mapPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 22.34, longitude: 114.16),
@@ -126,10 +125,7 @@ struct HomeMapListView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
-                    Image("WildFrogWordmark")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 30)
+                    WildFrogWordmark(markSize: 30)
                         .shadow(color: Color.black.opacity(0.28), radius: 8, y: 3)
 
                     Spacer()
@@ -456,33 +452,29 @@ struct HomeMapListView: View {
             .padding(.horizontal, 2)
             .padding(.bottom, 8)
 
-            ForEach(filteredMountains.prefix(displayedCount)) { mountain in
+            ForEach(filteredMountains.prefix(8)) { mountain in
                 NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
                     MountainDirectoryRow(mountain: mountain)
                 }
                 .buttonStyle(.plain)
             }
 
-            if filteredMountains.count > displayedCount {
-                Button {
-                    displayedCount += 40
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("顯示更多")
-                            .font(.frogCaption.weight(.bold))
-                            .foregroundStyle(FrogTheme.forest)
-                        Text("(\(filteredMountains.count - displayedCount) 座)")
-                            .font(.frogMicro)
-                            .foregroundStyle(FrogTheme.muted)
-                        Image(systemName: "chevron.down")
-                            .font(.frogMicro.weight(.bold))
-                            .foregroundStyle(FrogTheme.moss)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+            NavigationLink(value: NativeRoute.allMountains) {
+                HStack(spacing: 6) {
+                    Text("睇晒全部 \(MountainCatalog.catalogCount) 座")
+                        .font(.frogCaption.weight(.bold))
+                        .foregroundStyle(FrogTheme.forest)
+                    Image(systemName: "arrow.right")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.moss)
                 }
-                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 15)
+                .overlay(alignment: .top) {
+                    Rectangle().fill(FrogTheme.lineSoft).frame(height: 1)
+                }
             }
+            .buttonStyle(.plain)
         }
     }
 }
@@ -606,5 +598,113 @@ private struct MountainDirectoryRow: View {
                 .fill(FrogTheme.lineSoft)
                 .frame(height: 1)
         }
+    }
+}
+
+/// Full 330-peak directory — the "see all" destination (Preview → full-screen
+/// list pattern). Search + status filter pinned on top; rows grouped into
+/// region sections with sticky headers so a long list stays navigable.
+struct MountainDirectoryView: View {
+    @State private var searchText = ""
+    @State private var status: StatusFilter = .all
+
+    private enum StatusFilter: String, CaseIterable, Identifiable {
+        case all = "全部", done = "已打卡", open = "未打卡"
+        var id: String { rawValue }
+    }
+
+    private var filtered: [Mountain] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return MountainCatalog.mountains.filter { mountain in
+            let matchesStatus: Bool
+            switch status {
+            case .all: matchesStatus = true
+            case .done: matchesStatus = mountain.checkIns > 0
+            case .open: matchesStatus = mountain.checkIns == 0
+            }
+            let matchesSearch = query.isEmpty ||
+                mountain.nameZh.localizedCaseInsensitiveContains(query) ||
+                mountain.nameEn.localizedCaseInsensitiveContains(query)
+            return matchesStatus && matchesSearch
+        }
+    }
+
+    private var grouped: [(region: String, peaks: [Mountain])] {
+        Dictionary(grouping: filtered, by: { $0.region })
+            .map { (region: $0.key, peaks: $0.value.sorted { ($0.topRank ?? 9999) < ($1.topRank ?? 9999) }) }
+            .sorted { $0.peaks.count > $1.peaks.count }
+    }
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                ForEach(grouped, id: \.region) { group in
+                    Section {
+                        ForEach(group.peaks) { mountain in
+                            NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
+                                MountainDirectoryRow(mountain: mountain)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    } header: {
+                        HStack {
+                            Text(group.region)
+                                .font(.frogEyebrow)
+                                .tracking(1.2)
+                                .textCase(.uppercase)
+                                .foregroundStyle(FrogTheme.moss)
+                            Spacer()
+                            Text("\(group.peaks.count)")
+                                .font(.frogNum(12, weight: .semibold))
+                                .foregroundStyle(FrogTheme.faint)
+                        }
+                        .padding(.horizontal, 2)
+                        .padding(.vertical, 9)
+                        .background(FrogTheme.warmPaper)
+                    }
+                }
+
+                if filtered.isEmpty {
+                    Text("搵唔到符合嘅山峰")
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                }
+            }
+            .padding(.horizontal, FrogSpace.screenPadding)
+            .padding(.bottom, 40)
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(spacing: 10) {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(FrogTheme.faint)
+                    TextField("搜尋 \(MountainCatalog.catalogCount) 座山峰", text: $searchText)
+                        .autocorrectionDisabled()
+                }
+                .padding(.horizontal, 14)
+                .frame(height: 46)
+                .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(FrogTheme.line, lineWidth: 1))
+
+                HStack(spacing: 8) {
+                    ForEach(StatusFilter.allCases) { option in
+                        Button { status = option } label: {
+                            Text(option.rawValue).chipStyle(isSelected: status == option)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Spacer()
+                }
+            }
+            .padding(.horizontal, FrogSpace.screenPadding)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
+            .background(FrogTheme.warmPaper)
+        }
+        .navigationTitle("山峰列表")
+        .nativeInlineTitle()
+        .background(FrogTheme.warmPaper)
     }
 }
