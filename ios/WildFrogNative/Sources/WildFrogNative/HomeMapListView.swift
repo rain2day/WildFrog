@@ -456,7 +456,8 @@ struct HomeMapListView: View {
                 }
                 .frame(maxWidth: 210)
             }
-            .padding(12)
+            .padding(.horizontal, 2)
+            .padding(.bottom, 8)
 
             ForEach(filteredMountains.prefix(displayedCount)) { mountain in
                 NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
@@ -486,7 +487,6 @@ struct HomeMapListView: View {
                 .buttonStyle(.plain)
             }
         }
-        .cardStyle()
     }
 }
 
@@ -581,14 +581,13 @@ private struct MountainDirectoryRow: View {
                 .font(.caption.weight(.medium))
                 .foregroundStyle(FrogTheme.muted)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 2)
+        .padding(.vertical, 11)
         .frame(minHeight: FrogSpace.rowMinHeight)
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(FrogTheme.line)
+                .fill(FrogTheme.lineSoft)
                 .frame(height: 1)
-                .padding(.leading, 70)
         }
     }
 }
