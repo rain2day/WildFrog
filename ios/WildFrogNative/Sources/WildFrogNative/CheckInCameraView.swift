@@ -138,7 +138,7 @@ struct CheckInCameraView: View {
                 }
 
                 if mode == .choosing {
-                    modeChooserOverlay(topInset: proxy.safeAreaInsets.top)
+                    modeChooserOverlay(bottomInset: proxy.safeAreaInsets.bottom)
                 }
 
                 if showSuccess {
@@ -249,12 +249,11 @@ struct CheckInCameraView: View {
 
     // MARK: - Mode chooser (開始行程 vs 直接打卡)
 
-    private func modeChooserOverlay(topInset: CGFloat) -> some View {
-        GeometryReader { proxy in
-            ZStack {
-                Color.black.opacity(0.45)
-                    .ignoresSafeArea()
-                    .onTapGesture { dismiss() } // Tap backdrop to back out of the picker.
+    private func modeChooserOverlay(bottomInset: CGFloat) -> some View {
+        ZStack {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+                .onTapGesture { dismiss() } // Tap backdrop to back out of the picker.
 
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
@@ -311,9 +310,9 @@ struct CheckInCameraView: View {
                     .shadow(color: Color.black.opacity(0.28), radius: 24, y: -8)
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
-                .padding(.bottom, proxy.safeAreaInsets.bottom + 16)
+                .padding(.bottom, max(bottomInset, 12) + 16)
             }
-        }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func modeOptionLabel(
