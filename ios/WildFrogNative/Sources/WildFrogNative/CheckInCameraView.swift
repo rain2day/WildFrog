@@ -138,7 +138,7 @@ struct CheckInCameraView: View {
                 }
 
                 if mode == .choosing {
-                    modeChooserOverlay(bottomInset: proxy.safeAreaInsets.bottom)
+                    modeChooserOverlay(bottomInset: proxy.safeAreaInsets.bottom, screenHeight: proxy.size.height)
                 }
 
             }
@@ -259,7 +259,7 @@ struct CheckInCameraView: View {
 
     // MARK: - Mode chooser (開始行程 vs 直接打卡)
 
-    private func modeChooserOverlay(bottomInset: CGFloat) -> some View {
+    private func modeChooserOverlay(bottomInset: CGFloat, screenHeight: CGFloat) -> some View {
         ZStack {
             Color.black.opacity(0.45)
                 .ignoresSafeArea()
@@ -320,7 +320,9 @@ struct CheckInCameraView: View {
                     .shadow(color: Color.black.opacity(0.28), radius: 24, y: -8)
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
-                .padding(.bottom, max(bottomInset, 12) + 16)
+                // Comfortable bottom-sheet clearance — sits in the lower half,
+                // not jammed against the home indicator. Scales with screen size.
+                .padding(.bottom, max(bottomInset + 16, screenHeight * 0.16))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
