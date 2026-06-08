@@ -1,24 +1,28 @@
-# WildFrog Demo
+# WildFrog Native iOS
 
-WildFrog is a mobile-first mountain check-in demo focused on hiking records, GPS-gated check-ins, photo proof, and per-mountain leaderboards.
+WildFrog is now a native SwiftUI iOS app. Current development should start from:
 
-Open the demo from GitHub Pages or run it locally by serving the `prototype/` folder.
+- `ios/WildFrogNative/`
+- `ios/WildFrogNative/Sources/WildFrogNative/`
+- `ios/WildFrogNative/WildFrogNative.xcodeproj`
 
-## Demo Scope
+## Important
 
-- Mountain list and detail screens.
-- GPS check-in state.
-- Location-gated `Take photo` / `Upload photo` proof.
-- Branded stamped-photo preview with mountain name, height, region, and check-in count.
-- Total leaderboard and personal rank.
-- Traditional Chinese default UI with an English toggle.
+Do not use the old static web prototype for UI redesign or feature work.
 
-This is a static web prototype. No iOS native project, backend, real GPS, camera picker, upload service, Supabase project, or server-side stamping is connected yet.
+The legacy web preview draft has been archived at:
 
-## Local Preview
-
-```bash
-python3 -m http.server 4173 --directory prototype
+```text
+archive/web-preview-draft-20260608/
 ```
 
-Then open `http://localhost:4173/`.
+It is retained only for historical reference. New work should target the native iOS app on branch `wildfrog-recovery-20260607`.
+
+## Build
+
+```bash
+xcodebuild -project ios/WildFrogNative/WildFrogNative.xcodeproj \
+  -scheme WildFrogNative \
+  -destination 'generic/platform=iOS Simulator' \
+  build
+```

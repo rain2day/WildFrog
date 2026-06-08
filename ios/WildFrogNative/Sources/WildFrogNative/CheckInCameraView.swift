@@ -24,10 +24,10 @@ struct CheckInCameraView: View {
     @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var checkInStore: CheckInStore
+    @EnvironmentObject private var recorder: TrackRecorder
 
     // MARK: - Flow state
     @State private var mode: CheckInMode = .choosing
-    @StateObject private var recorder = TrackRecorder()
     @State private var trackCameraPosition: MapCameraPosition = .userLocation(
         fallback: .automatic
     )
@@ -39,6 +39,7 @@ struct CheckInCameraView: View {
 
     // MARK: - Save state
     @State private var isSavingWatermark = false
+    @State private var didCompleteCheckIn = false
     @State private var saveMessage: String?
     @State private var showSignInAlert = false
 
@@ -69,10 +70,13 @@ struct CheckInCameraView: View {
         case .authorizedWhenInUse, .authorizedAlways:
             guard let d = distanceMetres else { return "定位中…" }
             if d <= 500 {
-                return "喺打卡範圍（\(Int(d))m）"
+                return "\(Int(d))m"
             } else {
                 let km = d / 1000
-                return String(format: "距離 %.1fkm，行近啲", km)
+                if km > 99 {
+                    return ">99km"
+                }
+                return String(format: "%.1fkm", km)
             }
         @unknown default:
             return "定位中…"
@@ -93,7 +97,7 @@ struct CheckInCameraView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ZStack(alignment: .bottom) {
+            ZStack {
                 // Background: captured photo or mountain asset
                 backgroundLayer(size: proxy.size)
 
@@ -108,36 +112,45 @@ struct CheckInCameraView: View {
                 )
                 .ignoresSafeArea()
 
-                VStack(spacing: 18) {
-                    checkInTopBar(topInset: proxy.safeAreaInsets.top)
+                VStack(spacing: 12) {
+                    checkInTopBar
                     statusStrip
                     if mode == .recording {
                         recordingBanner
                     }
-                    Spacer()
-                    photoActionRow
-                        .padding(.horizontal, FrogSpace.screenPadding)
-                    checkInBottomSheet
-                        .padding(.bottom, 16)
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
+                .padding(.top, proxy.safeAreaInsets.top + 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                if mode != .choosing {
+                    VStack(spacing: 14) {
+                        photoActionRow
+                        checkInBottomSheet
+                    }
+                    .padding(.horizontal, FrogSpace.screenPadding)
+                    .padding(.bottom, max(proxy.safeAreaInsets.bottom, 12) + 92)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
 
                 if mode == .choosing {
                     modeChooserOverlay(topInset: proxy.safeAreaInsets.top)
                 }
             }
+            .ignoresSafeArea()
         }
         .hiddenNavigationBar()
         .background(FrogTheme.warmPaper)
         .onAppear {
             locationManager.requestAuthorization()
             locationManager.startUpdating()
+            if recorder.isRecording {
+                mode = .recording
+            }
         }
         .onDisappear {
             locationManager.stopUpdating()
-            if recorder.isRecording {
-                recorder.stop()
-            }
         }
         .fullScreenCover(isPresented: $showCamera) {
             #if canImport(UIKit)
@@ -166,19 +179,19 @@ struct CheckInCameraView: View {
             Image(uiImage: img)
                 .resizable()
                 .scaledToFill()
-                .frame(width: size.width, height: size.height)
+                .frame(width: size.width, height: size.height + 180)
                 .clipped()
                 .ignoresSafeArea()
         } else {
             MountainPhoto(mountain: mountain, dimming: 0)
-                .frame(width: size.width, height: size.height)
+                .frame(width: size.width, height: size.height + 180)
                 .ignoresSafeArea()
         }
     }
 
     // MARK: - Top bar
 
-    private func checkInTopBar(topInset: CGFloat) -> some View {
+    private var checkInTopBar: some View {
         HStack(alignment: .top) {
             Button {
                 dismiss()
@@ -207,7 +220,6 @@ struct CheckInCameraView: View {
             Color.clear
                 .frame(width: 54, height: 54)
         }
-        .padding(.top, topInset + 8)
     }
 
     // MARK: - Status strip
@@ -223,59 +235,72 @@ struct CheckInCameraView: View {
     // MARK: - Mode chooser (開始行程 vs 直接打卡)
 
     private func modeChooserOverlay(topInset: CGFloat) -> some View {
-        ZStack(alignment: .bottom) {
-            Color.black.opacity(0.45)
-                .ignoresSafeArea()
-                .onTapGesture { dismiss() } // Tap backdrop to back out of the picker.
+        GeometryReader { proxy in
+            ZStack {
+                Color.black.opacity(0.45)
+                    .ignoresSafeArea()
+                    .onTapGesture { dismiss() } // Tap backdrop to back out of the picker.
 
-            VStack(alignment: .leading, spacing: 16) {
-                Capsule()
-                    .fill(FrogTheme.line)
-                    .frame(width: 46, height: 5)
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Capsule()
+                            .fill(FrogTheme.line)
+                            .frame(width: 46, height: 5)
+                            .frame(maxWidth: .infinity)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(mountain.nameZh)
+                                .font(.system(size: 25, weight: .black, design: .rounded))
+                                .foregroundStyle(FrogTheme.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                            Text("點樣打卡呢座山？")
+                                .font(.frogCaption.weight(.semibold))
+                                .foregroundStyle(FrogTheme.muted)
+                        }
+
+                        Button {
+                            startRecordingMode()
+                        } label: {
+                            modeOptionLabel(
+                                systemImage: "figure.hiking",
+                                title: "開始行程（記軌跡）",
+                                subtitle: "沿途記錄路線、距離、時間、爬升，到山頂打卡綁埋",
+                                background: FrogTheme.orange,
+                                foreground: .white
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            mode = .directCheckIn
+                        } label: {
+                            modeOptionLabel(
+                                systemImage: "bolt.fill",
+                                title: "直接打卡",
+                                subtitle: "已喺山頂／唔記全程，直接影相打卡",
+                                background: Color.white,
+                                foreground: FrogTheme.ink
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 12)
+                    .padding(.bottom, 18)
                     .frame(maxWidth: .infinity)
+                    .background(FrogTheme.warmPaper)
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.2), radius: 20, y: 10)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(mountain.nameZh)
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(FrogTheme.ink)
-                    Text("點樣打卡呢座山？")
-                        .font(.frogCaption.weight(.semibold))
-                        .foregroundStyle(FrogTheme.muted)
+                    Spacer(minLength: 0)
                 }
-
-                Button {
-                    startRecordingMode()
-                } label: {
-                    modeOptionLabel(
-                        systemImage: "figure.hiking",
-                        title: "開始行程（記軌跡）",
-                        subtitle: "沿途記錄路線、距離、時間、爬升，到山頂打卡綁埋",
-                        background: FrogTheme.orange,
-                        foreground: .white
-                    )
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    mode = .directCheckIn
-                } label: {
-                    modeOptionLabel(
-                        systemImage: "bolt.fill",
-                        title: "直接打卡",
-                        subtitle: "已喺山頂／唔記全程，直接影相打卡",
-                        background: Color.white,
-                        foreground: FrogTheme.ink
-                    )
-                }
-                .buttonStyle(.plain)
+                .padding(.horizontal, FrogSpace.screenPadding)
+                .padding(.top, proxy.safeAreaInsets.top + 120)
+                .padding(.bottom, proxy.safeAreaInsets.bottom + 120)
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 14)
-            .padding(.bottom, 40)
-            .frame(maxWidth: .infinity)
-            .background(FrogTheme.warmPaper)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .shadow(color: Color.black.opacity(0.2), radius: 20, y: -6)
         }
     }
 
@@ -286,28 +311,30 @@ struct CheckInCameraView: View {
         background: Color,
         foreground: Color
     ) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             Image(systemName: systemImage)
-                .font(.system(size: 22, weight: .black))
+                .font(.system(size: 21, weight: .black))
                 .foregroundStyle(foreground)
-                .frame(width: 30)
+                .frame(width: 28)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .font(.system(size: 16, weight: .black, design: .rounded))
                     .foregroundStyle(foreground)
                 Text(subtitle)
                     .font(.frogCaption.weight(.semibold))
                     .foregroundStyle(foreground.opacity(0.78))
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
         }
-        .padding(16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(FrogTheme.line, lineWidth: background == Color.white ? 1 : 0)
         )
     }
@@ -345,6 +372,18 @@ struct CheckInCameraView: View {
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
+                Spacer(minLength: 0)
+                Button {
+                    stopRecordingMode()
+                } label: {
+                    Label("STOP", systemImage: "stop.fill")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(FrogTheme.ink, in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(14)
@@ -378,6 +417,11 @@ struct CheckInCameraView: View {
     private func startRecordingMode() {
         mode = .recording
         recorder.start()
+    }
+
+    private func stopRecordingMode() {
+        _ = recorder.stop()
+        mode = .directCheckIn
     }
 
     // MARK: - Photo action row
@@ -468,24 +512,38 @@ struct CheckInCameraView: View {
                             .multilineTextAlignment(.center)
                     )
             }
-            // Watermark overlay
-            VStack(alignment: .leading, spacing: 2) {
-                Text("WILDFROG")
-                    .font(.system(size: 9, weight: .black, design: .rounded))
-                Text("\(mountain.nameZh) · \(mountain.height)m")
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
-            .foregroundStyle(.white)
-            .padding(8)
+
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.64)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+
+            previewWatermarkBadge
+                .padding(8)
         }
-        .frame(width: 154, height: 102)
+        .frame(width: 132, height: 92)
         .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .stroke(Color.white.opacity(0.24), lineWidth: 1)
         )
+    }
+
+    private var previewWatermarkBadge: some View {
+        HStack(spacing: 5) {
+            WildFrogBrandMark(size: 18, cornerRadius: 5)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("WILDFROG")
+                    .font(.system(size: 8, weight: .black, design: .rounded))
+                Text("\(mountain.nameZh) · \(mountain.height)m")
+                    .font(.system(size: 7, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+            }
+        }
+        .foregroundStyle(.white)
+        .shadow(color: .black.opacity(0.55), radius: 4)
     }
 
     // MARK: - Bottom sheet
@@ -497,38 +555,27 @@ struct CheckInCameraView: View {
                 .frame(width: 46, height: 5)
                 .frame(maxWidth: .infinity)
 
-            HStack(alignment: .top, spacing: 18) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        Text(mountain.nameZh)
-                            .font(.system(size: 36, weight: .black, design: .rounded))
-                            .foregroundStyle(FrogTheme.ink)
-                            .lineLimit(1)
-                        Image(systemName: "mountain.2.circle")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundStyle(FrogTheme.slate)
-                    }
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(mountain.nameZh)
+                        .font(.system(size: 30, weight: .black, design: .rounded))
+                        .foregroundStyle(FrogTheme.ink)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.62)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Text(mountain.nameEn)
-                        .font(.frogTitle)
+                        .font(.system(size: 22, weight: .black, design: .rounded))
                         .foregroundStyle(FrogTheme.forest)
                         .lineLimit(1)
-                    Text("\(mountain.height)m")
-                        .font(.frogTitle)
-                        .foregroundStyle(FrogTheme.forest)
+                        .minimumScaleFactor(0.7)
 
                     HStack(spacing: 8) {
-                        CheckInConfidencePill(systemImage: "checkmark.shield.fill", text: "位置吻合")
-                        Text("·")
-                            .foregroundStyle(FrogTheme.muted)
-                        Text("信心度")
-                            .font(.frogCaption.weight(.semibold))
-                            .foregroundStyle(FrogTheme.muted)
-                        Text("高")
+                        Label("\(mountain.height)m", systemImage: "mountain.2.fill")
                             .font(.frogCaption.weight(.black))
-                            .foregroundStyle(FrogTheme.moss)
+                            .foregroundStyle(FrogTheme.forest)
+                        CheckInConfidencePill(systemImage: "checkmark.shield.fill", text: "吻合")
                     }
-                    .padding(.top, 6)
 
                     Text("根據 GPS、海拔及方向核對")
                         .font(.frogCaption.weight(.semibold))
@@ -536,15 +583,15 @@ struct CheckInCameraView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                Spacer()
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Watermark Preview")
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("水印預覽")
                         .font(.frogCaption.weight(.black))
                         .foregroundStyle(FrogTheme.forest)
                     watermarkPreview
                 }
+                .frame(width: 132, alignment: .leading)
             }
 
             // Complete check-in button — gated by signed-in AND in-range AND has photo
@@ -569,7 +616,7 @@ struct CheckInCameraView: View {
                 .opacity(canCheckIn ? 1 : 0.4)
             }
             .buttonStyle(.plain)
-            .disabled(isSavingWatermark || (!canCheckIn && authService.isSignedIn))
+            .disabled(isSavingWatermark || didCompleteCheckIn || (!canCheckIn && authService.isSignedIn))
             .alert("請先登入", isPresented: $showSignInAlert) {
                 Button("好", role: .cancel) {}
             } message: {
@@ -585,7 +632,7 @@ struct CheckInCameraView: View {
             .foregroundStyle(canCheckIn ? FrogTheme.muted : FrogTheme.orange)
             .frame(maxWidth: .infinity, alignment: .center)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 20)
         .padding(.top, 10)
         .padding(.bottom, 18)
         .background(FrogTheme.warmPaper.opacity(0.96))
@@ -622,7 +669,10 @@ struct CheckInCameraView: View {
             return
         }
 
+        guard !didCompleteCheckIn else { return }
+
         isSavingWatermark = true
+        didCompleteCheckIn = true
         saveMessage = nil
 
         // Finalise the recorded hike (if any) before persisting so the track
@@ -636,7 +686,12 @@ struct CheckInCameraView: View {
             let filename = await savePhotoToDocuments(capturedImage)
 
             // 2. Write to local CheckInStore (account-bound), binding the track
-            checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
+            await MainActor.run {
+                checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
+                isSavingWatermark = false
+                saveMessage = "打卡成功！"
+                dismiss()
+            }
 
             // 3. Best-effort Firestore write — failure does not block local success
             Task {
@@ -650,25 +705,10 @@ struct CheckInCameraView: View {
             // 4. Save watermark image to photo library
             let status = await requestPhotoAddPermission()
             guard status == .authorized || status == .limited else {
-                await MainActor.run {
-                    isSavingWatermark = false
-                    saveMessage = "未獲相簿儲存權限。"
-                }
                 return
             }
 
-            do {
-                try await saveToPhotoLibrary(watermarkImage)
-                await MainActor.run {
-                    isSavingWatermark = false
-                    saveMessage = "打卡成功！水印圖已儲存到相簿。"
-                }
-            } catch {
-                await MainActor.run {
-                    isSavingWatermark = false
-                    saveMessage = "打卡已記錄，但儲存相簿失敗：\(error.localizedDescription)"
-                }
-            }
+            try? await saveToPhotoLibrary(watermarkImage)
         }
         #else
         saveMessage = "此平台暫不支援儲存到相簿。"
@@ -758,11 +798,20 @@ private struct CheckInWatermarkExportView: View {
                 endPoint: .bottom
             )
 
+            Text("WILDFROG")
+                .font(.system(size: 138, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.14))
+                .rotationEffect(.degrees(-18))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Label("WildFrog", systemImage: "mountain.2.fill")
-                            .font(.system(size: 72, weight: .black, design: .rounded))
+                        HStack(spacing: 18) {
+                            WildFrogBrandMark(size: 92, cornerRadius: 24)
+                            Text("WildFrog")
+                                .font(.system(size: 72, weight: .black, design: .rounded))
+                        }
                         Text("HONG KONG MOUNTAINEER")
                             .font(.system(size: 28, weight: .black, design: .rounded))
                     }

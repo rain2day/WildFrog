@@ -1,0 +1,4340 @@
+{
+  "count": 330,
+  "method": "auto-detected projection bands plus largest connected component centered crops",
+  "sheets": [
+    {
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "columns": 8,
+      "rows": 6,
+      "candidates": 48
+    },
+    {
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "columns": 8,
+      "rows": 6,
+      "candidates": 48
+    },
+    {
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "columns": 8,
+      "rows": 6,
+      "candidates": 48
+    },
+    {
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "columns": 8,
+      "rows": 6,
+      "candidates": 48
+    },
+    {
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "columns": 8,
+      "rows": 6,
+      "candidates": 48
+    },
+    {
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "columns": 9,
+      "rows": 6,
+      "candidates": 54
+    },
+    {
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "columns": 8,
+      "rows": 6,
+      "candidates": 48
+    }
+  ],
+  "items": [
+    {
+      "index": 1,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        34,
+        23,
+        206,
+        196
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-001.png"
+    },
+    {
+      "index": 2,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        216,
+        20,
+        383,
+        199
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-002.png"
+    },
+    {
+      "index": 3,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        397,
+        22,
+        568,
+        196
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-003.png"
+    },
+    {
+      "index": 4,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 4,
+      "bbox": [
+        576,
+        18,
+        752,
+        201
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-004.png"
+    },
+    {
+      "index": 5,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 5,
+      "bbox": [
+        760,
+        23,
+        932,
+        197
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-005.png"
+    },
+    {
+      "index": 6,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 6,
+      "bbox": [
+        937,
+        20,
+        1119,
+        199
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-006.png"
+    },
+    {
+      "index": 7,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 7,
+      "bbox": [
+        1131,
+        20,
+        1286,
+        199
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-007.png"
+    },
+    {
+      "index": 8,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 1,
+      "column": 8,
+      "bbox": [
+        1300,
+        18,
+        1478,
+        201
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-008.png"
+    },
+    {
+      "index": 9,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        27,
+        196,
+        202,
+        375
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-009.png"
+    },
+    {
+      "index": 10,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        209,
+        195,
+        390,
+        379
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-010.png"
+    },
+    {
+      "index": 11,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        405,
+        194,
+        561,
+        379
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-011.png"
+    },
+    {
+      "index": 12,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 4,
+      "bbox": [
+        576,
+        194,
+        751,
+        377
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-012.png"
+    },
+    {
+      "index": 13,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 5,
+      "bbox": [
+        756,
+        196,
+        932,
+        375
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-013.png"
+    },
+    {
+      "index": 14,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 6,
+      "bbox": [
+        938,
+        196,
+        1117,
+        376
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-014.png"
+    },
+    {
+      "index": 15,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 7,
+      "bbox": [
+        1129,
+        192,
+        1288,
+        379
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-015.png"
+    },
+    {
+      "index": 16,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 2,
+      "column": 8,
+      "bbox": [
+        1303,
+        196,
+        1478,
+        378
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-016.png"
+    },
+    {
+      "index": 17,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        26,
+        372,
+        201,
+        553
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-017.png"
+    },
+    {
+      "index": 18,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        211,
+        373,
+        387,
+        553
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-018.png"
+    },
+    {
+      "index": 19,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        393,
+        370,
+        572,
+        556
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-019.png"
+    },
+    {
+      "index": 20,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 4,
+      "bbox": [
+        577,
+        371,
+        750,
+        554
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-020.png"
+    },
+    {
+      "index": 21,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 5,
+      "bbox": [
+        756,
+        374,
+        930,
+        553
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-021.png"
+    },
+    {
+      "index": 22,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 6,
+      "bbox": [
+        940,
+        372,
+        1113,
+        554
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-022.png"
+    },
+    {
+      "index": 23,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 7,
+      "bbox": [
+        1123,
+        372,
+        1293,
+        556
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-023.png"
+    },
+    {
+      "index": 24,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 3,
+      "column": 8,
+      "bbox": [
+        1301,
+        372,
+        1479,
+        556
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-024.png"
+    },
+    {
+      "index": 25,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 1,
+      "bbox": [
+        38,
+        547,
+        192,
+        730
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-025.png"
+    },
+    {
+      "index": 26,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 2,
+      "bbox": [
+        211,
+        548,
+        386,
+        728
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-026.png"
+    },
+    {
+      "index": 27,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 3,
+      "bbox": [
+        396,
+        547,
+        570,
+        731
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-027.png"
+    },
+    {
+      "index": 28,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 4,
+      "bbox": [
+        580,
+        547,
+        748,
+        731
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-028.png"
+    },
+    {
+      "index": 29,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 5,
+      "bbox": [
+        756,
+        550,
+        930,
+        729
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-029.png"
+    },
+    {
+      "index": 30,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 6,
+      "bbox": [
+        938,
+        548,
+        1116,
+        730
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-030.png"
+    },
+    {
+      "index": 31,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 7,
+      "bbox": [
+        1122,
+        547,
+        1294,
+        731
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-031.png"
+    },
+    {
+      "index": 32,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 4,
+      "column": 8,
+      "bbox": [
+        1302,
+        550,
+        1477,
+        730
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-032.png"
+    },
+    {
+      "index": 33,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 1,
+      "bbox": [
+        28,
+        725,
+        202,
+        900
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-033.png"
+    },
+    {
+      "index": 34,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 2,
+      "bbox": [
+        214,
+        721,
+        383,
+        903
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-034.png"
+    },
+    {
+      "index": 35,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 3,
+      "bbox": [
+        394,
+        724,
+        565,
+        902
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-035.png"
+    },
+    {
+      "index": 36,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 4,
+      "bbox": [
+        576,
+        724,
+        750,
+        901
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-036.png"
+    },
+    {
+      "index": 37,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 5,
+      "bbox": [
+        766,
+        723,
+        922,
+        904
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-037.png"
+    },
+    {
+      "index": 38,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 6,
+      "bbox": [
+        938,
+        722,
+        1115,
+        903
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-038.png"
+    },
+    {
+      "index": 39,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 7,
+      "bbox": [
+        1131,
+        724,
+        1286,
+        905
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-039.png"
+    },
+    {
+      "index": 40,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 5,
+      "column": 8,
+      "bbox": [
+        1304,
+        725,
+        1475,
+        905
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-040.png"
+    },
+    {
+      "index": 41,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 1,
+      "bbox": [
+        29,
+        891,
+        197,
+        1020
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-041.png"
+    },
+    {
+      "index": 42,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 2,
+      "bbox": [
+        217,
+        892,
+        381,
+        1022
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-042.png"
+    },
+    {
+      "index": 43,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 3,
+      "bbox": [
+        400,
+        892,
+        559,
+        1023
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-043.png"
+    },
+    {
+      "index": 44,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 4,
+      "bbox": [
+        588,
+        893,
+        738,
+        1023
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-044.png"
+    },
+    {
+      "index": 45,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 5,
+      "bbox": [
+        765,
+        895,
+        921,
+        1023
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-045.png"
+    },
+    {
+      "index": 46,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 6,
+      "bbox": [
+        952,
+        893,
+        1101,
+        1023
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-046.png"
+    },
+    {
+      "index": 47,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 7,
+      "bbox": [
+        1131,
+        899,
+        1284,
+        1020
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-047.png"
+    },
+    {
+      "index": 48,
+      "sheet": "wildfrog-stamp-sheet-imagegen-01.png",
+      "row": 6,
+      "column": 8,
+      "bbox": [
+        1309,
+        897,
+        1472,
+        1023
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-048.png"
+    },
+    {
+      "index": 49,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        30,
+        17,
+        200,
+        198
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-049.png"
+    },
+    {
+      "index": 50,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        212,
+        18,
+        391,
+        198
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-050.png"
+    },
+    {
+      "index": 51,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        403,
+        15,
+        571,
+        200
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-051.png"
+    },
+    {
+      "index": 52,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 4,
+      "bbox": [
+        582,
+        19,
+        758,
+        197
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-052.png"
+    },
+    {
+      "index": 53,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 5,
+      "bbox": [
+        769,
+        15,
+        940,
+        202
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-053.png"
+    },
+    {
+      "index": 54,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 6,
+      "bbox": [
+        948,
+        18,
+        1126,
+        198
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-054.png"
+    },
+    {
+      "index": 55,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 7,
+      "bbox": [
+        1134,
+        20,
+        1310,
+        195
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-055.png"
+    },
+    {
+      "index": 56,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 1,
+      "column": 8,
+      "bbox": [
+        1331,
+        20,
+        1505,
+        198
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-056.png"
+    },
+    {
+      "index": 57,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        30,
+        193,
+        197,
+        372
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-057.png"
+    },
+    {
+      "index": 58,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        220,
+        193,
+        382,
+        372
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-058.png"
+    },
+    {
+      "index": 59,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        398,
+        195,
+        575,
+        372
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-059.png"
+    },
+    {
+      "index": 60,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 4,
+      "bbox": [
+        587,
+        198,
+        751,
+        368
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-060.png"
+    },
+    {
+      "index": 61,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 5,
+      "bbox": [
+        765,
+        196,
+        942,
+        372
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-061.png"
+    },
+    {
+      "index": 62,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 6,
+      "bbox": [
+        959,
+        196,
+        1117,
+        373
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-062.png"
+    },
+    {
+      "index": 63,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 7,
+      "bbox": [
+        1134,
+        195,
+        1311,
+        373
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-063.png"
+    },
+    {
+      "index": 64,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 2,
+      "column": 8,
+      "bbox": [
+        1337,
+        193,
+        1499,
+        375
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-064.png"
+    },
+    {
+      "index": 65,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        30,
+        372,
+        197,
+        535
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-065.png"
+    },
+    {
+      "index": 66,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        211,
+        365,
+        384,
+        539
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-066.png"
+    },
+    {
+      "index": 67,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        399,
+        364,
+        575,
+        541
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-067.png"
+    },
+    {
+      "index": 68,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 4,
+      "bbox": [
+        587,
+        364,
+        752,
+        541
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-068.png"
+    },
+    {
+      "index": 69,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 5,
+      "bbox": [
+        765,
+        364,
+        943,
+        540
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-069.png"
+    },
+    {
+      "index": 70,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 6,
+      "bbox": [
+        956,
+        364,
+        1121,
+        540
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-070.png"
+    },
+    {
+      "index": 71,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 7,
+      "bbox": [
+        1136,
+        366,
+        1311,
+        540
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-071.png"
+    },
+    {
+      "index": 72,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 3,
+      "column": 8,
+      "bbox": [
+        1327,
+        372,
+        1509,
+        535
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-072.png"
+    },
+    {
+      "index": 73,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 1,
+      "bbox": [
+        34,
+        529,
+        192,
+        704
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-073.png"
+    },
+    {
+      "index": 74,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 2,
+      "bbox": [
+        222,
+        529,
+        377,
+        704
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-074.png"
+    },
+    {
+      "index": 75,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 3,
+      "bbox": [
+        401,
+        533,
+        567,
+        701
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-075.png"
+    },
+    {
+      "index": 76,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 4,
+      "bbox": [
+        584,
+        535,
+        753,
+        697
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-076.png"
+    },
+    {
+      "index": 77,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 5,
+      "bbox": [
+        770,
+        533,
+        939,
+        700
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-077.png"
+    },
+    {
+      "index": 78,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 6,
+      "bbox": [
+        960,
+        530,
+        1118,
+        703
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-078.png"
+    },
+    {
+      "index": 79,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 7,
+      "bbox": [
+        1137,
+        531,
+        1307,
+        704
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-079.png"
+    },
+    {
+      "index": 80,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 4,
+      "column": 8,
+      "bbox": [
+        1334,
+        535,
+        1501,
+        700
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-080.png"
+    },
+    {
+      "index": 81,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 1,
+      "bbox": [
+        28,
+        691,
+        198,
+        860
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-081.png"
+    },
+    {
+      "index": 82,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 2,
+      "bbox": [
+        220,
+        690,
+        376,
+        858
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-082.png"
+    },
+    {
+      "index": 83,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 3,
+      "bbox": [
+        403,
+        690,
+        564,
+        859
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-083.png"
+    },
+    {
+      "index": 84,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 4,
+      "bbox": [
+        583,
+        691,
+        752,
+        859
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-084.png"
+    },
+    {
+      "index": 85,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 5,
+      "bbox": [
+        772,
+        692,
+        939,
+        858
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-085.png"
+    },
+    {
+      "index": 86,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 6,
+      "bbox": [
+        960,
+        690,
+        1118,
+        863
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-086.png"
+    },
+    {
+      "index": 87,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 7,
+      "bbox": [
+        1139,
+        695,
+        1308,
+        864
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-087.png"
+    },
+    {
+      "index": 88,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 5,
+      "column": 8,
+      "bbox": [
+        1336,
+        690,
+        1499,
+        864
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-088.png"
+    },
+    {
+      "index": 89,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 1,
+      "bbox": [
+        30,
+        848,
+        195,
+        1013
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-089.png"
+    },
+    {
+      "index": 90,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 2,
+      "bbox": [
+        215,
+        846,
+        383,
+        1014
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-090.png"
+    },
+    {
+      "index": 91,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 3,
+      "bbox": [
+        403,
+        850,
+        567,
+        1011
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-091.png"
+    },
+    {
+      "index": 92,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 4,
+      "bbox": [
+        587,
+        847,
+        748,
+        1015
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-092.png"
+    },
+    {
+      "index": 93,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 5,
+      "bbox": [
+        770,
+        848,
+        938,
+        1015
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-093.png"
+    },
+    {
+      "index": 94,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 6,
+      "bbox": [
+        957,
+        849,
+        1120,
+        1013
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-094.png"
+    },
+    {
+      "index": 95,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 7,
+      "bbox": [
+        1139,
+        849,
+        1309,
+        1015
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-095.png"
+    },
+    {
+      "index": 96,
+      "sheet": "wildfrog-stamp-sheet-imagegen-02.png",
+      "row": 6,
+      "column": 8,
+      "bbox": [
+        1338,
+        848,
+        1497,
+        1015
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-096.png"
+    },
+    {
+      "index": 97,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        26,
+        14,
+        185,
+        197
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-097.png"
+    },
+    {
+      "index": 98,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        212,
+        14,
+        387,
+        194
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-098.png"
+    },
+    {
+      "index": 99,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        404,
+        13,
+        565,
+        197
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-099.png"
+    },
+    {
+      "index": 100,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 4,
+      "bbox": [
+        591,
+        18,
+        748,
+        187
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-100.png"
+    },
+    {
+      "index": 101,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 5,
+      "bbox": [
+        762,
+        12,
+        937,
+        194
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-101.png"
+    },
+    {
+      "index": 102,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 6,
+      "bbox": [
+        945,
+        14,
+        1124,
+        194
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-102.png"
+    },
+    {
+      "index": 103,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 7,
+      "bbox": [
+        1138,
+        13,
+        1301,
+        197
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-103.png"
+    },
+    {
+      "index": 104,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 1,
+      "column": 8,
+      "bbox": [
+        1322,
+        14,
+        1498,
+        196
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-104.png"
+    },
+    {
+      "index": 105,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        22,
+        190,
+        192,
+        365
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-105.png"
+    },
+    {
+      "index": 106,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        210,
+        190,
+        387,
+        369
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-106.png"
+    },
+    {
+      "index": 107,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        402,
+        189,
+        567,
+        369
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-107.png"
+    },
+    {
+      "index": 108,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 4,
+      "bbox": [
+        580,
+        189,
+        754,
+        369
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-108.png"
+    },
+    {
+      "index": 109,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 5,
+      "bbox": [
+        762,
+        190,
+        934,
+        368
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-109.png"
+    },
+    {
+      "index": 110,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 6,
+      "bbox": [
+        953,
+        189,
+        1119,
+        371
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-110.png"
+    },
+    {
+      "index": 111,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 7,
+      "bbox": [
+        1131,
+        190,
+        1307,
+        369
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-111.png"
+    },
+    {
+      "index": 112,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 2,
+      "column": 8,
+      "bbox": [
+        1322,
+        189,
+        1498,
+        368
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-112.png"
+    },
+    {
+      "index": 113,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        22,
+        357,
+        192,
+        532
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-113.png"
+    },
+    {
+      "index": 114,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        216,
+        359,
+        380,
+        532
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-114.png"
+    },
+    {
+      "index": 115,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        402,
+        359,
+        565,
+        534
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-115.png"
+    },
+    {
+      "index": 116,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 4,
+      "bbox": [
+        583,
+        359,
+        750,
+        534
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-116.png"
+    },
+    {
+      "index": 117,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 5,
+      "bbox": [
+        763,
+        360,
+        933,
+        534
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-117.png"
+    },
+    {
+      "index": 118,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 6,
+      "bbox": [
+        954,
+        361,
+        1118,
+        536
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-118.png"
+    },
+    {
+      "index": 119,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 7,
+      "bbox": [
+        1137,
+        361,
+        1301,
+        537
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-119.png"
+    },
+    {
+      "index": 120,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 3,
+      "column": 8,
+      "bbox": [
+        1324,
+        360,
+        1495,
+        534
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-120.png"
+    },
+    {
+      "index": 121,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 1,
+      "bbox": [
+        21,
+        523,
+        193,
+        700
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-121.png"
+    },
+    {
+      "index": 122,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 2,
+      "bbox": [
+        212,
+        524,
+        385,
+        701
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-122.png"
+    },
+    {
+      "index": 123,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 3,
+      "bbox": [
+        397,
+        523,
+        569,
+        701
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-123.png"
+    },
+    {
+      "index": 124,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 4,
+      "bbox": [
+        583,
+        523,
+        750,
+        701
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-124.png"
+    },
+    {
+      "index": 125,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 5,
+      "bbox": [
+        768,
+        525,
+        929,
+        702
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-125.png"
+    },
+    {
+      "index": 126,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 6,
+      "bbox": [
+        951,
+        526,
+        1121,
+        702
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-126.png"
+    },
+    {
+      "index": 127,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 7,
+      "bbox": [
+        1135,
+        523,
+        1304,
+        706
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-127.png"
+    },
+    {
+      "index": 128,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 4,
+      "column": 8,
+      "bbox": [
+        1326,
+        523,
+        1493,
+        706
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-128.png"
+    },
+    {
+      "index": 129,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 1,
+      "bbox": [
+        22,
+        693,
+        194,
+        870
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-129.png"
+    },
+    {
+      "index": 130,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 2,
+      "bbox": [
+        208,
+        692,
+        385,
+        869
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-130.png"
+    },
+    {
+      "index": 131,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 3,
+      "bbox": [
+        400,
+        693,
+        567,
+        870
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-131.png"
+    },
+    {
+      "index": 132,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 4,
+      "bbox": [
+        580,
+        693,
+        753,
+        870
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-132.png"
+    },
+    {
+      "index": 133,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 5,
+      "bbox": [
+        761,
+        692,
+        934,
+        869
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-133.png"
+    },
+    {
+      "index": 134,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 6,
+      "bbox": [
+        952,
+        696,
+        1120,
+        868
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-134.png"
+    },
+    {
+      "index": 135,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 7,
+      "bbox": [
+        1135,
+        692,
+        1304,
+        873
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-135.png"
+    },
+    {
+      "index": 136,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 5,
+      "column": 8,
+      "bbox": [
+        1325,
+        694,
+        1494,
+        872
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-136.png"
+    },
+    {
+      "index": 137,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 1,
+      "bbox": [
+        22,
+        858,
+        191,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-137.png"
+    },
+    {
+      "index": 138,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 2,
+      "bbox": [
+        209,
+        858,
+        384,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-138.png"
+    },
+    {
+      "index": 139,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 3,
+      "bbox": [
+        399,
+        858,
+        568,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-139.png"
+    },
+    {
+      "index": 140,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 4,
+      "bbox": [
+        580,
+        859,
+        754,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-140.png"
+    },
+    {
+      "index": 141,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 5,
+      "bbox": [
+        761,
+        859,
+        934,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-141.png"
+    },
+    {
+      "index": 142,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 6,
+      "bbox": [
+        952,
+        859,
+        1119,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-142.png"
+    },
+    {
+      "index": 143,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 7,
+      "bbox": [
+        1141,
+        859,
+        1297,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-143.png"
+    },
+    {
+      "index": 144,
+      "sheet": "wildfrog-stamp-sheet-imagegen-03.png",
+      "row": 6,
+      "column": 8,
+      "bbox": [
+        1330,
+        861,
+        1489,
+        1024
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-144.png"
+    },
+    {
+      "index": 145,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        26,
+        10,
+        192,
+        177
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-145.png"
+    },
+    {
+      "index": 146,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        210,
+        10,
+        366,
+        176
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-146.png"
+    },
+    {
+      "index": 147,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        387,
+        8,
+        553,
+        176
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-147.png"
+    },
+    {
+      "index": 148,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 4,
+      "bbox": [
+        573,
+        6,
+        725,
+        178
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-148.png"
+    },
+    {
+      "index": 149,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 5,
+      "bbox": [
+        743,
+        7,
+        912,
+        179
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-149.png"
+    },
+    {
+      "index": 150,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 6,
+      "bbox": [
+        929,
+        6,
+        1075,
+        177
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-150.png"
+    },
+    {
+      "index": 151,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 7,
+      "bbox": [
+        1092,
+        8,
+        1252,
+        177
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-151.png"
+    },
+    {
+      "index": 152,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 1,
+      "column": 8,
+      "bbox": [
+        1272,
+        5,
+        1419,
+        183
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-152.png"
+    },
+    {
+      "index": 153,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        27,
+        174,
+        191,
+        337
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-153.png"
+    },
+    {
+      "index": 154,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        201,
+        174,
+        373,
+        341
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-154.png"
+    },
+    {
+      "index": 155,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        391,
+        170,
+        543,
+        343
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-155.png"
+    },
+    {
+      "index": 156,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 4,
+      "bbox": [
+        567,
+        171,
+        731,
+        343
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-156.png"
+    },
+    {
+      "index": 157,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 5,
+      "bbox": [
+        744,
+        174,
+        909,
+        340
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-157.png"
+    },
+    {
+      "index": 158,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 6,
+      "bbox": [
+        924,
+        171,
+        1085,
+        344
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-158.png"
+    },
+    {
+      "index": 159,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 7,
+      "bbox": [
+        1099,
+        175,
+        1265,
+        344
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-159.png"
+    },
+    {
+      "index": 160,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 2,
+      "column": 8,
+      "bbox": [
+        1280,
+        172,
+        1473,
+        350
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-160.png"
+    },
+    {
+      "index": 161,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        23,
+        334,
+        188,
+        501
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-161.png"
+    },
+    {
+      "index": 162,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        202,
+        333,
+        366,
+        503
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-162.png"
+    },
+    {
+      "index": 163,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        388,
+        339,
+        548,
+        500
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-163.png"
+    },
+    {
+      "index": 164,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 4,
+      "bbox": [
+        564,
+        337,
+        731,
+        505
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-164.png"
+    },
+    {
+      "index": 165,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 5,
+      "bbox": [
+        745,
+        338,
+        909,
+        503
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-165.png"
+    },
+    {
+      "index": 166,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 6,
+      "bbox": [
+        926,
+        335,
+        1091,
+        505
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-166.png"
+    },
+    {
+      "index": 167,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 7,
+      "bbox": [
+        1110,
+        336,
+        1279,
+        505
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-167.png"
+    },
+    {
+      "index": 168,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 3,
+      "column": 8,
+      "bbox": [
+        1300,
+        334,
+        1491,
+        509
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-168.png"
+    },
+    {
+      "index": 169,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 1,
+      "bbox": [
+        22,
+        497,
+        187,
+        663
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-169.png"
+    },
+    {
+      "index": 170,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 2,
+      "bbox": [
+        205,
+        497,
+        365,
+        666
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-170.png"
+    },
+    {
+      "index": 171,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 3,
+      "bbox": [
+        385,
+        500,
+        549,
+        664
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-171.png"
+    },
+    {
+      "index": 172,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 4,
+      "bbox": [
+        562,
+        494,
+        736,
+        666
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-172.png"
+    },
+    {
+      "index": 173,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 5,
+      "bbox": [
+        746,
+        497,
+        907,
+        669
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-173.png"
+    },
+    {
+      "index": 174,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 6,
+      "bbox": [
+        925,
+        498,
+        1092,
+        665
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-174.png"
+    },
+    {
+      "index": 175,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 7,
+      "bbox": [
+        1112,
+        495,
+        1276,
+        668
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-175.png"
+    },
+    {
+      "index": 176,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 4,
+      "column": 8,
+      "bbox": [
+        1309,
+        497,
+        1477,
+        671
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-176.png"
+    },
+    {
+      "index": 177,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 1,
+      "bbox": [
+        25,
+        657,
+        185,
+        828
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-177.png"
+    },
+    {
+      "index": 178,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 2,
+      "bbox": [
+        205,
+        658,
+        366,
+        828
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-178.png"
+    },
+    {
+      "index": 179,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 3,
+      "bbox": [
+        386,
+        661,
+        548,
+        825
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-179.png"
+    },
+    {
+      "index": 180,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 4,
+      "bbox": [
+        570,
+        660,
+        729,
+        832
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-180.png"
+    },
+    {
+      "index": 181,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 5,
+      "bbox": [
+        750,
+        658,
+        906,
+        829
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-181.png"
+    },
+    {
+      "index": 182,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 6,
+      "bbox": [
+        925,
+        659,
+        1092,
+        828
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-182.png"
+    },
+    {
+      "index": 183,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 7,
+      "bbox": [
+        1110,
+        657,
+        1283,
+        831
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-183.png"
+    },
+    {
+      "index": 184,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 5,
+      "column": 8,
+      "bbox": [
+        1301,
+        657,
+        1480,
+        836
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-184.png"
+    },
+    {
+      "index": 185,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 1,
+      "bbox": [
+        23,
+        821,
+        188,
+        994
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-185.png"
+    },
+    {
+      "index": 186,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 2,
+      "bbox": [
+        200,
+        824,
+        368,
+        993
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-186.png"
+    },
+    {
+      "index": 187,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 3,
+      "bbox": [
+        388,
+        825,
+        546,
+        994
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-187.png"
+    },
+    {
+      "index": 188,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 4,
+      "bbox": [
+        563,
+        824,
+        728,
+        993
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-188.png"
+    },
+    {
+      "index": 189,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 5,
+      "bbox": [
+        745,
+        825,
+        909,
+        994
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-189.png"
+    },
+    {
+      "index": 190,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 6,
+      "bbox": [
+        932,
+        823,
+        1089,
+        1000
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-190.png"
+    },
+    {
+      "index": 191,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 7,
+      "bbox": [
+        1109,
+        825,
+        1279,
+        997
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-191.png"
+    },
+    {
+      "index": 192,
+      "sheet": "wildfrog-stamp-sheet-imagegen-04.png",
+      "row": 6,
+      "column": 8,
+      "bbox": [
+        1308,
+        824,
+        1479,
+        1001
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-192.png"
+    },
+    {
+      "index": 193,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        30,
+        16,
+        200,
+        196
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-193.png"
+    },
+    {
+      "index": 194,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        217,
+        16,
+        381,
+        199
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-194.png"
+    },
+    {
+      "index": 195,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        397,
+        18,
+        567,
+        195
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-195.png"
+    },
+    {
+      "index": 196,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 4,
+      "bbox": [
+        584,
+        13,
+        748,
+        199
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-196.png"
+    },
+    {
+      "index": 197,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 5,
+      "bbox": [
+        762,
+        17,
+        934,
+        195
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-197.png"
+    },
+    {
+      "index": 198,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 6,
+      "bbox": [
+        944,
+        13,
+        1121,
+        197
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-198.png"
+    },
+    {
+      "index": 199,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 7,
+      "bbox": [
+        1136,
+        17,
+        1307,
+        190
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-199.png"
+    },
+    {
+      "index": 200,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 1,
+      "column": 8,
+      "bbox": [
+        1333,
+        13,
+        1488,
+        198
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-200.png"
+    },
+    {
+      "index": 201,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        36,
+        188,
+        187,
+        374
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-201.png"
+    },
+    {
+      "index": 202,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        212,
+        193,
+        385,
+        370
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-202.png"
+    },
+    {
+      "index": 203,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        402,
+        189,
+        561,
+        366
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-203.png"
+    },
+    {
+      "index": 204,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 4,
+      "bbox": [
+        588,
+        188,
+        744,
+        375
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-204.png"
+    },
+    {
+      "index": 205,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 5,
+      "bbox": [
+        763,
+        191,
+        935,
+        369
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-205.png"
+    },
+    {
+      "index": 206,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 6,
+      "bbox": [
+        957,
+        189,
+        1111,
+        374
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-206.png"
+    },
+    {
+      "index": 207,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 7,
+      "bbox": [
+        1135,
+        193,
+        1304,
+        368
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-207.png"
+    },
+    {
+      "index": 208,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 2,
+      "column": 8,
+      "bbox": [
+        1333,
+        189,
+        1494,
+        373
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-208.png"
+    },
+    {
+      "index": 209,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        30,
+        365,
+        194,
+        536
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-209.png"
+    },
+    {
+      "index": 210,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        212,
+        365,
+        379,
+        536
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-210.png"
+    },
+    {
+      "index": 211,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        400,
+        361,
+        562,
+        533
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-211.png"
+    },
+    {
+      "index": 212,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 4,
+      "bbox": [
+        583,
+        365,
+        750,
+        536
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-212.png"
+    },
+    {
+      "index": 213,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 5,
+      "bbox": [
+        771,
+        361,
+        927,
+        538
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-213.png"
+    },
+    {
+      "index": 214,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 6,
+      "bbox": [
+        948,
+        366,
+        1118,
+        537
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-214.png"
+    },
+    {
+      "index": 215,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 7,
+      "bbox": [
+        1138,
+        362,
+        1303,
+        541
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-215.png"
+    },
+    {
+      "index": 216,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 3,
+      "column": 8,
+      "bbox": [
+        1328,
+        370,
+        1493,
+        533
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-216.png"
+    },
+    {
+      "index": 217,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 1,
+      "bbox": [
+        37,
+        525,
+        188,
+        701
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-217.png"
+    },
+    {
+      "index": 218,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 2,
+      "bbox": [
+        210,
+        529,
+        374,
+        694
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-218.png"
+    },
+    {
+      "index": 219,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 3,
+      "bbox": [
+        400,
+        528,
+        561,
+        701
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-219.png"
+    },
+    {
+      "index": 220,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 4,
+      "bbox": [
+        583,
+        529,
+        748,
+        699
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-220.png"
+    },
+    {
+      "index": 221,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 5,
+      "bbox": [
+        761,
+        525,
+        936,
+        701
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-221.png"
+    },
+    {
+      "index": 222,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 6,
+      "bbox": [
+        955,
+        527,
+        1109,
+        704
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-222.png"
+    },
+    {
+      "index": 223,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 7,
+      "bbox": [
+        1136,
+        533,
+        1302,
+        700
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-223.png"
+    },
+    {
+      "index": 224,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 4,
+      "column": 8,
+      "bbox": [
+        1329,
+        528,
+        1492,
+        705
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-224.png"
+    },
+    {
+      "index": 225,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 1,
+      "bbox": [
+        28,
+        685,
+        191,
+        853
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-225.png"
+    },
+    {
+      "index": 226,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 2,
+      "bbox": [
+        206,
+        686,
+        375,
+        855
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-226.png"
+    },
+    {
+      "index": 227,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 3,
+      "bbox": [
+        401,
+        686,
+        558,
+        858
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-227.png"
+    },
+    {
+      "index": 228,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 4,
+      "bbox": [
+        583,
+        693,
+        744,
+        852
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-228.png"
+    },
+    {
+      "index": 229,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 5,
+      "bbox": [
+        763,
+        689,
+        930,
+        858
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-229.png"
+    },
+    {
+      "index": 230,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 6,
+      "bbox": [
+        953,
+        686,
+        1112,
+        861
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-230.png"
+    },
+    {
+      "index": 231,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 7,
+      "bbox": [
+        1135,
+        690,
+        1303,
+        860
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-231.png"
+    },
+    {
+      "index": 232,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 5,
+      "column": 8,
+      "bbox": [
+        1329,
+        689,
+        1492,
+        861
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-232.png"
+    },
+    {
+      "index": 233,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 1,
+      "bbox": [
+        35,
+        843,
+        186,
+        1014
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-233.png"
+    },
+    {
+      "index": 234,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 2,
+      "bbox": [
+        204,
+        843,
+        374,
+        1012
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-234.png"
+    },
+    {
+      "index": 235,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 3,
+      "bbox": [
+        393,
+        843,
+        561,
+        1013
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-235.png"
+    },
+    {
+      "index": 236,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 4,
+      "bbox": [
+        582,
+        843,
+        741,
+        1015
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-236.png"
+    },
+    {
+      "index": 237,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 5,
+      "bbox": [
+        767,
+        852,
+        925,
+        1011
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-237.png"
+    },
+    {
+      "index": 238,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 6,
+      "bbox": [
+        954,
+        846,
+        1110,
+        1018
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-238.png"
+    },
+    {
+      "index": 239,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 7,
+      "bbox": [
+        1134,
+        845,
+        1303,
+        1016
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-239.png"
+    },
+    {
+      "index": 240,
+      "sheet": "wildfrog-stamp-sheet-imagegen-05.png",
+      "row": 6,
+      "column": 8,
+      "bbox": [
+        1324,
+        846,
+        1492,
+        1017
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-240.png"
+    },
+    {
+      "index": 241,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        12,
+        12,
+        176,
+        182
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-241.png"
+    },
+    {
+      "index": 242,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        200,
+        15,
+        363,
+        177
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-242.png"
+    },
+    {
+      "index": 243,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        378,
+        12,
+        525,
+        181
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-243.png"
+    },
+    {
+      "index": 244,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 4,
+      "bbox": [
+        544,
+        14,
+        696,
+        183
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-244.png"
+    },
+    {
+      "index": 245,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 5,
+      "bbox": [
+        710,
+        14,
+        865,
+        177
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-245.png"
+    },
+    {
+      "index": 246,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 6,
+      "bbox": [
+        882,
+        19,
+        1035,
+        182
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-246.png"
+    },
+    {
+      "index": 247,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 7,
+      "bbox": [
+        1047,
+        14,
+        1209,
+        182
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-247.png"
+    },
+    {
+      "index": 248,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 8,
+      "bbox": [
+        1219,
+        12,
+        1367,
+        182
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-248.png"
+    },
+    {
+      "index": 249,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 1,
+      "column": 9,
+      "bbox": [
+        1382,
+        19,
+        1528,
+        176
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-249.png"
+    },
+    {
+      "index": 250,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        17,
+        173,
+        169,
+        344
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-250.png"
+    },
+    {
+      "index": 251,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        188,
+        173,
+        356,
+        344
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-251.png"
+    },
+    {
+      "index": 252,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        373,
+        173,
+        521,
+        343
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-252.png"
+    },
+    {
+      "index": 253,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 4,
+      "bbox": [
+        535,
+        177,
+        701,
+        344
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-253.png"
+    },
+    {
+      "index": 254,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 5,
+      "bbox": [
+        709,
+        176,
+        868,
+        339
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-254.png"
+    },
+    {
+      "index": 255,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 6,
+      "bbox": [
+        875,
+        173,
+        1040,
+        341
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-255.png"
+    },
+    {
+      "index": 256,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 7,
+      "bbox": [
+        1046,
+        176,
+        1206,
+        340
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-256.png"
+    },
+    {
+      "index": 257,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 8,
+      "bbox": [
+        1214,
+        174,
+        1372,
+        341
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-257.png"
+    },
+    {
+      "index": 258,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 2,
+      "column": 9,
+      "bbox": [
+        1373,
+        176,
+        1530,
+        339
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-258.png"
+    },
+    {
+      "index": 259,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        7,
+        337,
+        168,
+        500
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-259.png"
+    },
+    {
+      "index": 260,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        186,
+        334,
+        356,
+        504
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-260.png"
+    },
+    {
+      "index": 261,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        364,
+        334,
+        516,
+        504
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-261.png"
+    },
+    {
+      "index": 262,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 4,
+      "bbox": [
+        531,
+        337,
+        695,
+        501
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-262.png"
+    },
+    {
+      "index": 263,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 5,
+      "bbox": [
+        712,
+        335,
+        858,
+        504
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-263.png"
+    },
+    {
+      "index": 264,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 6,
+      "bbox": [
+        874,
+        337,
+        1035,
+        501
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-264.png"
+    },
+    {
+      "index": 265,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 7,
+      "bbox": [
+        1039,
+        336,
+        1202,
+        500
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-265.png"
+    },
+    {
+      "index": 266,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 8,
+      "bbox": [
+        1212,
+        334,
+        1364,
+        503
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-266.png"
+    },
+    {
+      "index": 267,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 3,
+      "column": 9,
+      "bbox": [
+        1369,
+        336,
+        1530,
+        501
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-267.png"
+    },
+    {
+      "index": 268,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 1,
+      "bbox": [
+        6,
+        498,
+        169,
+        663
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-268.png"
+    },
+    {
+      "index": 269,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 2,
+      "bbox": [
+        192,
+        494,
+        343,
+        665
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-269.png"
+    },
+    {
+      "index": 270,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 3,
+      "bbox": [
+        351,
+        499,
+        511,
+        662
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-270.png"
+    },
+    {
+      "index": 271,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 4,
+      "bbox": [
+        527,
+        494,
+        688,
+        666
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-271.png"
+    },
+    {
+      "index": 272,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 5,
+      "bbox": [
+        704,
+        495,
+        862,
+        666
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-272.png"
+    },
+    {
+      "index": 273,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 6,
+      "bbox": [
+        873,
+        498,
+        1032,
+        661
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-273.png"
+    },
+    {
+      "index": 274,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 7,
+      "bbox": [
+        1036,
+        496,
+        1199,
+        665
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-274.png"
+    },
+    {
+      "index": 275,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 8,
+      "bbox": [
+        1211,
+        497,
+        1356,
+        666
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-275.png"
+    },
+    {
+      "index": 276,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 4,
+      "column": 9,
+      "bbox": [
+        1369,
+        498,
+        1525,
+        661
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-276.png"
+    },
+    {
+      "index": 277,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 1,
+      "bbox": [
+        7,
+        660,
+        166,
+        821
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-277.png"
+    },
+    {
+      "index": 278,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 2,
+      "bbox": [
+        183,
+        656,
+        342,
+        824
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-278.png"
+    },
+    {
+      "index": 279,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 3,
+      "bbox": [
+        349,
+        661,
+        508,
+        821
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-279.png"
+    },
+    {
+      "index": 280,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 4,
+      "bbox": [
+        527,
+        657,
+        682,
+        826
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-280.png"
+    },
+    {
+      "index": 281,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 5,
+      "bbox": [
+        700,
+        658,
+        849,
+        825
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-281.png"
+    },
+    {
+      "index": 282,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 6,
+      "bbox": [
+        868,
+        656,
+        1029,
+        821
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-282.png"
+    },
+    {
+      "index": 283,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 7,
+      "bbox": [
+        1040,
+        659,
+        1199,
+        821
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-283.png"
+    },
+    {
+      "index": 284,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 8,
+      "bbox": [
+        1213,
+        659,
+        1357,
+        824
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-284.png"
+    },
+    {
+      "index": 285,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 5,
+      "column": 9,
+      "bbox": [
+        1370,
+        664,
+        1525,
+        818
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-285.png"
+    },
+    {
+      "index": 286,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 1,
+      "bbox": [
+        9,
+        815,
+        169,
+        987
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-286.png"
+    },
+    {
+      "index": 287,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 2,
+      "bbox": [
+        185,
+        816,
+        337,
+        987
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-287.png"
+    },
+    {
+      "index": 288,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 3,
+      "bbox": [
+        350,
+        820,
+        508,
+        983
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-288.png"
+    },
+    {
+      "index": 289,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 4,
+      "bbox": [
+        528,
+        820,
+        680,
+        989
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-289.png"
+    },
+    {
+      "index": 290,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 5,
+      "bbox": [
+        694,
+        819,
+        854,
+        985
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-290.png"
+    },
+    {
+      "index": 291,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 6,
+      "bbox": [
+        864,
+        820,
+        1028,
+        988
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-291.png"
+    },
+    {
+      "index": 292,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 7,
+      "bbox": [
+        1034,
+        821,
+        1194,
+        985
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-292.png"
+    },
+    {
+      "index": 293,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 8,
+      "bbox": [
+        1203,
+        820,
+        1363,
+        986
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-293.png"
+    },
+    {
+      "index": 294,
+      "sheet": "wildfrog-stamp-sheet-imagegen-06.png",
+      "row": 6,
+      "column": 9,
+      "bbox": [
+        1367,
+        820,
+        1528,
+        988
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-294.png"
+    },
+    {
+      "index": 295,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        17,
+        8,
+        193,
+        185
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-295.png"
+    },
+    {
+      "index": 296,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        216,
+        5,
+        374,
+        191
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-296.png"
+    },
+    {
+      "index": 297,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        398,
+        9,
+        573,
+        187
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-297.png"
+    },
+    {
+      "index": 298,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 4,
+      "bbox": [
+        586,
+        5,
+        758,
+        191
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-298.png"
+    },
+    {
+      "index": 299,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 5,
+      "bbox": [
+        770,
+        6,
+        951,
+        190
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-299.png"
+    },
+    {
+      "index": 300,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 6,
+      "bbox": [
+        959,
+        5,
+        1142,
+        188
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-300.png"
+    },
+    {
+      "index": 301,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 7,
+      "bbox": [
+        1154,
+        5,
+        1326,
+        190
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-301.png"
+    },
+    {
+      "index": 302,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 1,
+      "column": 8,
+      "bbox": [
+        1338,
+        6,
+        1517,
+        189
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-302.png"
+    },
+    {
+      "index": 303,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        17,
+        187,
+        190,
+        361
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-303.png"
+    },
+    {
+      "index": 304,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        205,
+        183,
+        384,
+        366
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-304.png"
+    },
+    {
+      "index": 305,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        400,
+        181,
+        570,
+        369
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-305.png"
+    },
+    {
+      "index": 306,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 4,
+      "bbox": [
+        583,
+        182,
+        760,
+        364
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-306.png"
+    },
+    {
+      "index": 307,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 5,
+      "bbox": [
+        770,
+        183,
+        948,
+        365
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-307.png"
+    },
+    {
+      "index": 308,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 6,
+      "bbox": [
+        965,
+        180,
+        1132,
+        369
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-308.png"
+    },
+    {
+      "index": 309,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 7,
+      "bbox": [
+        1147,
+        183,
+        1327,
+        366
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-309.png"
+    },
+    {
+      "index": 310,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 2,
+      "column": 8,
+      "bbox": [
+        1344,
+        181,
+        1514,
+        371
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-310.png"
+    },
+    {
+      "index": 311,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        14,
+        357,
+        192,
+        538
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-311.png"
+    },
+    {
+      "index": 312,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        206,
+        354,
+        383,
+        542
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-312.png"
+    },
+    {
+      "index": 313,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        396,
+        357,
+        574,
+        539
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-313.png"
+    },
+    {
+      "index": 314,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 4,
+      "bbox": [
+        586,
+        357,
+        758,
+        538
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-314.png"
+    },
+    {
+      "index": 315,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 5,
+      "bbox": [
+        770,
+        357,
+        950,
+        540
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-315.png"
+    },
+    {
+      "index": 316,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 6,
+      "bbox": [
+        960,
+        357,
+        1136,
+        540
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-316.png"
+    },
+    {
+      "index": 317,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 7,
+      "bbox": [
+        1153,
+        356,
+        1324,
+        542
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-317.png"
+    },
+    {
+      "index": 318,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 3,
+      "column": 8,
+      "bbox": [
+        1338,
+        358,
+        1518,
+        541
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-318.png"
+    },
+    {
+      "index": 319,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 1,
+      "bbox": [
+        13,
+        525,
+        192,
+        705
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-319.png"
+    },
+    {
+      "index": 320,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 2,
+      "bbox": [
+        202,
+        527,
+        379,
+        705
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-320.png"
+    },
+    {
+      "index": 321,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 3,
+      "bbox": [
+        396,
+        530,
+        572,
+        703
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-321.png"
+    },
+    {
+      "index": 322,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 4,
+      "bbox": [
+        580,
+        528,
+        757,
+        705
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-322.png"
+    },
+    {
+      "index": 323,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 5,
+      "bbox": [
+        777,
+        527,
+        943,
+        710
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-323.png"
+    },
+    {
+      "index": 324,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 6,
+      "bbox": [
+        959,
+        529,
+        1138,
+        709
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-324.png"
+    },
+    {
+      "index": 325,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 7,
+      "bbox": [
+        1153,
+        527,
+        1324,
+        713
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-325.png"
+    },
+    {
+      "index": 326,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 4,
+      "column": 8,
+      "bbox": [
+        1338,
+        529,
+        1517,
+        709
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-326.png"
+    },
+    {
+      "index": 327,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 5,
+      "column": 1,
+      "bbox": [
+        17,
+        688,
+        188,
+        869
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-327.png"
+    },
+    {
+      "index": 328,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 5,
+      "column": 2,
+      "bbox": [
+        198,
+        692,
+        376,
+        868
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-328.png"
+    },
+    {
+      "index": 329,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 5,
+      "column": 3,
+      "bbox": [
+        392,
+        691,
+        574,
+        870
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-329.png"
+    },
+    {
+      "index": 330,
+      "sheet": "wildfrog-stamp-sheet-imagegen-07.png",
+      "row": 5,
+      "column": 4,
+      "bbox": [
+        576,
+        691,
+        760,
+        870
+      ],
+      "file": "design/generated-stamps/crops/wildfrog-stamp-330.png"
+    }
+  ]
+}

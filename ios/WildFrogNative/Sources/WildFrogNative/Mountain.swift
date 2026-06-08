@@ -21,6 +21,10 @@ struct Mountain: Identifiable, Equatable {
         topRank.map { "#\($0)" } ?? "未排名"
     }
 
+    var stampImageName: String {
+        MountainCatalog.stampImageName(for: id)
+    }
+
     static func == (lhs: Mountain, rhs: Mountain) -> Bool {
         lhs.id == rhs.id
     }
@@ -28,6 +32,11 @@ struct Mountain: Identifiable, Equatable {
 
 enum MountainCatalog {
     static let catalogCount = 330
+
+    static func stampImageName(for mountainId: String) -> String {
+        let index = mountains.firstIndex { $0.id == mountainId } ?? 0
+        return String(format: "WildFrogStamp%03d", index + 1)
+    }
 
     static let mountains: [Mountain] = [
         Mountain(

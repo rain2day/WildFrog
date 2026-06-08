@@ -352,11 +352,13 @@ struct ProfileView: View {
                     .foregroundStyle(FrogTheme.orange)
             }
 
-            Image("WildFrogStampSheet")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            MountainStampGrid(
+                unlockedMountainIds: checkInStore.visitedMountainIds,
+                columnsCount: 6,
+                limit: 36,
+                prioritizesUnlocked: true,
+                showsLabels: false
+            )
         }
         .padding(FrogSpace.cardPadding)
         .background(FrogTheme.passport)

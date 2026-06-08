@@ -52,6 +52,7 @@ struct WildFrogNativeApp: App {
     @State private var authService: ProfileAuthService
     @StateObject private var locationManager = LocationManager()
     @StateObject private var checkInStore = CheckInStore()
+    @StateObject private var trackRecorder = TrackRecorder()
 
     init() {
         _authService = State(initialValue: ProfileAuthService(activateFirebase: false))
@@ -63,6 +64,7 @@ struct WildFrogNativeApp: App {
                 .environment(authService)
                 .environmentObject(locationManager)
                 .environmentObject(checkInStore)
+                .environmentObject(trackRecorder)
                 .task { @MainActor in
                     authService.activate()
                 }

@@ -1,6 +1,6 @@
 # WildFrog Native iOS Draft
 
-This is the first SwiftUI-native split from the web prototype.
+This is the active SwiftUI-native WildFrog app.
 
 Current screens:
 
@@ -29,5 +29,5 @@ xcodebuild -project ios/WildFrogNative/WildFrogNative.xcodeproj \
 Notes:
 
 - The current package is a compileable native SwiftUI foundation and now also includes a generated Xcode app project.
-- `MountainCatalog` uses a representative native sample list. The web prototype still contains the fuller legacy mountain list; the next step is to move that into shared JSON or generated Swift data.
+- The legacy static web prototype is archived under `archive/web-preview-draft-20260608/` and should not be used for current UI redesign or implementation decisions.
 - GPS permissions, live camera capture, MapKit clustering, and real photo export are intentionally left for the next native phase.

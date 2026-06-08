@@ -162,6 +162,14 @@ final class CheckInStore: ObservableObject {
         Set(records.map(\.mountainId)).count
     }
 
+    var visitedMountainIds: Set<String> {
+        Set(records.map(\.mountainId))
+    }
+
+    func hasVisited(mountainId: String) -> Bool {
+        visitedMountainIds.contains(mountainId)
+    }
+
     var currentStreak: Int {
         let calendar = Self.hongKongCalendar
         let activeDays = Set(records.map { calendar.startOfDay(for: $0.date) })

@@ -1,23 +1,11 @@
 import SwiftUI
-
-enum RecordsSegment: String, CaseIterable, Identifiable {
-    case passport
-    case tracks
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .passport: "打卡日曆"
-        case .tracks: "我嘅行程"
-        }
-    }
-}
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct RecordsCalendarView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
 
-    @State private var segment: RecordsSegment = .passport
     @State private var selectedDay = Calendar.current.component(.day, from: Date())
     @State private var displayedMonth: Date = {
         let calendar = Calendar.current
@@ -48,26 +36,28 @@ struct RecordsCalendarView: View {
         checkInStore.days(year: displayedYear, month: displayedMonthNumber)
     }
 
-    /// Map from active day → first matched Mountain (for calendar tiles and stamp timeline).
-    private var activeRecords: [Int: Mountain] {
-        var result: [Int: Mountain] = [:]
+    /// Map from active day → first matched check-in record for calendar tiles.
+    private var activeRecords: [Int: CheckInRecord] {
+        var result: [Int: CheckInRecord] = [:]
         for day in activeDays {
-            // Find a mountain checked in on this day in the displayed month
             let matchingRecord = checkInStore.records.first { record in
                 let cal = Calendar.current
                 let comps = cal.dateComponents([.year, .month, .day], from: record.date)
                 return comps.year == displayedYear && comps.month == displayedMonthNumber && comps.day == day
             }
-            if let mountainId = matchingRecord?.mountainId,
-               let mountain = MountainCatalog.mountains.first(where: { $0.id == mountainId }) {
-                result[day] = mountain
+            if let matchingRecord {
+                result[day] = matchingRecord
             }
         }
         return result
     }
 
-    private var selectedMountain: Mountain? {
+    private var selectedRecord: CheckInRecord? {
         activeRecords[selectedDay]
+    }
+
+    private var selectedMountain: Mountain? {
+        selectedRecord.map { MountainCatalog.mountain(id: $0.mountainId) }
     }
 
     private var monthDays: [Int] {
@@ -114,40 +104,17 @@ struct RecordsCalendarView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                segmentControl
-
-                switch segment {
-                case .passport:
-                    passportCover
-                    stampTimeline
-                    passportStrip
-                    calendarPanel
-                    selectedRecordCard
-                case .tracks:
-                    TripsSection()
-                }
+                passportCover
+                TripsSection()
+                passportStrip
+                calendarPanel
+                selectedRecordCard
             }
             .padding(FrogSpace.screenPadding)
             .padding(.bottom, 110)
         }
         .hiddenNavigationBar()
         .background(FrogTheme.passport)
-    }
-
-    private var segmentControl: some View {
-        HStack(spacing: 8) {
-            ForEach(RecordsSegment.allCases) { item in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.18)) { segment = item }
-                } label: {
-                    Text(item.title)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                        .chipStyle(isSelected: segment == item)
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
 
     private var passportCover: some View {
@@ -227,40 +194,6 @@ struct RecordsCalendarView: View {
         .shadow(color: FrogTheme.forest.opacity(0.2), radius: 16, y: 8)
     }
 
-    private var stampTimeline: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                RecordSectionTitle(title: "本月印章")
-                Spacer()
-                Text("\(activeDays.count) DAYS")
-                    .font(.frogMicro.weight(.black))
-                    .foregroundStyle(FrogTheme.orange)
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    if activeRecords.isEmpty {
-                        ForEach(0..<6, id: \.self) { index in
-                            StampPlaceholderSlot(index: index)
-                        }
-                    } else {
-                        ForEach(activeRecords.keys.sorted().prefix(8), id: \.self) { day in
-                            if let mountain = activeRecords[day] {
-                                StampTimelineCard(day: day, mountain: mountain, isSelected: selectedDay == day)
-                                    .onTapGesture {
-                                        selectedDay = day
-                                    }
-                            }
-                        }
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-        .padding(FrogSpace.cardPadding)
-        .paperCardStyle(cornerRadius: 18)
-    }
-
     private var recentCoverMountain: Mountain {
         checkedMountains.first ?? MountainCatalog.mountain(id: "lion-rock")
     }
@@ -268,7 +201,7 @@ struct RecordsCalendarView: View {
     private var passportStrip: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                RecordSectionTitle(title: "Passport Stamps")
+                RecordSectionTitle(title: "山峰印章圖鑑")
                 Spacer()
                 Text("\(checkInStore.distinctMountainCount) / \(MountainCatalog.catalogCount)")
                     .font(.frogCaption.weight(.semibold))
@@ -277,10 +210,11 @@ struct RecordsCalendarView: View {
             Divider()
                 .background(FrogTheme.forest.opacity(0.12))
 
-            Image("WildFrogStampSheet")
-                .resizable()
-                .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            MountainStampGrid(
+                unlockedMountainIds: checkInStore.visitedMountainIds,
+                columnsCount: 5,
+                showsLabels: true
+            )
         }
         .padding(FrogSpace.cardPadding)
         .paperCardStyle(cornerRadius: 18)
@@ -347,7 +281,7 @@ struct RecordsCalendarView: View {
                     } label: {
                         CalendarTile(
                             day: cell.day,
-                            mountain: cell.isCurrentMonth ? activeRecords[cell.day] : nil,
+                            record: cell.isCurrentMonth ? activeRecords[cell.day] : nil,
                             isSelected: cell.isCurrentMonth && selectedDay == cell.day,
                             isCurrentMonth: cell.isCurrentMonth
                         )
@@ -363,7 +297,7 @@ struct RecordsCalendarView: View {
 
     private var selectedRecordCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: selectedMountain == nil ? .center : .firstTextBaseline, spacing: 16) {
+            HStack(alignment: selectedRecord == nil ? .center : .firstTextBaseline, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(selectedDay)")
                         .font(.system(size: 44, weight: .black, design: .rounded))
@@ -373,7 +307,7 @@ struct RecordsCalendarView: View {
                         .foregroundStyle(FrogTheme.ink)
                 }
 
-                if selectedMountain == nil {
+                if selectedRecord == nil {
                     Rectangle()
                         .fill(FrogTheme.forest.opacity(0.12))
                         .frame(width: 1, height: 56)
@@ -391,9 +325,9 @@ struct RecordsCalendarView: View {
                     Spacer()
                 }
 
-                if let selectedMountain {
-                    NavigationLink(value: NativeRoute.mountainDetail(selectedMountain.id)) {
-                        Label("查看山峰", systemImage: "chevron.right")
+                if let selectedRecord {
+                    NavigationLink(value: NativeRoute.tripDetail(selectedRecord.id)) {
+                        Label("查看行程", systemImage: "chevron.right")
                             .font(.frogCaption)
                     }
                     .buttonStyle(.bordered)
@@ -401,9 +335,9 @@ struct RecordsCalendarView: View {
                 }
             }
 
-            if let selectedMountain {
+            if let selectedRecord, let selectedMountain {
                 ZStack(alignment: .bottomLeading) {
-                    MountainPhoto(mountain: selectedMountain, dimming: 0.18)
+                    CheckInRecordPhoto(record: selectedRecord, mountain: selectedMountain, dimming: 0.18)
                         .frame(height: 210)
                     LinearGradient(
                         colors: [.clear, Color.black.opacity(0.76)],
@@ -421,7 +355,7 @@ struct RecordsCalendarView: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-                Text("官方有效紀錄已保存。相片會生成白色水印版本，可用於分享或之後輸出證書。")
+                Text("顯示你打卡時保存的原相；水印版本只用於分享或相簿輸出。")
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
             }
@@ -440,14 +374,14 @@ struct RecordsCalendarView: View {
 
 private struct CalendarTile: View {
     let day: Int
-    let mountain: Mountain?
+    let record: CheckInRecord?
     let isSelected: Bool
     let isCurrentMonth: Bool
 
     var body: some View {
         ZStack {
-            if let mountain {
-                MountainPhoto(mountain: mountain, dimming: 0.24)
+            if let record {
+                CheckInRecordPhoto(record: record, mountain: MountainCatalog.mountain(id: record.mountainId), dimming: 0.24)
             } else {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(isCurrentMonth ? Color.white.opacity(0.74) : FrogTheme.warmPaper.opacity(0.58))
@@ -459,15 +393,15 @@ private struct CalendarTile: View {
 
             Text("\(day)")
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
-                .foregroundStyle(mountain == nil ? (isCurrentMonth ? FrogTheme.ink : FrogTheme.muted.opacity(0.72)) : .white)
-                .shadow(color: .black.opacity(mountain == nil ? 0 : 0.25), radius: 3)
+                .foregroundStyle(record == nil ? (isCurrentMonth ? FrogTheme.ink : FrogTheme.muted.opacity(0.72)) : .white)
+                .shadow(color: .black.opacity(record == nil ? 0 : 0.25), radius: 3)
         }
         .aspectRatio(1, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(
-                    isSelected ? FrogTheme.orange : (mountain == nil ? FrogTheme.forest.opacity(0.07) : Color.white.opacity(0.65)),
+                    isSelected ? FrogTheme.orange : (record == nil ? FrogTheme.forest.opacity(0.07) : Color.white.opacity(0.65)),
                     lineWidth: isSelected ? 2 : 1
                 )
         )
@@ -521,10 +455,11 @@ private struct CalendarCellModel: Identifiable {
 
 private struct RecordSectionTitle: View {
     let title: String
+    var systemImage: String = "seal.fill"
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: "seal.fill")
+            Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .black))
                 .foregroundStyle(FrogTheme.forest)
                 .frame(width: 30, height: 30)
@@ -536,67 +471,141 @@ private struct RecordSectionTitle: View {
     }
 }
 
-private struct StampPlaceholderSlot: View {
-    let index: Int
+struct MountainStampGrid: View {
+    let unlockedMountainIds: Set<String>
+    var columnsCount: Int = 5
+    var limit: Int?
+    var prioritizesUnlocked: Bool = false
+    var showsLabels: Bool = true
+
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 8), count: columnsCount)
+    }
+
+    private var slots: [MountainStampSlot] {
+        let allSlots = (1...MountainCatalog.catalogCount).map { index -> MountainStampSlot in
+            let mountain = MountainCatalog.mountains.indices.contains(index - 1) ? MountainCatalog.mountains[index - 1] : nil
+            return MountainStampSlot(index: index, mountain: mountain)
+        }
+
+        let orderedSlots: [MountainStampSlot]
+        if prioritizesUnlocked {
+            orderedSlots = allSlots.sorted {
+                let lhsUnlocked = $0.mountain.map { unlockedMountainIds.contains($0.id) } ?? false
+                let rhsUnlocked = $1.mountain.map { unlockedMountainIds.contains($0.id) } ?? false
+                if lhsUnlocked != rhsUnlocked {
+                    return lhsUnlocked && !rhsUnlocked
+                }
+                return $0.index < $1.index
+            }
+        } else {
+            orderedSlots = allSlots
+        }
+
+        if let limit {
+            return Array(orderedSlots.prefix(limit))
+        }
+        return orderedSlots
+    }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(FrogTheme.warmPaper.opacity(0.82))
-            .frame(width: 54, height: 54)
-            .overlay {
-                Circle()
-                    .stroke(
-                        FrogTheme.forest.opacity(0.16),
-                        style: StrokeStyle(lineWidth: 1, dash: [4, 4])
-                    )
-                    .padding(9)
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(slots) { slot in
+                MountainStampSlotView(
+                    slot: slot,
+                    isUnlocked: slot.mountain.map { unlockedMountainIds.contains($0.id) } ?? false,
+                    showsLabel: showsLabels
+                )
             }
-            .overlay(alignment: .bottomTrailing) {
-                Text("\(index + 1)")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(FrogTheme.forest.opacity(0.22))
-                    .padding(6)
-            }
+        }
     }
 }
 
-private struct StampTimelineCard: View {
-    let day: Int
-    let mountain: Mountain
-    let isSelected: Bool
+private struct MountainStampSlot: Identifiable {
+    let index: Int
+    let mountain: Mountain?
+
+    var id: Int { index }
+
+    var imageName: String {
+        String(format: "WildFrogStamp%03d", index)
+    }
+}
+
+private struct MountainStampSlotView: View {
+    let slot: MountainStampSlot
+    let isUnlocked: Bool
+    let showsLabel: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ZStack(alignment: .topLeading) {
-                MountainPhoto(mountain: mountain, dimming: 0.14)
-                    .frame(width: 98, height: 82)
-
-                Text("\(day)")
-                    .font(.frogCaption.weight(.black))
-                    .foregroundStyle(FrogTheme.forest)
-                    .frame(width: 30, height: 30)
-                    .background(FrogTheme.passport.opacity(0.92), in: Circle())
-                    .padding(7)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(mountain.nameZh)
-                    .font(.frogCaption.weight(.black))
-                    .foregroundStyle(FrogTheme.ink)
-                    .lineLimit(1)
-                Text("\(mountain.height)m")
-                    .font(.frogMicro)
-                    .foregroundStyle(FrogTheme.muted)
+        Group {
+            if let mountain = slot.mountain {
+                NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
+                    content(label: mountain.nameZh)
+                }
+                .buttonStyle(.plain)
+            } else {
+                content(label: "待加入")
             }
         }
-        .frame(width: 98, alignment: .leading)
-        .padding(8)
-        .background(isSelected ? FrogTheme.orangeSoft : Color.white, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(isSelected ? FrogTheme.orange : FrogTheme.line, lineWidth: isSelected ? 2 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func content(label: String) -> some View {
+        VStack(spacing: showsLabel ? 5 : 0) {
+            ZStack(alignment: .topTrailing) {
+                Image(slot.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .saturation(isUnlocked ? 1 : 0)
+                    .opacity(isUnlocked ? 1 : 0.32)
+                    .overlay {
+                        if !isUnlocked {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(FrogTheme.passport.opacity(0.48))
+                        }
+                    }
+
+                if !isUnlocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundStyle(FrogTheme.muted)
+                        .frame(width: 20, height: 20)
+                        .background(FrogTheme.passport, in: Circle())
+                        .overlay(Circle().stroke(FrogTheme.forest.opacity(0.12), lineWidth: 1))
+                        .padding(2)
+                }
+            }
+            .frame(height: showsLabel ? 64 : 54)
+            .frame(maxWidth: .infinity)
+
+            if showsLabel {
+                Text(label)
+                    .font(.frogMicro.weight(isUnlocked ? .black : .semibold))
+                    .foregroundStyle(isUnlocked ? FrogTheme.forest : FrogTheme.muted.opacity(0.76))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.vertical, showsLabel ? 6 : 4)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isUnlocked ? Color.white.opacity(0.68) : Color.white.opacity(0.36))
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(isUnlocked ? FrogTheme.orange.opacity(0.18) : FrogTheme.forest.opacity(0.05), lineWidth: 1)
+        )
+    }
+
+    private var accessibilityLabel: String {
+        if let mountain = slot.mountain {
+            return isUnlocked ? "\(mountain.nameZh) 印章已解鎖" : "\(mountain.nameZh) 印章未解鎖"
+        }
+        return "未加入山峰資料的印章槽位"
     }
 }
 
@@ -612,7 +621,15 @@ private struct TripsSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                RecordSectionTitle(title: "我嘅行程", systemImage: "figure.hiking")
+                Spacer()
+                Text("\(trips.count)")
+                    .font(.frogCaption.weight(.black))
+                    .foregroundStyle(FrogTheme.orange)
+            }
+
             if trips.isEmpty {
                 emptyState
             } else {
@@ -626,6 +643,8 @@ private struct TripsSection: View {
                 }
             }
         }
+        .padding(FrogSpace.cardPadding)
+        .paperCardStyle(cornerRadius: 18)
     }
 
     private var emptyState: some View {
@@ -641,8 +660,7 @@ private struct TripsSection: View {
                 .foregroundStyle(FrogTheme.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(FrogSpace.cardPadding)
-        .cardStyle()
+        .padding(.vertical, 10)
     }
 }
 
@@ -687,15 +705,7 @@ private struct TripRow: View {
 
     @ViewBuilder
     private var thumbnailView: some View {
-        Group {
-            if let thumbnail {
-                Image(uiImage: thumbnail)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                MountainPhoto(mountain: mountain, dimming: 0.1)
-            }
-        }
+        PhotoFallbackView(image: thumbnail, mountain: mountain, dimming: 0.1)
         .frame(width: 66, height: 66)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
@@ -738,5 +748,53 @@ private struct TripRow: View {
             await MainActor.run { thumbnail = image }
         }
         #endif
+    }
+}
+
+private struct CheckInRecordPhoto: View {
+    let record: CheckInRecord
+    let mountain: Mountain
+    var dimming: Double = 0.1
+
+    @State private var image: UIImage?
+
+    var body: some View {
+        PhotoFallbackView(image: image, mountain: mountain, dimming: dimming)
+            .onAppear { loadPhoto() }
+    }
+
+    private func loadPhoto() {
+        #if os(iOS)
+        guard image == nil, let filename = record.photoFilename, !filename.isEmpty else { return }
+        Task {
+            let loaded = await Task.detached(priority: .utility) { () -> UIImage? in
+                guard let url = FileManager.default
+                    .urls(for: .documentDirectory, in: .userDomainMask)
+                    .first?
+                    .appendingPathComponent(filename),
+                      let data = try? Data(contentsOf: url) else { return nil }
+                return UIImage(data: data)
+            }.value
+            await MainActor.run { image = loaded }
+        }
+        #endif
+    }
+}
+
+private struct PhotoFallbackView: View {
+    let image: UIImage?
+    let mountain: Mountain
+    var dimming: Double = 0.1
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                MountainPhoto(mountain: mountain, dimming: dimming)
+            }
+        }
     }
 }
