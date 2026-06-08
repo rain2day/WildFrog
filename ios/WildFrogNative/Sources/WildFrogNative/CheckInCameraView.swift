@@ -142,7 +142,7 @@ struct CheckInCameraView: View {
                 }
 
                 if showSuccess {
-                    checkInSuccessView
+                    checkInSuccessView(topInset: proxy.safeAreaInsets.top, bottomInset: proxy.safeAreaInsets.bottom)
                         .transition(.opacity)
                         .zIndex(10)
                 }
@@ -731,11 +731,10 @@ struct CheckInCameraView: View {
 
     // MARK: - Success screen (design flow 04)
 
-    private var checkInSuccessView: some View {
-        GeometryReader { proxy in
-            ZStack {
-                MountainPhoto(mountain: mountain, dimming: 0)
-                    .ignoresSafeArea()
+    private func checkInSuccessView(topInset: CGFloat, bottomInset: CGFloat) -> some View {
+        ZStack {
+            MountainPhoto(mountain: mountain, dimming: 0)
+                .ignoresSafeArea()
 
                 LinearGradient(
                     colors: [
@@ -749,7 +748,7 @@ struct CheckInCameraView: View {
                 .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    Spacer().frame(height: proxy.safeAreaInsets.top + 22)
+                    Spacer().frame(height: topInset + 22)
 
                     ZStack {
                         Circle()
@@ -835,12 +834,12 @@ struct CheckInCameraView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.bottom, proxy.safeAreaInsets.bottom + 18)
+                    .padding(.bottom, max(bottomInset, 12) + 18)
                 }
                 .padding(.horizontal, 24)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
-        }
     }
 
     private func successStat(value: String, label: String, tint: Color = .white) -> some View {
@@ -952,7 +951,7 @@ struct CheckInCameraView: View {
     #if canImport(UIKit)
     @MainActor
     private func renderWatermarkImage(userPhoto: UIImage) -> UIImage? {
-        let currentCount = checkInStore.count(for: mountain.id)
+        let currentCount = checkInStore.distinctMountainCount
         let renderer = ImageRenderer(
             content: CheckInWatermarkExportView(mountain: mountain, userPhoto: userPhoto, checkInCount: currentCount)
                 .frame(width: 1080, height: 1080)
@@ -1006,72 +1005,69 @@ private struct CheckInWatermarkExportView: View {
                 .scaledToFill()
                 .clipped()
 
+            // Light top + bottom darkening for corner legibility only — no wash.
             LinearGradient(
-                colors: [.black.opacity(0.72), .black.opacity(0.08), .black.opacity(0.82)],
+                colors: [.black.opacity(0.5), .clear, .clear, .black.opacity(0.55)],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
-            Text("WILDFROG")
-                .font(.system(size: 138, weight: .black))
-                .foregroundStyle(.white.opacity(0.14))
-                .rotationEffect(.degrees(-18))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(spacing: 0) {
+                // Top — logo (left) + peak name · height (right)
                 HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 18) {
-                            WildFrogBrandMark(size: 92, cornerRadius: 24)
+                    HStack(spacing: 18) {
+                        WildFrogBrandMark(size: 86, cornerRadius: 22)
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("WildFrog")
-                                .font(.system(size: 72, weight: .black))
+                                .font(.system(size: 58, weight: .black))
+                            Text("MOUNTAIN RANGERS")
+                                .font(.system(size: 22, weight: .heavy))
+                                .tracking(3)
                         }
-                        Text("HONG KONG MOUNTAINEER")
-                            .font(.system(size: 28, weight: .black))
                     }
 
-                    Spacer()
+                    Spacer(minLength: 24)
 
                     Text("\(mountain.nameZh) · \(mountain.height)m")
-                        .font(.system(size: 42, weight: .black))
+                        .font(.system(size: 38, weight: .black))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+                        .minimumScaleFactor(0.6)
+                        .multilineTextAlignment(.trailing)
                 }
 
                 Spacer()
 
+                // Bottom — MOUNTAINEER badge (left) + challenge record (right)
                 HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(mountain.displayName)
-                            .font(.system(size: 52, weight: .black))
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.58)
-                        Text("挑戰紀錄 · \(max(1, checkInCount + 1))/100 mt.")
-                            .font(.system(size: 40, weight: .black))
-                    }
+                    Text("MOUNTAINEER")
+                        .font(.system(size: 26, weight: .black))
+                        .tracking(3)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 9)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(.white, lineWidth: 2)
+                        )
 
                     Spacer()
 
-                    Image(systemName: "location.circle.fill")
-                        .font(.system(size: 82, weight: .black))
+                    Text("挑戰紀錄 · \(max(1, checkInCount))/300 mt.")
+                        .font(.system(size: 34, weight: .black))
                 }
             }
             .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.42), radius: 12)
-            .padding(54)
+            .shadow(color: .black.opacity(0.5), radius: 10)
+            .padding(56)
 
+            // Corner registration ticks (top-right, bottom-left).
             VStack {
                 HStack {
                     Spacer()
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 10, height: 150)
+                    Rectangle().fill(Color.white).frame(width: 10, height: 130)
                 }
                 Spacer()
                 HStack {
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 10, height: 150)
+                    Rectangle().fill(Color.white).frame(width: 10, height: 130)
                     Spacer()
                 }
             }
