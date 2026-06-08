@@ -141,11 +141,6 @@ struct CheckInCameraView: View {
                     modeChooserOverlay(bottomInset: proxy.safeAreaInsets.bottom)
                 }
 
-                if showSuccess {
-                    checkInSuccessView(topInset: proxy.safeAreaInsets.top, bottomInset: proxy.safeAreaInsets.bottom)
-                        .transition(.opacity)
-                        .zIndex(10)
-                }
             }
             .ignoresSafeArea()
         }
@@ -157,6 +152,13 @@ struct CheckInCameraView: View {
             if recorder.isRecording {
                 mode = .recording
             }
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-qaSuccess") {
+                mode = .directCheckIn
+                capturedImage = UIImage(named: mountain.imageName)
+                showSuccess = true
+            }
+            #endif
         }
         .onDisappear {
             locationManager.stopUpdating()
@@ -186,6 +188,9 @@ struct CheckInCameraView: View {
         }
         .fullScreenCover(isPresented: $showEnlargedWatermark) {
             watermarkEnlargedView
+        }
+        .fullScreenCover(isPresented: $showSuccess) {
+            checkInSuccessScreen
         }
     }
 
@@ -731,25 +736,28 @@ struct CheckInCameraView: View {
 
     // MARK: - Success screen (design flow 04)
 
-    private func checkInSuccessView(topInset: CGFloat, bottomInset: CGFloat) -> some View {
-        ZStack {
+    private var checkInSuccessScreen: some View {
+        ZStack(alignment: .top) {
+            // Full-bleed photo + design gradient (.succ .ph / .grad).
             MountainPhoto(mountain: mountain, dimming: 0)
                 .ignoresSafeArea()
 
-                LinearGradient(
-                    colors: [
-                        FrogTheme.forest.opacity(0.62),
-                        FrogTheme.forest.opacity(0.42),
-                        Color.black.opacity(0.92)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+            LinearGradient(
+                colors: [
+                    FrogTheme.forest.opacity(0.62),
+                    FrogTheme.forest.opacity(0.42),
+                    Color.black.opacity(0.92)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
+            // Presented as a fullScreenCover → clean safe area, so the ScrollView
+            // respects insets on its own. Content top-aligned, actions follow the
+            // card (design .succ .inner order). Scrolls if it ever overflows.
+            ScrollView {
                 VStack(spacing: 0) {
-                    Spacer().frame(height: topInset + 22)
-
                     ZStack {
                         Circle()
                             .stroke(Color.white.opacity(0.55), lineWidth: 2)
@@ -761,18 +769,19 @@ struct CheckInCameraView: View {
                             .font(.system(size: 40, weight: .heavy))
                             .foregroundStyle(.white)
                     }
+                    .padding(.top, 18)
 
                     Text("VALID CHECK-IN · 有效打卡")
                         .font(.frogEyebrow)
                         .tracking(1.8)
                         .textCase(.uppercase)
                         .foregroundStyle(.white.opacity(0.6))
-                        .padding(.top, 24)
+                        .padding(.top, 26)
 
                     Text("\(mountain.nameZh) 已打卡")
                         .font(.system(size: 30, weight: .black))
                         .foregroundStyle(.white)
-                        .padding(.top, 10)
+                        .padding(.top, 12)
 
                     Text("已記錄到你的 300 峰護照，水印相已儲存到相簿。")
                         .font(.frogCaption)
@@ -781,6 +790,7 @@ struct CheckInCameraView: View {
                         .frame(maxWidth: 252)
                         .padding(.top, 8)
 
+                    // record card (.succ .card)
                     VStack(spacing: 14) {
                         if let wm = watermarkPreviewImage {
                             Image(uiImage: wm)
@@ -803,8 +813,7 @@ struct CheckInCameraView: View {
                     .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.top, 26)
 
-                    Spacer(minLength: 16)
-
+                    // actions follow the card (.succ .actions padding-top:26)
                     VStack(spacing: 10) {
                         if let wm = watermarkPreviewImage {
                             ShareLink(
@@ -820,7 +829,10 @@ struct CheckInCameraView: View {
                             }
                         }
 
-                        Button { dismiss() } label: {
+                        Button {
+                            showSuccess = false
+                            dismiss()
+                        } label: {
                             Text("返回山峰")
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.white)
@@ -834,12 +846,14 @@ struct CheckInCameraView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.bottom, max(bottomInset, 12) + 18)
+                    .padding(.top, 26)
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .padding(.bottom, 28)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea()
+        }
     }
 
     private func successStat(value: String, label: String, tint: Color = .white) -> some View {
