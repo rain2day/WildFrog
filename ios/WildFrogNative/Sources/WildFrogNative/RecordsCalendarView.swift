@@ -102,172 +102,152 @@ struct RecordsCalendarView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                passportCover
-                TripsSection()
-                passportStrip
-                calendarPanel
-                selectedRecordCard
+        GeometryReader { outer in
+            let topInset = outer.safeAreaInsets.top
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    passportCover(topInset: topInset)
+
+                    VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                        TripsSection()
+                        passportStrip
+                        calendarPanel
+                        selectedRecordCard
+                    }
+                    .padding(FrogSpace.screenPadding)
+                    .padding(.top, FrogSpace.cardGap)
+                    .padding(.bottom, 110)
+                }
             }
-            .padding(FrogSpace.screenPadding)
-            .padding(.bottom, 110)
+            .ignoresSafeArea(edges: .top)
         }
         .hiddenNavigationBar()
-        .background(FrogTheme.passport)
+        .appPageBackground(FrogTheme.passport)
     }
 
-    private var passportCover: some View {
-        ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: recentCoverMountain, dimming: 0.24)
+    // MARK: - Passport hero (.passport)
 
+    private func passportCover(topInset: CGFloat) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            MountainPhoto(mountain: recentCoverMountain, dimming: 0)
+
+            // Single layered gradient — readable photo top, anchored forest bottom.
             LinearGradient(
                 colors: [
-                    FrogTheme.forest.opacity(0.16),
-                    FrogTheme.forest.opacity(0.42),
+                    FrogTheme.forest.opacity(0.30),
+                    FrogTheme.forest.opacity(0.55),
                     FrogTheme.forest.opacity(0.96)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
-            LinearGradient(
-                colors: [
-                    Color.clear,
-                    FrogTheme.orange.opacity(0.18),
-                    Color.clear
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .top) {
-                    HStack(spacing: 9) {
-                        WildFrogBrandMark(size: 40, cornerRadius: 11)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("WILDFROG")
-                                .font(.system(size: 15, weight: .black, design: .rounded))
-                            Text("PEAK PASSPORT")
-                                .font(.system(size: 8, weight: .black))
-                                .foregroundStyle(FrogTheme.orange)
-                        }
-                    }
-                    .foregroundStyle(.white)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center) {
+                    WildFrogWordmark(markSize: 30)
+                        .shadow(color: Color.black.opacity(0.28), radius: 8, y: 3)
 
                     Spacer()
 
                     Text(displayedMonth.formatted(.dateTime.year().month(.abbreviated).locale(Locale(identifier: "en_US"))))
-                        .font(.frogMicro.weight(.black))
+                        .font(.frogNum(11, weight: .semibold))
+                        .tracking(0.8)
+                        .textCase(.uppercase)
                         .foregroundStyle(FrogTheme.forest)
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
+                        .padding(.vertical, 6)
                         .background(FrogTheme.leaf, in: Capsule())
                 }
+                .padding(.top, topInset + 8)
 
-                Spacer(minLength: 40)
+                Spacer(minLength: 24)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Peak Passport")
-                        .font(.system(size: 34, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text("每一次有效打卡，都變成一本香港山峰護照。")
-                        .font(.frogCaption.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.76))
-                        .lineLimit(2)
+                Text("Peak Passport")
+                    .font(.frogNum(30, weight: .heavy))
+                    .foregroundStyle(.white)
+
+                Text("每一次有效打卡，都變成一本香港山峰護照。")
+                    .font(.frogCaption)
+                    .foregroundStyle(.white.opacity(0.76))
+                    .lineLimit(2)
+                    .padding(.top, 7)
+
+                HStack(spacing: 9) {
+                    PassportCoverMetric(value: "\(activeDays.count)", label: "月內打卡日")
+                    PassportCoverMetric(value: "\(checkInStore.distinctMountainCount)", label: "已到山峰")
+                    PassportCoverMetric(value: "\(checkInStore.currentStreak)", label: "連續日")
                 }
-
-                HStack(spacing: 10) {
-                    PassportCoverMetric(value: "\(activeDays.count)", label: "月內打卡日", systemImage: "calendar")
-                    PassportCoverMetric(value: "\(checkInStore.distinctMountainCount)", label: "已到山峰", systemImage: "mountain.2")
-                    PassportCoverMetric(value: "\(checkInStore.currentStreak)", label: "連續日", systemImage: "flame")
-                }
+                .padding(.top, 18)
             }
-            .padding(18)
+            .padding(.horizontal, FrogSpace.screenPadding + 4)
+            .padding(.bottom, 24)
         }
-        .frame(height: 286)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.white.opacity(0.42), lineWidth: 1)
-        )
-        .shadow(color: FrogTheme.forest.opacity(0.2), radius: 16, y: 8)
+        .frame(height: topInset + 290)
+        .clipped()
     }
 
     private var recentCoverMountain: Mountain {
         checkedMountains.first ?? MountainCatalog.mountain(id: "lion-rock")
     }
 
+    // MARK: - Stamp passport (山峰印章圖鑑)
+
     private var passportStrip: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                RecordSectionTitle(title: "山峰印章圖鑑")
-                Spacer()
+        VStack(alignment: .leading, spacing: 12) {
+            RecordSectionHeader(title: "山峰印章圖鑑 · STAMPS") {
                 Text("\(checkInStore.distinctMountainCount) / \(MountainCatalog.catalogCount)")
-                    .font(.frogCaption.weight(.semibold))
-                    .foregroundStyle(FrogTheme.orange)
+                    .font(.frogNum(12, weight: .semibold))
+                    .foregroundStyle(FrogTheme.moss)
             }
-            Divider()
-                .background(FrogTheme.forest.opacity(0.12))
 
             MountainStampGrid(
                 unlockedMountainIds: checkInStore.visitedMountainIds,
                 columnsCount: 5,
                 showsLabels: true
             )
+            .padding(FrogSpace.cardPadding)
+            .cardStyle()
         }
-        .padding(FrogSpace.cardPadding)
-        .paperCardStyle(cornerRadius: 18)
     }
+
+    // MARK: - Photo calendar (.panel)
 
     private var calendarPanel: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(displayedMonthLabel)
-                        .font(.system(size: 23, weight: .black, design: .rounded))
+                        .font(.frogNum(22, weight: .heavy))
                         .foregroundStyle(FrogTheme.forest)
                     Text("打卡相簿")
-                        .font(.frogCaption.weight(.semibold))
-                        .foregroundStyle(FrogTheme.ink)
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
                 }
 
                 Spacer()
 
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        displayedMonth = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
-                        selectedDay = 1
+                HStack(spacing: 8) {
+                    CalendarNavButton(systemImage: "chevron.left") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            displayedMonth = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
+                            selectedDay = 1
+                        }
                     }
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.frogCaption)
-                        .foregroundStyle(FrogTheme.ink)
-                        .frame(width: 34, height: 34)
-                }
-                .buttonStyle(.plain)
-                .controlStyle()
-
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        displayedMonth = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
-                        selectedDay = 1
+                    CalendarNavButton(systemImage: "chevron.right") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            displayedMonth = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
+                            selectedDay = 1
+                        }
                     }
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.frogCaption)
-                        .foregroundStyle(FrogTheme.ink)
-                        .frame(width: 34, height: 34)
                 }
-                .buttonStyle(.plain)
-                .controlStyle()
             }
 
-            HStack {
+            HStack(spacing: 7) {
                 ForEach(["日", "一", "二", "三", "四", "五", "六"], id: \.self) { day in
                     Text(day)
-                        .font(.frogMicro.weight(.black))
-                        .foregroundStyle(FrogTheme.ink.opacity(0.68))
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.faint)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -292,27 +272,29 @@ struct RecordsCalendarView: View {
             }
         }
         .padding(FrogSpace.cardPadding)
-        .paperCardStyle()
+        .cardStyle()
     }
 
+    // MARK: - Selected record (.panel)
+
     private var selectedRecordCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: selectedRecord == nil ? .center : .firstTextBaseline, spacing: 16) {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(alignment: .top, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(selectedDay)")
-                        .font(.system(size: 44, weight: .black, design: .rounded))
+                        .font(.frogNum(42, weight: .heavy))
                         .foregroundStyle(FrogTheme.forest)
                     Text("\(displayedMonthNumber)月")
-                        .font(.frogCaption.weight(.black))
+                        .font(.frogMicro.weight(.bold))
                         .foregroundStyle(FrogTheme.ink)
                 }
 
                 if selectedRecord == nil {
                     Rectangle()
-                        .fill(FrogTheme.forest.opacity(0.12))
-                        .frame(width: 1, height: 56)
+                        .fill(FrogTheme.line)
+                        .frame(width: 1, height: 52)
 
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 5) {
                         Text("這天未有打卡紀錄")
                             .font(.frogRow)
                             .foregroundStyle(FrogTheme.ink)
@@ -322,55 +304,74 @@ struct RecordsCalendarView: View {
                             .lineLimit(2)
                     }
                 } else {
-                    Spacer()
+                    Spacer(minLength: 0)
                 }
 
                 if let selectedRecord {
                     NavigationLink(value: NativeRoute.tripDetail(selectedRecord.id)) {
-                        Label("查看行程", systemImage: "chevron.right")
-                            .font(.frogCaption)
+                        Text("查看行程")
+                            .font(.frogCaption.weight(.semibold))
+                            .foregroundStyle(FrogTheme.ink)
+                            .padding(.horizontal, 14)
+                            .frame(height: 36)
+                            .overlay(
+                                Capsule().stroke(FrogTheme.line, lineWidth: 1)
+                            )
                     }
-                    .buttonStyle(.bordered)
-                    .tint(FrogTheme.orange)
+                    .buttonStyle(.plain)
                 }
             }
 
             if let selectedRecord, let selectedMountain {
                 ZStack(alignment: .bottomLeading) {
-                    CheckInRecordPhoto(record: selectedRecord, mountain: selectedMountain, dimming: 0.18)
-                        .frame(height: 210)
+                    CheckInRecordPhoto(record: selectedRecord, mountain: selectedMountain, dimming: 0)
+                        .frame(height: 172)
                     LinearGradient(
-                        colors: [.clear, Color.black.opacity(0.76)],
-                        startPoint: .top,
+                        colors: [.clear, FrogTheme.forest.opacity(0.8)],
+                        startPoint: .center,
                         endPoint: .bottom
                     )
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(selectedMountain.displayName)
                             .font(.frogTitle)
-                        Text("第 \(max(1, selectedMountain.checkIns)) 次登頂 · \(selectedMountain.height)m")
-                            .font(.frogBody)
+                        Text("第 \(checkInStore.count(for: selectedMountain.id)) 次登頂 · \(selectedMountain.height)m")
+                            .font(.frogNum(13, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.82))
                     }
                     .foregroundStyle(.white)
-                    .padding(16)
+                    .padding(14)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-                Text("顯示你打卡時保存的原相；水印版本只用於分享或相簿輸出。")
-                    .font(.frogCaption)
-                    .foregroundStyle(FrogTheme.muted)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
         }
         .padding(FrogSpace.cardPadding)
-        .background(alignment: .bottomTrailing) {
-            Image(systemName: "mountain.2")
-                .font(.system(size: 82, weight: .light))
-                .foregroundStyle(FrogTheme.forest.opacity(0.055))
-                .padding(.trailing, 18)
-                .padding(.bottom, 10)
-        }
-        .paperCardStyle()
+        .cardStyle()
     }
 }
+
+// MARK: - Calendar nav button (.cal-nav .b)
+
+private struct CalendarNavButton: View {
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(FrogTheme.ink)
+                .frame(width: 34, height: 34)
+                .background(FrogTheme.warmPaper, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(FrogTheme.line, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Calendar tile (.cal-cell)
 
 private struct CalendarTile: View {
     let day: Int
@@ -381,68 +382,63 @@ private struct CalendarTile: View {
     var body: some View {
         ZStack {
             if let record {
-                CheckInRecordPhoto(record: record, mountain: MountainCatalog.mountain(id: record.mountainId), dimming: 0.24)
+                CheckInRecordPhoto(record: record, mountain: MountainCatalog.mountain(id: record.mountainId), dimming: 0)
+                Color.black.opacity(0.28)
             } else {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(isCurrentMonth ? FrogTheme.warmPaper : FrogTheme.paper.opacity(0.5))
-                    .overlay {
-                        FrogContourLines(color: FrogTheme.forest.opacity(isCurrentMonth ? 0.025 : 0.015), lineWidth: 0.6)
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    }
+                    .fill(FrogTheme.warmPaper)
             }
 
             Text("\(day)")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                .foregroundStyle(record == nil ? (isCurrentMonth ? FrogTheme.ink : FrogTheme.muted.opacity(0.72)) : .white)
-                .shadow(color: .black.opacity(record == nil ? 0 : 0.25), radius: 3)
+                .font(.frogNum(14, weight: .medium))
+                .foregroundStyle(record == nil ? FrogTheme.muted : .white)
+                .shadow(color: .black.opacity(record == nil ? 0 : 0.5), radius: 3, y: 1)
         }
         .aspectRatio(1, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(
-                    isSelected ? FrogTheme.orange : (record == nil ? FrogTheme.line : Color.white.opacity(0.65)),
+                    isSelected ? FrogTheme.orange : (record == nil ? FrogTheme.lineSoft : Color.white.opacity(0.5)),
                     lineWidth: isSelected ? 2 : 1
                 )
         )
+        .opacity(isCurrentMonth ? 1 : 0.4)
     }
 }
+
+// MARK: - Passport metric (.ppm .m)
 
 private struct PassportCoverMetric: View {
     let value: String
     let label: String
-    let systemImage: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(value)
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Spacer(minLength: 4)
-                Image(systemName: systemImage)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(FrogTheme.leaf.opacity(0.9))
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            Text(value)
+                .font(.frogNum(22, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
 
-            VStack(alignment: .leading, spacing: 7) {
-                Text(label)
-                    .font(.frogMicro.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.74))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-                Capsule()
-                    .fill(FrogTheme.leaf.opacity(0.84))
-                    .frame(width: 28, height: 3)
-            }
+            Text(label)
+                .font(.frogMicro.weight(.medium))
+                .foregroundStyle(.white.opacity(0.7))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.top, 4)
+
+            Capsule()
+                .fill(FrogTheme.leaf)
+                .frame(width: 26, height: 3)
+                .padding(.top, 8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(11)
-        .background(Color.black.opacity(0.30), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .background(FrogTheme.forest.opacity(0.42), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
         )
     }
 }
@@ -453,20 +449,29 @@ private struct CalendarCellModel: Identifiable {
     let id: String
 }
 
-private struct RecordSectionTitle: View {
+// MARK: - Section header (.wf-section eyebrow + hairline rule)
+
+private struct RecordSectionHeader<Trailing: View>: View {
     let title: String
-    var systemImage: String = "seal.fill"
+    let trailing: Trailing
+
+    init(title: String, @ViewBuilder trailing: () -> Trailing) {
+        self.title = title
+        self.trailing = trailing()
+    }
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15, weight: .black))
-                .foregroundStyle(FrogTheme.forest)
-                .frame(width: 30, height: 30)
-                .background(FrogTheme.forest.opacity(0.08), in: Circle())
+        HStack(spacing: 12) {
             Text(title)
-                .font(.frogTitle)
-                .foregroundStyle(FrogTheme.forest)
+                .font(.frogEyebrow)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(FrogTheme.moss)
+                .fixedSize(horizontal: true, vertical: false)
+            Rectangle()
+                .fill(FrogTheme.line)
+                .frame(height: 1)
+            trailing
         }
     }
 }
@@ -582,7 +587,7 @@ private struct MountainStampSlotView: View {
 
             if showsLabel {
                 Text(label)
-                    .font(.frogMicro.weight(isUnlocked ? .black : .semibold))
+                    .font(.frogMicro.weight(isUnlocked ? .bold : .medium))
                     .foregroundStyle(isUnlocked ? FrogTheme.forest : FrogTheme.muted.opacity(0.76))
                     .lineLimit(1)
                     .minimumScaleFactor(0.62)
@@ -597,7 +602,7 @@ private struct MountainStampSlotView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(isUnlocked ? FrogTheme.orange.opacity(0.18) : FrogTheme.forest.opacity(0.05), lineWidth: 1)
+                .stroke(isUnlocked ? FrogTheme.moss.opacity(0.18) : FrogTheme.lineSoft, lineWidth: 1)
         )
     }
 
@@ -609,42 +614,66 @@ private struct MountainStampSlotView: View {
     }
 }
 
-// MARK: - Trips section ("我嘅行程")
+// MARK: - Trips section ("我嘅行程 · TRIPS")
 
-/// Lists every completed check-in (newest first). Each row is one trip: summit
+/// Preview of the most recent trips (newest first). Each row is one trip: summit
 /// photo, mountain, date, and a track badge (distance/time) or a 打卡 tag.
+/// When there are more than `previewLimit`, a "全部行程 →" link opens the full list.
 private struct TripsSection: View {
     @EnvironmentObject private var checkInStore: CheckInStore
+
+    private let previewLimit = 4
 
     private var trips: [CheckInRecord] {
         checkInStore.records.sorted { $0.date > $1.date }
     }
 
+    private var previewTrips: [CheckInRecord] {
+        Array(trips.prefix(previewLimit))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                RecordSectionTitle(title: "我嘅行程", systemImage: "figure.hiking")
-                Spacer()
+            RecordSectionHeader(title: "我嘅行程 · TRIPS") {
                 Text("\(trips.count)")
-                    .font(.frogCaption.weight(.black))
-                    .foregroundStyle(FrogTheme.orange)
+                    .font(.frogNum(12, weight: .semibold))
+                    .foregroundStyle(FrogTheme.moss)
             }
 
             if trips.isEmpty {
                 emptyState
             } else {
                 VStack(spacing: 10) {
-                    ForEach(trips) { record in
+                    ForEach(previewTrips) { record in
                         NavigationLink(value: NativeRoute.tripDetail(record.id)) {
                             TripRow(record: record)
                         }
                         .buttonStyle(.plain)
                     }
                 }
+
+                if trips.count > previewLimit {
+                    NavigationLink {
+                        AllTripsView(trips: trips)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("全部行程")
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .font(.frogCaption.weight(.semibold))
+                        .foregroundStyle(FrogTheme.moss)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(FrogTheme.line, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
-        .padding(FrogSpace.cardPadding)
-        .paperCardStyle(cornerRadius: 18)
     }
 
     private var emptyState: some View {
@@ -660,7 +689,39 @@ private struct TripsSection: View {
                 .foregroundStyle(FrogTheme.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 10)
+        .padding(FrogSpace.cardPadding)
+        .cardStyle()
+    }
+}
+
+/// Full chronological list of every completed trip, reached via "全部行程 →".
+private struct AllTripsView: View {
+    let trips: [CheckInRecord]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                RecordSectionHeader(title: "全部行程 · ALL TRIPS") {
+                    Text("\(trips.count)")
+                        .font(.frogNum(12, weight: .semibold))
+                        .foregroundStyle(FrogTheme.moss)
+                }
+
+                VStack(spacing: 10) {
+                    ForEach(trips) { record in
+                        NavigationLink(value: NativeRoute.tripDetail(record.id)) {
+                            TripRow(record: record)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(FrogSpace.screenPadding)
+            .padding(.bottom, 110)
+        }
+        .navigationTitle("我嘅行程")
+        .nativeInlineTitle()
+        .appPageBackground(FrogTheme.passport)
     }
 }
 
@@ -674,30 +735,31 @@ private struct TripRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 13) {
             thumbnailView
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(mountain.nameZh)
-                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .font(.frogRow)
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
                 Text(record.date.formatted(date: .abbreviated, time: .shortened))
-                    .font(.frogCaption.weight(.semibold))
+                    .font(.frogNum(12, weight: .medium))
                     .foregroundStyle(FrogTheme.muted)
                 badge
+                    .padding(.top, 3)
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(FrogTheme.muted)
+                .foregroundStyle(FrogTheme.faint)
         }
-        .padding(12)
-        .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(11)
+        .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .stroke(FrogTheme.line, lineWidth: 1)
         )
         .onAppear { loadThumbnail() }
@@ -706,29 +768,25 @@ private struct TripRow: View {
     @ViewBuilder
     private var thumbnailView: some View {
         PhotoFallbackView(image: thumbnail, mountain: mountain, dimming: 0.1)
-        .frame(width: 66, height: 66)
+        .frame(width: 60, height: 60)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(FrogTheme.line, lineWidth: 1)
-        )
     }
 
     @ViewBuilder
     private var badge: some View {
         if let track = record.track {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Label(TrackFormat.distance(track.distanceMeters), systemImage: "ruler")
                 Label(TrackFormat.duration(track.durationSeconds), systemImage: "clock")
             }
-            .font(.frogMicro.weight(.bold))
+            .font(.frogNum(11, weight: .semibold))
             .foregroundStyle(FrogTheme.moss)
         } else {
             Text("打卡")
-                .font(.frogMicro.weight(.black))
+                .font(.frogMicro.weight(.bold))
                 .foregroundStyle(FrogTheme.orange)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
                 .background(FrogTheme.orangeSoft, in: Capsule())
         }
     }

@@ -222,7 +222,7 @@ struct CheckInCameraView: View {
     // MARK: - Status strip
 
     private var statusStrip: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 9) {
             CheckInStatusChip(systemImage: gpsChipImage, title: gpsChipTitle, subtitle: nil)
             CheckInStatusChip(systemImage: "mountain.2", title: "\(mountain.height)m", subtitle: "summit")
             CheckInStatusChip(systemImage: "sun.max", title: "Weather", subtitle: "Clear")
@@ -244,17 +244,17 @@ struct CheckInCameraView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Capsule()
                             .fill(FrogTheme.line)
-                            .frame(width: 46, height: 5)
+                            .frame(width: 44, height: 5)
                             .frame(maxWidth: .infinity)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(mountain.nameZh)
-                                .font(.system(size: 25, weight: .black, design: .rounded))
+                                .font(.system(size: 24, weight: .black))
                                 .foregroundStyle(FrogTheme.ink)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.72)
                             Text("點樣打卡呢座山？")
-                                .font(.frogCaption.weight(.semibold))
+                                .font(.frogCaption.weight(.medium))
                                 .foregroundStyle(FrogTheme.muted)
                         }
 
@@ -289,8 +289,8 @@ struct CheckInCameraView: View {
                     .padding(.bottom, 18)
                     .frame(maxWidth: .infinity)
                     .background(FrogTheme.warmPaper)
-                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.2), radius: 20, y: 10)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.28), radius: 24, y: -8)
 
                     Spacer(minLength: 0)
                 }
@@ -308,18 +308,18 @@ struct CheckInCameraView: View {
         background: Color,
         foreground: Color
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 13) {
             Image(systemName: systemImage)
-                .font(.system(size: 21, weight: .black))
+                .font(.system(size: 21, weight: .semibold))
                 .foregroundStyle(foreground)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(foreground)
                 Text(subtitle)
-                    .font(.frogCaption.weight(.semibold))
-                    .foregroundStyle(foreground.opacity(0.78))
+                    .font(.frogCaption.weight(.medium))
+                    .foregroundStyle(background == FrogTheme.orange ? foreground.opacity(0.82) : FrogTheme.muted)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
@@ -327,7 +327,7 @@ struct CheckInCameraView: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 13)
+        .padding(.vertical, 15)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
@@ -374,7 +374,7 @@ struct CheckInCameraView: View {
                     stopRecordingMode()
                 } label: {
                     Label("STOP", systemImage: "stop.fill")
-                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .font(.system(size: 11, weight: .heavy))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
@@ -384,7 +384,8 @@ struct CheckInCameraView: View {
             }
         }
         .padding(14)
-        .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(FrogTheme.warmPaper.opacity(0.92), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(FrogTheme.line, lineWidth: 1)
@@ -400,12 +401,12 @@ struct CheckInCameraView: View {
     private func recordingStat(value: String, label: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.system(size: 22, weight: .black, design: .rounded))
+                .font(.frogNum(22, weight: .heavy))
                 .foregroundStyle(FrogTheme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             Text(label)
-                .font(.frogCaption.weight(.semibold))
+                .font(.frogCaption.weight(.medium))
                 .foregroundStyle(FrogTheme.muted)
         }
         .frame(maxWidth: .infinity)
@@ -424,7 +425,7 @@ struct CheckInCameraView: View {
     // MARK: - Photo action row
 
     private var photoActionRow: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 11) {
             // 即場拍照
             Button {
                 #if canImport(UIKit)
@@ -435,16 +436,17 @@ struct CheckInCameraView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "camera.fill")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 16, weight: .semibold))
                     Text("即場拍照")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 14, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 46)
-                .background(Color.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .background(Color.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .stroke(Color.white.opacity(0.42), lineWidth: 1)
                 )
                 .foregroundStyle(.white)
             }
@@ -473,16 +475,17 @@ struct CheckInCameraView: View {
             ) {
                 HStack(spacing: 8) {
                     Image(systemName: "photo.fill")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 16, weight: .semibold))
                     Text("上載相片")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 14, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 46)
-                .background(Color.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .background(Color.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .stroke(Color.white.opacity(0.42), lineWidth: 1)
                 )
                 .foregroundStyle(.white)
             }
@@ -502,7 +505,7 @@ struct CheckInCameraView: View {
                 MountainPhoto(mountain: mountain, dimming: 0.34)
                     .overlay(
                         Text("先影相或揀相")
-                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.82))
                             .padding(6)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -517,30 +520,34 @@ struct CheckInCameraView: View {
             )
 
             previewWatermarkBadge
-                .padding(8)
+                .padding(7)
         }
-        .frame(width: 132, height: 92)
-        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .frame(width: 116, height: 84)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .stroke(Color.white.opacity(0.24), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: 1)
         )
     }
 
     private var previewWatermarkBadge: some View {
         HStack(spacing: 5) {
-            WildFrogBrandMark(size: 18, cornerRadius: 5)
+            Image(systemName: "checkmark")
+                .font(.system(size: 9, weight: .black))
+                .foregroundStyle(.white)
+                .frame(width: 16, height: 16)
+                .background(FrogTheme.orange, in: RoundedRectangle(cornerRadius: 4, style: .continuous))
             VStack(alignment: .leading, spacing: 0) {
                 Text("WILDFROG")
-                    .font(.system(size: 8, weight: .black, design: .rounded))
+                    .font(.frogNum(7.5, weight: .bold))
                 Text("\(mountain.nameZh) · \(mountain.height)m")
-                    .font(.system(size: 7, weight: .bold, design: .rounded))
+                    .font(.frogNum(7.5, weight: .bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.62)
             }
         }
         .foregroundStyle(.white)
-        .shadow(color: .black.opacity(0.55), radius: 4)
+        .shadow(color: .black.opacity(0.6), radius: 2, y: 1)
     }
 
     // MARK: - Bottom sheet
@@ -549,46 +556,48 @@ struct CheckInCameraView: View {
         VStack(alignment: .leading, spacing: 15) {
             Capsule()
                 .fill(FrogTheme.line)
-                .frame(width: 46, height: 5)
+                .frame(width: 44, height: 5)
                 .frame(maxWidth: .infinity)
 
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: 14) {
                 VStack(alignment: .leading, spacing: 7) {
                     Text(mountain.nameZh)
-                        .font(.system(size: 30, weight: .black, design: .rounded))
+                        .font(.system(size: 27, weight: .black))
                         .foregroundStyle(FrogTheme.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.62)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(mountain.nameEn)
-                        .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundStyle(FrogTheme.forest)
+                        .font(.frogNum(18, weight: .semibold))
+                        .foregroundStyle(FrogTheme.moss)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
 
                     HStack(spacing: 8) {
                         Label("\(mountain.height)m", systemImage: "mountain.2.fill")
-                            .font(.frogCaption.weight(.black))
+                            .font(.frogNum(13, weight: .semibold))
                             .foregroundStyle(FrogTheme.forest)
-                        CheckInConfidencePill(systemImage: "checkmark.shield.fill", text: "吻合")
+                        CheckInConfidencePill(systemImage: "checkmark", text: "GPS 吻合")
                     }
 
                     Text("根據 GPS、海拔及方向核對")
-                        .font(.frogCaption.weight(.semibold))
+                        .font(.frogCaption.weight(.medium))
                         .foregroundStyle(FrogTheme.muted)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 7) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("水印預覽")
-                        .font(.frogCaption.weight(.black))
-                        .foregroundStyle(FrogTheme.forest)
+                        .font(.frogEyebrow)
+                        .tracking(1.4)
+                        .textCase(.uppercase)
+                        .foregroundStyle(FrogTheme.moss)
                     watermarkPreview
                 }
-                .frame(width: 132, alignment: .leading)
+                .frame(width: 116, alignment: .leading)
             }
 
             // Complete check-in button — gated by signed-in AND in-range AND has photo
@@ -599,17 +608,17 @@ struct CheckInCameraView: View {
                     performCheckIn()
                 }
             } label: {
-                HStack(spacing: 16) {
+                HStack(spacing: 14) {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 28, weight: .black))
-                        .frame(width: 46, height: 46)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                        .font(.system(size: 22, weight: .heavy))
+                        .frame(width: 42, height: 42)
+                        .overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 2.5))
                     Text(isSavingWatermark ? "正在儲存..." : "完成打卡")
-                        .font(.system(size: 27, weight: .black, design: .rounded))
+                        .font(.system(size: 22, weight: .bold))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 66)
-                .primaryCTAStyle(cornerRadius: 24)
+                .frame(height: 62)
+                .primaryCTAStyle(cornerRadius: 20)
                 .opacity(canCheckIn ? 1 : 0.4)
             }
             .buttonStyle(.plain)
@@ -625,16 +634,24 @@ struct CheckInCameraView: View {
                 Image(systemName: "info.circle")
                 Text(saveMessage ?? hintText)
             }
-            .font(.frogCaption.weight(.semibold))
+            .font(.system(size: 12, weight: .medium))
             .foregroundStyle(canCheckIn ? FrogTheme.muted : FrogTheme.orange)
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal, 20)
         .padding(.top, 10)
-        .padding(.bottom, 18)
-        .background(FrogTheme.warmPaper.opacity(0.96))
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Color.black.opacity(0.16), radius: 18, y: -4)
+        .padding(.bottom, 22)
+        .background(FrogTheme.warmPaper.opacity(0.97))
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 26,
+                bottomLeadingRadius: 36,
+                bottomTrailingRadius: 36,
+                topTrailingRadius: 26,
+                style: .continuous
+            )
+        )
+        .shadow(color: Color.black.opacity(0.18), radius: 24, y: -8)
     }
 
     private var hintText: String {
@@ -796,7 +813,7 @@ private struct CheckInWatermarkExportView: View {
             )
 
             Text("WILDFROG")
-                .font(.system(size: 138, weight: .black, design: .rounded))
+                .font(.system(size: 138, weight: .black))
                 .foregroundStyle(.white.opacity(0.14))
                 .rotationEffect(.degrees(-18))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -807,16 +824,16 @@ private struct CheckInWatermarkExportView: View {
                         HStack(spacing: 18) {
                             WildFrogBrandMark(size: 92, cornerRadius: 24)
                             Text("WildFrog")
-                                .font(.system(size: 72, weight: .black, design: .rounded))
+                                .font(.system(size: 72, weight: .black))
                         }
                         Text("HONG KONG MOUNTAINEER")
-                            .font(.system(size: 28, weight: .black, design: .rounded))
+                            .font(.system(size: 28, weight: .black))
                     }
 
                     Spacer()
 
                     Text("\(mountain.nameZh) · \(mountain.height)m")
-                        .font(.system(size: 42, weight: .black, design: .rounded))
+                        .font(.system(size: 42, weight: .black))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                 }
@@ -826,11 +843,11 @@ private struct CheckInWatermarkExportView: View {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(mountain.displayName)
-                            .font(.system(size: 52, weight: .black, design: .rounded))
+                            .font(.system(size: 52, weight: .black))
                             .lineLimit(2)
                             .minimumScaleFactor(0.58)
                         Text("挑戰紀錄 · \(max(1, checkInCount + 1))/100 mt.")
-                            .font(.system(size: 40, weight: .black, design: .rounded))
+                            .font(.system(size: 40, weight: .black))
                     }
 
                     Spacer()
@@ -883,22 +900,22 @@ private struct CheckInStatusChip: View {
     let subtitle: String?
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 9) {
             Image(systemName: systemImage)
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(FrogTheme.forest)
-                .frame(width: 26)
+                .frame(width: 24)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.frogCaption.weight(.bold))
+                    .font(.frogNum(14, weight: .semibold))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(.frogMicro.weight(.semibold))
+                        .font(.frogMicro.weight(.medium))
                         .foregroundStyle(FrogTheme.muted)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
@@ -907,16 +924,17 @@ private struct CheckInStatusChip: View {
 
             if subtitle == nil {
                 Circle()
-                    .fill(FrogTheme.forest)
+                    .fill(FrogTheme.leaf)
                     .frame(width: 7, height: 7)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 58, alignment: .center)
+        .frame(maxWidth: .infinity, minHeight: 54, alignment: .center)
         .padding(.horizontal, 12)
-        .background(Color.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(FrogTheme.surface.opacity(0.82), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.45), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .stroke(Color.white.opacity(0.5), lineWidth: 1)
         )
     }
 }
@@ -926,21 +944,19 @@ private struct CheckInConfidencePill: View {
     let text: String
 
     var body: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 5) {
             Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .black))
-                .foregroundStyle(.white)
-                .frame(width: 22, height: 22)
-                .background(FrogTheme.forest, in: Circle())
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(FrogTheme.moss)
 
             Text(text)
-                .font(.frogCaption.weight(.bold))
-                .foregroundStyle(FrogTheme.ink)
+                .font(.frogCaption.weight(.semibold))
+                .foregroundStyle(FrogTheme.moss)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(FrogTheme.mapWash.opacity(0.7), in: Capsule())
+        .padding(.horizontal, 9)
+        .padding(.vertical, 6)
+        .background(FrogTheme.mossSoft, in: Capsule())
     }
 }

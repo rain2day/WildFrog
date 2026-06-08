@@ -55,194 +55,201 @@ struct LeaderboardView: View {
     }
 
     private var leaderboardHeader: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        // .lb-title: 34 / forest / tight tracking, with a 32×3 trail underline (.u)
+        VStack(alignment: .leading, spacing: 7) {
             Text("排行榜")
-                .font(.system(size: 38, weight: .black, design: .rounded))
+                .font(.frogNum(34, weight: .heavy))
+                .tracking(-0.6)
                 .foregroundStyle(FrogTheme.forest)
-            Rectangle()
+            Capsule()
                 .fill(FrogTheme.orange)
-                .frame(width: 34, height: 3)
-                .clipShape(Capsule())
+                .frame(width: 32, height: 3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 12)
     }
 
     private var scopeSelector: some View {
+        // .seg: surface-2 track + hairline; active segment = forest fill, white text.
         HStack(spacing: 0) {
             ForEach(LeaderboardScope.allCases) { item in
                 Button {
                     scope = item
                 } label: {
                     Text(item.rawValue)
-                        .font(.frogRow.weight(.bold))
-                        .foregroundStyle(scope == item ? .white : FrogTheme.forest)
+                        .font(.frogRow.weight(.semibold))
+                        .foregroundStyle(scope == item ? .white : FrogTheme.muted)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 44)
+                        .frame(height: 38)
                         .background {
                             if scope == item {
-                                Capsule()
-                                    .fill(FrogTheme.forest)
-                                    .padding(3)
+                                Capsule().fill(FrogTheme.forest)
                             }
                         }
                 }
                 .buttonStyle(.plain)
             }
         }
-        .background(Color.white.opacity(0.56), in: Capsule())
+        .padding(3)
+        .background(FrogTheme.surface2, in: Capsule())
         .overlay(Capsule().stroke(FrogTheme.line, lineWidth: 1))
     }
 
 
     private var crossUserDisclaimer: some View {
-        HStack(spacing: 6) {
+        // .note: trail-soft bg, small brick-brown text (#8a5a3e), info glyph.
+        HStack(spacing: 7) {
             Image(systemName: "info.circle")
                 .font(.frogMicro.weight(.semibold))
             Text("示範資料 · 真實排行榜需要伺服器（即將推出）")
                 .font(.frogMicro)
         }
-        .foregroundStyle(FrogTheme.muted)
+        .foregroundStyle(Self.brickBrown)
         .padding(.horizontal, 12)
-        .padding(.vertical, 7)
+        .padding(.vertical, 9)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
+    /// .note text colour (#8a5a3e) — restrained brick-brown on trail-soft.
+    private static let brickBrown = Color(red: 138 / 255, green: 90 / 255, blue: 62 / 255)
+
     private var myRankCard: some View {
-        ZStack(alignment: .bottomTrailing) {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("我的紀錄")
-                        .font(.frogTitle)
-                        .foregroundStyle(FrogTheme.forest)
-                    Text("\(myTotalCheckIns)")
-                        .font(.system(size: 72, weight: .black, design: .rounded))
-                        .foregroundStyle(FrogTheme.forest)
-                        .lineLimit(1)
-                    HStack(spacing: 5) {
-                        Text("總打卡")
-                            .font(.frogCaption.weight(.semibold))
-                            .foregroundStyle(FrogTheme.ink)
-                        Text("\(myDistinctMountains)")
-                            .font(.frogTitle)
-                            .foregroundStyle(FrogTheme.orange)
-                        Text("座山")
-                            .font(.frogCaption.weight(.semibold))
-                            .foregroundStyle(FrogTheme.ink)
-                    }
-                    HStack(spacing: 5) {
-                        Image(systemName: "flame.fill")
-                            .font(.frogCaption.weight(.bold))
-                            .foregroundStyle(FrogTheme.orange)
-                        Text("連續 \(checkInStore.currentStreak) 日")
-                            .font(.frogCaption.weight(.semibold))
-                            .foregroundStyle(FrogTheme.muted)
-                    }
+        // .myrank: left = eyebrow + big rank number + "總打卡 · N 座山" + streak;
+        // right = tilted poster photo (white border). Plain hairline card.
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("我的紀錄 · MY RECORD")
+                    .font(.frogEyebrow)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(FrogTheme.moss)
+
+                Text("\(myTotalCheckIns)")
+                    .font(.frogNum(62, weight: .semibold))
+                    .tracking(-1.5)
+                    .foregroundStyle(FrogTheme.forest)
+                    .lineLimit(1)
+                    .padding(.top, 4)
+
+                // .sub — count is a numeral data-accent (gold), not orange.
+                (
+                    Text("總打卡 · ")
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
+                    + Text("\(myDistinctMountains)")
+                        .font(.frogNum(14, weight: .bold))
+                        .foregroundStyle(FrogTheme.gold)
+                    + Text(" 座山")
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
+                )
+                .padding(.top, 8)
+
+                HStack(spacing: 5) {
+                    Image(systemName: "flame.fill")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.moss)
+                    Text("連續 \(checkInStore.currentStreak) 日")
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
                 }
-
-                Spacer()
-
-                ZStack(alignment: .top) {
-                    MountainPhoto(mountain: MountainCatalog.mountain(id: "victoria-peak"), dimming: 0.05)
-                        .frame(width: 126, height: 112)
-                        .clipShape(RoundedRectangle(cornerRadius: 2, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                .stroke(Color.white, lineWidth: 8)
-                        )
-                        .rotationEffect(.degrees(1.5))
-
-                    Rectangle()
-                        .fill(Color(red: 218 / 255, green: 199 / 255, blue: 153 / 255).opacity(0.72))
-                        .frame(width: 54, height: 18)
-                        .rotationEffect(.degrees(-2))
-                        .offset(y: -8)
-                }
+                .padding(.top, 9)
             }
 
-            WildFrogMark()
-                .stroke(FrogTheme.forest.opacity(0.16), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-                .frame(width: 58, height: 58)
+            Spacer(minLength: 0)
+
+            MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0.05)
+                .frame(width: 104, height: 100)
+                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .stroke(Color.white, lineWidth: 6)
+                )
+                .shadow(color: FrogTheme.warmShadow.opacity(0.14), radius: 9, x: 0, y: 5)
+                .rotationEffect(.degrees(1.5))
         }
-        .padding(20)
-        .background(FrogTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(FrogTheme.orange.opacity(0.16), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.07), radius: 10, x: 0, y: 4)
+        .padding(18)
+        .cardStyle()
     }
 
     private var podiumPanel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Top 3")
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(FrogTheme.forest)
-                Rectangle()
-                    .fill(FrogTheme.orange)
-                    .frame(width: 28, height: 2)
-                    .clipShape(Capsule())
-            }
+        VStack(alignment: .leading, spacing: 13) {
+            sectionHeader("TOP 3")
 
+            // .podium: 3 cards end-aligned; first centred + elevated (gold tint).
             HStack(alignment: .bottom, spacing: 10) {
-                ForEach(Array(demoUsers.prefix(3))) { user in
-                    PodiumCard(user: user, height: user.rank == 1 ? 132 : 112)
+                ForEach(podiumOrder) { user in
+                    PodiumCard(user: user, height: user.rank == 1 ? 158 : 138)
                 }
             }
+        }
+    }
+
+    /// Podium display order: 2nd · 1st · 3rd (winner centred), matching the design.
+    private var podiumOrder: [LeaderboardUser] {
+        let top = Array(demoUsers.prefix(3))
+        let first = top.first { $0.rank == 1 }
+        let second = top.first { $0.rank == 2 }
+        let third = top.first { $0.rank == 3 }
+        return [second, first, third].compactMap { $0 }
+    }
+
+    /// .wf-section: eyebrow label + trailing hairline rule.
+    private func sectionHeader(_ label: String) -> some View {
+        HStack(spacing: 12) {
+            Text(label)
+                .font(.frogEyebrow)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(FrogTheme.moss)
+            Rectangle()
+                .fill(FrogTheme.line)
+                .frame(height: 1)
         }
     }
 
     private var topUsers: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("排行榜（示範）")
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(FrogTheme.forest)
-                Spacer()
-                Button { showAllLeaderboard = true } label: {
-                    HStack(spacing: 4) {
-                        Text("查看全部")
-                            .font(.frogCaption.weight(.semibold))
-                            .foregroundStyle(FrogTheme.muted)
-                        Image(systemName: "chevron.right")
-                            .font(.frogCaption.weight(.bold))
-                            .foregroundStyle(FrogTheme.muted)
-                    }
-                }
-                .buttonStyle(.plain)
-            }
+        VStack(alignment: .leading, spacing: 6) {
+            sectionHeader("排行榜（示範）")
 
+            // .lb-row list — the current-user row (.me) gets a trail-soft highlight.
             VStack(spacing: 0) {
                 ForEach(demoUsers) { user in
-                    LeaderboardRow(user: user, isCurrentUser: false)
+                    LeaderboardRow(user: user, isCurrentUser: isCurrentUser(user))
                 }
             }
-            .cardStyle()
+            .padding(.top, 6)
+
+            // 完整排行 → opens the full ranking list.
+            Button { showAllLeaderboard = true } label: {
+                HStack(spacing: 5) {
+                    Text("完整排行")
+                        .font(.frogCaption.weight(.semibold))
+                    Image(systemName: "arrow.right")
+                        .font(.frogMicro.weight(.bold))
+                }
+                .foregroundStyle(FrogTheme.moss)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(FrogTheme.line, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 6)
         }
     }
 
+    /// Existing "me" detection — the draft user row in the demo set.
+    private func isCurrentUser(_ user: LeaderboardUser) -> Bool {
+        user.name == "Aud"
+    }
+
     private var mountainHeatList: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("熱門山峰")
-                    .font(.headline.weight(.black))
-                    .foregroundStyle(FrogTheme.forest)
-                Spacer()
-                Button { showAllLeaderboard = true } label: {
-                    HStack(spacing: 4) {
-                        Text("查看全部")
-                            .font(.frogCaption.weight(.semibold))
-                            .foregroundStyle(FrogTheme.muted)
-                        Image(systemName: "chevron.right")
-                            .font(.frogCaption.weight(.bold))
-                            .foregroundStyle(FrogTheme.muted)
-                    }
-                }
-                .buttonStyle(.plain)
-            }
+        VStack(alignment: .leading, spacing: 13) {
+            sectionHeader("熱門山峰 · HOT PEAKS")
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -273,63 +280,58 @@ private struct PodiumCard: View {
     let user: LeaderboardUser
     let height: CGFloat
 
-    private var tint: Color {
+    private var isFirst: Bool { user.rank == 1 }
+
+    /// .pod .rk colour — first gold, second pine, third faint (ink-3).
+    private var rankColor: Color {
         switch user.rank {
         case 1: FrogTheme.gold
         case 2: FrogTheme.moss
-        default: FrogTheme.slate
+        default: FrogTheme.faint
         }
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Text("\(user.rank)")
-                .font(.system(size: user.rank == 1 ? 26 : 22, weight: .black, design: .rounded))
-                .foregroundStyle(tint)
+                .font(.frogNum(20, weight: .semibold))
+                .foregroundStyle(rankColor)
 
-            LeaderboardAvatar(user: user, size: user.rank == 1 ? 62 : 54)
-                .overlay {
-                    if user.rank == 1 {
-                        HStack(spacing: 26) {
-                            Image(systemName: "laurel.leading")
-                            Image(systemName: "laurel.trailing")
-                        }
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundStyle(FrogTheme.gold)
-                        .offset(y: 2)
-                    }
-                }
+            LeaderboardAvatar(user: user, size: isFirst ? 58 : 50)
 
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Text(user.name)
-                    .font(.frogCaption.weight(.black))
+                    .font(.frogCaption.weight(.bold))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
-                Text("\(user.climbed) 山")
-                    .font(.frogMicro)
-                    .foregroundStyle(FrogTheme.muted)
+
+                Text("\(user.checkIns)")
+                    .font(.frogNum(18, weight: .semibold))
+                    .foregroundStyle(isFirst ? FrogTheme.forest : FrogTheme.moss)
             }
 
             Spacer(minLength: 0)
-
-            Text("\(user.checkIns)")
-                .font(.frogTitle)
-                .foregroundStyle(FrogTheme.orange)
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
-        .padding(10)
-        .background(
-            LinearGradient(
-                colors: [FrogTheme.surface, tint.opacity(0.12)],
-                startPoint: .top,
-                endPoint: .bottom
-            ),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .background {
+            // .pod: plain surface + hairline; .pod.first gets a gold tint.
+            if isFirst {
+                LinearGradient(
+                    colors: [FrogTheme.surface, FrogTheme.gold.opacity(0.12)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            } else {
+                FrogTheme.surface
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(tint.opacity(0.22), lineWidth: 1)
+                .stroke(FrogTheme.line, lineWidth: 1)
         )
     }
 }
@@ -339,43 +341,51 @@ private struct LeaderboardRow: View {
     let isCurrentUser: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 13) {
             Text("\(user.rank)")
-                .font(.headline.weight(.black))
+                .font(.frogNum(16, weight: .semibold))
                 .foregroundStyle(FrogTheme.forest)
-                .frame(width: 34, alignment: .leading)
+                .frame(width: 26, alignment: .leading)
 
-            LeaderboardAvatar(user: user, size: 38)
+            LeaderboardAvatar(user: user, size: 38, borderWidth: 2)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(user.name)
-                    .font(.headline.weight(.black))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isCurrentUser ? "你 · \(user.name)" : user.name)
+                    .font(.frogRow.weight(.bold))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
                 Text(user.subtitle)
-                    .font(.caption.weight(.semibold))
+                    .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
                     .lineLimit(1)
             }
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 3) {
+            VStack(alignment: .trailing, spacing: 1) {
                 Text("\(user.checkIns)")
-                    .font(.headline.weight(.black))
+                    .font(.frogNum(17, weight: .semibold))
                     .foregroundStyle(isCurrentUser ? FrogTheme.orange : FrogTheme.ink)
                 Text("次")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(FrogTheme.muted)
+                    .font(.frogMicro)
+                    .foregroundStyle(FrogTheme.faint)
             }
         }
-        .padding(12)
-        .background(isCurrentUser ? FrogTheme.orangeSoft.opacity(0.55) : FrogTheme.surface)
+        .padding(.vertical, 13)
+        .padding(.horizontal, isCurrentUser ? 12 : 4)
+        .background {
+            // .lb-row.me: trail-soft highlight, rounded; others = hairline divider.
+            if isCurrentUser {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(FrogTheme.orangeSoft)
+            }
+        }
         .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(FrogTheme.line)
-                .frame(height: 1)
-                .padding(.leading, 84)
+            if !isCurrentUser {
+                Rectangle()
+                    .fill(FrogTheme.lineSoft)
+                    .frame(height: 1)
+            }
         }
     }
 }
@@ -383,13 +393,14 @@ private struct LeaderboardRow: View {
 private struct LeaderboardAvatar: View {
     let user: LeaderboardUser
     let size: CGFloat
+    var borderWidth: CGFloat = 3
 
     var body: some View {
         MountainPhoto(mountain: MountainCatalog.mountain(id: user.avatarMountainId), dimming: 0.02)
             .frame(width: size, height: size)
             .clipShape(Circle())
-            .overlay(Circle().stroke(Color.white, lineWidth: 3))
-            .shadow(color: Color.black.opacity(0.12), radius: 5, y: 2)
+            .overlay(Circle().stroke(Color.white, lineWidth: borderWidth))
+            .shadow(color: FrogTheme.warmShadow.opacity(0.12), radius: 5, y: 2)
     }
 }
 
