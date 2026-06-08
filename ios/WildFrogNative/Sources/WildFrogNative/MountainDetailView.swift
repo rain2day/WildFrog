@@ -102,12 +102,17 @@ struct MountainDetailView: View {
                         .padding(.vertical, 5)
                         .background(FrogTheme.orange, in: Capsule())
 
-                    Text(mountain.displayName)
-                        .font(.system(size: 30, weight: .heavy))
-                        .foregroundStyle(.white)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.7)
-                        .fixedSize(horizontal: false, vertical: true)
+                    (
+                        Text(mountain.nameZh)
+                            .font(.system(size: 34, weight: .black))
+                            .foregroundStyle(.white)
+                        + Text(mountain.nameEn.isEmpty ? "" : "  \(mountain.nameEn)")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.78))
+                    )
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.66)
+                    .fixedSize(horizontal: false, vertical: true)
 
                     Label("\(mountain.region) · \(mountain.height)m", systemImage: "mappin.and.ellipse")
                         .font(.system(size: 14, weight: .semibold))
@@ -135,7 +140,7 @@ struct MountainDetailView: View {
     private var statCards: some View {
         HStack(spacing: 10) {
             DetailStatCard(systemImage: "checkmark.shield.fill", value: "\(mountain.checkIns)", label: "我的打卡", tint: FrogTheme.moss)
-            DetailStatCard(systemImage: "trophy.fill", value: mountain.rankText, label: "300峰排名", tint: FrogTheme.orange)
+            DetailStatCard(systemImage: "trophy.fill", value: mountain.rankText, label: "300峰排名", tint: FrogTheme.gold)
             DetailStatCard(systemImage: "person.2.fill", value: "\(mountain.totalCheckIns)", label: "總打卡", tint: FrogTheme.moss)
         }
     }
@@ -147,7 +152,7 @@ struct MountainDetailView: View {
                     Text("WILDFROG OFFICIAL RECORD")
                         .font(.frogEyebrow)
                         .tracking(1.1)
-                        .foregroundStyle(FrogTheme.orange)
+                        .foregroundStyle(FrogTheme.gold)
                     Text("登頂紀念證書")
                         .font(.headline.weight(.black))
                 }
@@ -163,7 +168,7 @@ struct MountainDetailView: View {
                         Text("WildFrog 山峰紀錄")
                             .font(.subheadline.weight(.heavy))
                         Text(mountain.nameZh)
-                            .font(.system(size: 38, weight: .black, design: .rounded))
+                            .font(.system(size: 38, weight: .black))
                             .lineLimit(1)
                             .minimumScaleFactor(0.58)
                         Text(mountain.nameEn)
@@ -201,7 +206,7 @@ struct MountainDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(FrogTheme.orange, lineWidth: 5)
+                            .stroke(FrogTheme.gold, lineWidth: 4)
                     )
 
                 Text("愛自然 / 愛運動 / 愛香港")
@@ -242,13 +247,13 @@ struct MountainDetailView: View {
                 Spacer()
                 Text(hasCheckedIn ? "PASSPORT SAVED" : "READY")
                     .font(.frogMicro.weight(.black))
-                    .foregroundStyle(FrogTheme.orange)
+                    .foregroundStyle(FrogTheme.moss)
             }
 
             HStack(spacing: 10) {
                 DetailFact(value: mountain.rankText, label: "300峰排名", systemImage: "trophy.fill", tint: FrogTheme.gold)
                 DetailFact(value: "\(mountain.height)m", label: "山峰海拔", systemImage: "triangle.fill", tint: FrogTheme.moss)
-                DetailFact(value: "60m", label: "有效半徑", systemImage: "scope", tint: FrogTheme.orange)
+                DetailFact(value: "500m", label: "有效半徑", systemImage: "scope", tint: FrogTheme.moss)
             }
         }
         .padding(FrogSpace.cardPadding)
@@ -297,11 +302,12 @@ private struct DetailStatusPill: View {
     let label: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.frogCaption.weight(.black))
+                .font(.frogNum(18, weight: .semibold))
                 .foregroundStyle(.white)
                 .lineLimit(1)
+                .minimumScaleFactor(0.6)
             Text(label)
                 .font(.frogMicro)
                 .foregroundStyle(.white.opacity(0.66))
@@ -309,8 +315,12 @@ private struct DetailStatusPill: View {
                 .minimumScaleFactor(0.72)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(9)
-        .background(Color.black.opacity(0.38), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(10)
+        .background(Color.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
     }
 }
 

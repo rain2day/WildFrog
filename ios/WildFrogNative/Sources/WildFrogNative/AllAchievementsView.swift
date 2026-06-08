@@ -79,7 +79,7 @@ struct AllAchievementsView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(14)
-                        .background(unlocked ? Color.white : Color.black.opacity(0.03))
+                        .background(unlocked ? FrogTheme.surface : FrogTheme.paper.opacity(0.6))
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -200,7 +200,7 @@ private struct AllLeaderboardRow: View {
             }
         }
         .padding(12)
-        .background(isCurrentUser ? FrogTheme.orangeSoft.opacity(0.55) : Color.white)
+        .background(isCurrentUser ? FrogTheme.orangeSoft.opacity(0.55) : FrogTheme.surface)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(FrogTheme.line)

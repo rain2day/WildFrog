@@ -30,16 +30,8 @@ struct HomeMapListView: View {
         ["全部"] + Array(Set(MountainCatalog.mountains.map(\.region))).sorted()
     }
 
-    private var checkedMountains: [Mountain] {
-        MountainCatalog.mountains.filter { $0.checkIns > 0 }
-    }
-
     private var totalCheckIns: Int {
         checkInStore.totalCheckIns
-    }
-
-    private var summitPoints: Int {
-        checkedMountains.reduce(0) { $0 + $1.height }
     }
 
     private var recommendedMountain: Mountain {
@@ -208,7 +200,7 @@ struct HomeMapListView: View {
             Map(position: $mapPosition) {
                 ForEach(mapMountains) { mountain in
                     Marker(mountain.nameZh, systemImage: mountain.checkIns > 0 ? "checkmark.circle.fill" : "mappin", coordinate: mountain.coordinate)
-                        .tint(mountain.checkIns > 0 ? FrogTheme.orange : FrogTheme.leaf)
+                        .tint(mountain.checkIns > 0 ? FrogTheme.orange : FrogTheme.moss)
                 }
             }
             .mapStyle(mapStyleHybrid ? .hybrid : .standard)
@@ -316,7 +308,7 @@ struct HomeMapListView: View {
         VStack(spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
-                    .font(.frogNum(26, weight: .semibold))
+                    .font(.frogNum(27, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -387,7 +379,7 @@ struct HomeMapListView: View {
                 } label: {
                     Text("全部")
                         .font(.frogCaption.weight(.bold))
-                        .foregroundStyle(FrogTheme.orange)
+                        .foregroundStyle(FrogTheme.moss)
                 }
                 .buttonStyle(.plain)
             }
@@ -409,13 +401,17 @@ struct HomeMapListView: View {
         VStack(spacing: 10) {
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(FrogTheme.muted)
+                    .foregroundStyle(FrogTheme.faint)
                 TextField("搜尋山峰", text: $searchText)
                     .autocorrectionDisabled()
             }
             .padding(.horizontal, 14)
             .frame(height: 48)
-            .cardStyle()
+            .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .stroke(FrogTheme.line, lineWidth: 1)
+            )
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -435,10 +431,11 @@ struct HomeMapListView: View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("山峰列表")
-                        .font(.frogCaption)
+                    Text("DIRECTORY")
+                        .font(.frogEyebrow)
+                        .tracking(1.4)
                         .foregroundStyle(FrogTheme.moss)
-                    Text("顯示 \(filteredMountains.count) / \(MountainCatalog.catalogCount) 座")
+                    Text("山峰列表 \(filteredMountains.count) / \(MountainCatalog.catalogCount)")
                         .font(.frogTitle)
                 }
 
@@ -479,7 +476,7 @@ struct HomeMapListView: View {
                             .foregroundStyle(FrogTheme.muted)
                         Image(systemName: "chevron.down")
                             .font(.frogMicro.weight(.bold))
-                            .foregroundStyle(FrogTheme.orange)
+                            .foregroundStyle(FrogTheme.moss)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -516,22 +513,35 @@ private struct FeaturedMountainCard: View {
                 endPoint: .bottom
             )
 
-            VStack(alignment: .leading, spacing: 3) {
-                Spacer()
-                Label(mountain.nameZh, systemImage: "location.fill")
-                    .font(.frogMicro.weight(.bold))
+            Text(mountain.rankText)
+                .font(.frogMicro.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(FrogTheme.forest.opacity(0.66), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(9)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(mountain.nameZh)
+                    .font(.system(size: 14, weight: .bold))
                     .lineLimit(1)
-                Text("\(mountain.height)m")
-                    .font(.frogMicro)
+                Text("\(mountain.height)m · \(mountain.region)")
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white.opacity(0.72))
+                    .lineLimit(1)
             }
-            .padding(10)
+            .padding(11)
         }
         .foregroundStyle(.white)
-        .frame(width: 118, height: 142)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(width: 122, height: 150)
+        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
         .shadow(color: FrogTheme.forest.opacity(0.16), radius: 12, x: 0, y: 7)
@@ -541,27 +551,26 @@ private struct FeaturedMountainCard: View {
 private struct MountainDirectoryRow: View {
     let mountain: Mountain
 
+    private var rankLabel: String {
+        if let rank = mountain.topRank { return "\(rank)" }
+        return "–"
+    }
+
     var body: some View {
-        HStack(spacing: 10) {
-            ZStack(alignment: .bottomLeading) {
-                MountainThumbnail(mountain: mountain, size: 54)
+        HStack(spacing: 11) {
+            Text(rankLabel)
+                .font(.frogNum(13, weight: .semibold))
+                .foregroundStyle(FrogTheme.faint)
+                .frame(width: 24)
 
-                Text(mountain.rankText)
-                    .font(.frogMicro)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 3)
-                    .background(FrogTheme.forest.opacity(0.82))
-                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-                    .padding(4)
-            }
+            MountainThumbnail(mountain: mountain, size: 46)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(mountain.displayName)
                     .font(.frogRow)
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
-                Text("\(mountain.region) · \(mountain.height)m · WildFrog 山峰目錄")
+                Text("\(mountain.region) · \(mountain.height)m")
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
                     .lineLimit(1)
@@ -569,17 +578,25 @@ private struct MountainDirectoryRow: View {
 
             Spacer()
 
-            Text(mountain.checkIns > 0 ? "\(mountain.checkIns) 次" : "未打卡")
-                .font(.frogCaption)
-                .foregroundStyle(mountain.checkIns > 0 ? .white : FrogTheme.muted)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(mountain.checkIns > 0 ? FrogTheme.moss : Color.black.opacity(0.06))
-                .clipShape(Capsule())
+            if mountain.checkIns > 0 {
+                Text("\(mountain.checkIns) 次")
+                    .font(.frogMicro)
+                    .foregroundStyle(FrogTheme.moss)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(FrogTheme.mossSoft, in: Capsule())
+            } else {
+                Text("未打卡")
+                    .font(.frogMicro)
+                    .foregroundStyle(FrogTheme.faint)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(FrogTheme.ink.opacity(0.05), in: Capsule())
+            }
 
             Image(systemName: "chevron.right")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(FrogTheme.muted)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(FrogTheme.faint)
         }
         .padding(.horizontal, 2)
         .padding(.vertical, 11)

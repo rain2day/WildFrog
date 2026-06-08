@@ -169,7 +169,7 @@ struct LeaderboardView: View {
                 .clipShape(Circle())
         }
         .padding(20)
-        .background(Color.white.opacity(0.72))
+        .background(FrogTheme.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -324,7 +324,7 @@ private struct PodiumCard: View {
         .padding(10)
         .background(
             LinearGradient(
-                colors: [Color.white, tint.opacity(0.12)],
+                colors: [FrogTheme.surface, tint.opacity(0.12)],
                 startPoint: .top,
                 endPoint: .bottom
             ),
@@ -373,7 +373,7 @@ private struct LeaderboardRow: View {
             }
         }
         .padding(12)
-        .background(isCurrentUser ? FrogTheme.orangeSoft.opacity(0.55) : Color.white)
+        .background(isCurrentUser ? FrogTheme.orangeSoft.opacity(0.55) : FrogTheme.surface)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(FrogTheme.line)

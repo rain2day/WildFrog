@@ -281,7 +281,7 @@ struct CheckInCameraView: View {
                                 systemImage: "bolt.fill",
                                 title: "直接打卡",
                                 subtitle: "已喺山頂／唔記全程，直接影相打卡",
-                                background: Color.white,
+                                background: FrogTheme.surface,
                                 foreground: FrogTheme.ink
                             )
                         }
@@ -335,7 +335,7 @@ struct CheckInCameraView: View {
         .background(background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(FrogTheme.line, lineWidth: background == Color.white ? 1 : 0)
+                .stroke(FrogTheme.line, lineWidth: background != FrogTheme.orange ? 1 : 0)
         )
     }
 

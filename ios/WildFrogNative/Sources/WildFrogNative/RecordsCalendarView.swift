@@ -384,7 +384,7 @@ private struct CalendarTile: View {
                 CheckInRecordPhoto(record: record, mountain: MountainCatalog.mountain(id: record.mountainId), dimming: 0.24)
             } else {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(isCurrentMonth ? Color.white.opacity(0.74) : FrogTheme.warmPaper.opacity(0.58))
+                    .fill(isCurrentMonth ? FrogTheme.warmPaper : FrogTheme.paper.opacity(0.5))
                     .overlay {
                         FrogContourLines(color: FrogTheme.forest.opacity(isCurrentMonth ? 0.025 : 0.015), lineWidth: 0.6)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -401,7 +401,7 @@ private struct CalendarTile: View {
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(
-                    isSelected ? FrogTheme.orange : (record == nil ? FrogTheme.forest.opacity(0.07) : Color.white.opacity(0.65)),
+                    isSelected ? FrogTheme.orange : (record == nil ? FrogTheme.line : Color.white.opacity(0.65)),
                     lineWidth: isSelected ? 2 : 1
                 )
         )
@@ -593,7 +593,7 @@ private struct MountainStampSlotView: View {
         .padding(.horizontal, 4)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isUnlocked ? Color.white.opacity(0.68) : Color.white.opacity(0.36))
+                .fill(isUnlocked ? FrogTheme.warmPaper : FrogTheme.surface2)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -695,7 +695,7 @@ private struct TripRow: View {
                 .foregroundStyle(FrogTheme.muted)
         }
         .padding(12)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(FrogTheme.line, lineWidth: 1)
