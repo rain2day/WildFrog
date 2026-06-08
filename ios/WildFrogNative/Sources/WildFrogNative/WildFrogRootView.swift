@@ -57,6 +57,14 @@ struct WildFrogRootView: View {
            let qaTab = AppTab(rawValue: arguments[arguments.index(after: tabFlagIndex)]) {
             _selectedTab = State(initialValue: qaTab)
         }
+        // Deep-link straight to a mountain detail for screenshot/QA loops.
+        if let mIndex = arguments.firstIndex(of: "-qaMountain"),
+           arguments.indices.contains(arguments.index(after: mIndex)) {
+            var path = NavigationPath()
+            path.append(NativeRoute.mountainDetail(arguments[arguments.index(after: mIndex)]))
+            _homePath = State(initialValue: path)
+            _selectedTab = State(initialValue: .home)
+        }
         #endif
     }
 
@@ -141,7 +149,7 @@ private struct FrogTabBar: View {
         return VStack(spacing: 4) {
             Image(systemName: tab.systemImage)
                 .font(.system(size: 19, weight: .semibold))
-                .foregroundStyle(active ? FrogTheme.orange : FrogTheme.muted)
+                .foregroundStyle(active ? FrogTheme.moss : FrogTheme.muted)
             Text(tab.title)
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(active ? FrogTheme.ink : FrogTheme.muted)
@@ -158,15 +166,8 @@ private struct FrogTabBar: View {
                 .font(.system(size: 22, weight: .black))
                 .foregroundStyle(.white)
                 .frame(width: 56, height: 56)
-                .background(
-                    LinearGradient(
-                        colors: [FrogTheme.orange, Color(red: 255 / 255, green: 116 / 255, blue: 39 / 255)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    in: Circle()
-                )
-                .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                .background(FrogTheme.orange, in: Circle())
+                .overlay(Circle().stroke(FrogTheme.surface, lineWidth: 4))
                 .shadow(color: FrogTheme.orange.opacity(active ? 0.44 : 0.28), radius: 12, y: 5)
             Text(tab.title)
                 .font(.system(size: 10, weight: .bold))

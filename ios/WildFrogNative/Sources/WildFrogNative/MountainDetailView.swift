@@ -5,6 +5,7 @@ struct MountainDetailView: View {
     let mountain: Mountain
 
     @EnvironmentObject private var locationManager: LocationManager
+    @Environment(\.dismiss) private var dismiss
 
     private var hasCheckedIn: Bool {
         mountain.checkIns > 0
@@ -26,111 +27,153 @@ struct MountainDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                hero
-                recordPanel
-                checkInAction
-                trailFactsPanel
-                checkpointMap
-                certificatePreview
+        GeometryReader { outer in
+            let topInset = outer.safeAreaInsets.top
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    hero(topInset: topInset)
+
+                    VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                        statCards
+                        checkInAction
+                        trailFactsPanel
+                        checkpointMap
+                        certificatePreview
+                    }
+                    .padding(.horizontal, FrogSpace.screenPadding)
+                    .padding(.top, 20)
+                    .padding(.bottom, 40)
+                }
             }
-            .padding(FrogSpace.screenPadding)
-            .padding(.bottom, 32)
+            .ignoresSafeArea(edges: .top)
         }
-        .navigationTitle(mountain.nameZh)
-        .nativeInlineTitle()
+        .hiddenNavigationBar()
         .background(FrogTheme.paper)
     }
 
-    private var hero: some View {
+    private func hero(topInset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: mountain, dimming: 0.1)
+            MountainPhoto(mountain: mountain, dimming: 0)
 
+            // One layered gradient (css .dhero .grad) — photo top, forest anchor.
             LinearGradient(
                 colors: [
-                    .black.opacity(0.08),
-                    .black.opacity(0.22),
-                    FrogTheme.forest.opacity(0.88)
+                    .black.opacity(0.34),
+                    .black.opacity(0.06),
+                    FrogTheme.forest.opacity(0.92)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
-                    WildFrogBrandMark(size: 38, cornerRadius: 10)
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 38, height: 38)
+                            .background(Color.white.opacity(0.14), in: Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.26), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("返回")
 
                     Spacer()
 
-                    Text(hasCheckedIn ? "已完成" : "未打卡")
-                        .font(.frogMicro.weight(.black))
-                        .foregroundStyle(hasCheckedIn ? FrogTheme.forest : .white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(hasCheckedIn ? FrogTheme.leaf : Color.black.opacity(0.48), in: Capsule())
+                    MountainStampSeal(
+                        mountain: mountain,
+                        size: 74,
+                        isUnlocked: hasCheckedIn,
+                        rotation: .degrees(6)
+                    )
                 }
+                .padding(.top, topInset + 6)
 
-                Spacer(minLength: 44)
+                Spacer(minLength: 28)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(mountain.rankText)
-                        .font(.caption.weight(.black))
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("\(mountain.rankText) · 300 PEAKS")
+                        .font(.system(size: 12, weight: .semibold))
+                        .tracking(0.4)
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 9)
+                        .padding(.horizontal, 11)
                         .padding(.vertical, 5)
-                        .background(FrogTheme.orange)
-                        .clipShape(Capsule())
+                        .background(FrogTheme.orange, in: Capsule())
 
                     Text(mountain.displayName)
-                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .font(.system(size: 30, weight: .heavy))
                         .foregroundStyle(.white)
                         .lineLimit(2)
-                        .minimumScaleFactor(0.72)
+                        .minimumScaleFactor(0.7)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Label("\(mountain.region) · \(mountain.height)m", systemImage: "mappin.and.ellipse")
-                        .font(.subheadline.weight(.bold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.82))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                 }
+                .shadow(color: Color.black.opacity(0.22), radius: 10, y: 4)
 
                 HStack(spacing: 8) {
                     DetailStatusPill(value: "\(mountain.totalCheckIns)", label: "全站打卡")
                     DetailStatusPill(value: mountain.checkIns > 0 ? "\(mountain.checkIns)" : "0", label: "我的紀錄")
                     DetailStatusPill(value: "\(mountain.height)m", label: "海拔")
                 }
+                .padding(.top, 18)
             }
-            .padding(18)
+            .padding(.horizontal, 22)
+            .padding(.bottom, 22)
         }
-        .frame(height: 330)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(height: topInset + 360)
+        .clipped()
     }
 
-    private var recordPanel: some View {
+    /// 3-up stat cards (css .statcards) — hairline on surface, one trail-tinted.
+    private var statCards: some View {
         HStack(spacing: 10) {
-            StatCard(value: "\(mountain.checkIns)", label: "我的打卡", systemImage: "checkmark.seal")
-            StatCard(value: mountain.rankText, label: "300峰排名", systemImage: "trophy")
-            StatCard(value: "\(mountain.totalCheckIns)", label: "總打卡", systemImage: "person.2")
+            DetailStatCard(systemImage: "checkmark.shield.fill", value: "\(mountain.checkIns)", label: "我的打卡", tint: FrogTheme.moss)
+            DetailStatCard(systemImage: "trophy.fill", value: mountain.rankText, label: "300峰排名", tint: FrogTheme.orange)
+            DetailStatCard(systemImage: "person.2.fill", value: "\(mountain.totalCheckIns)", label: "總打卡", tint: FrogTheme.moss)
         }
     }
 
     private var certificatePreview: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("登頂紀念證書")
-                .font(.headline.weight(.black))
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("WILDFROG OFFICIAL RECORD")
+                        .font(.frogEyebrow)
+                        .tracking(1.1)
+                        .foregroundStyle(FrogTheme.orange)
+                    Text("登頂紀念證書")
+                        .font(.headline.weight(.black))
+                }
+                Spacer()
+                Text(hasCheckedIn ? "山印已解鎖" : "完成打卡後解鎖")
+                    .font(.frogMicro.weight(.black))
+                    .foregroundStyle(hasCheckedIn ? FrogTheme.forest : FrogTheme.muted)
+            }
 
             VStack(spacing: 14) {
-                VStack(spacing: 6) {
-                    Text("WildFrog 山峰紀錄")
-                        .font(.subheadline.weight(.heavy))
-                    Text(mountain.nameZh)
-                        .font(.system(size: 38, weight: .black, design: .rounded))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.58)
-                    Text("登頂紀念證書")
-                        .font(.title2.weight(.heavy))
+                HStack(alignment: .top, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("WildFrog 山峰紀錄")
+                            .font(.subheadline.weight(.heavy))
+                        Text(mountain.nameZh)
+                            .font(.system(size: 38, weight: .black, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.58)
+                        Text(mountain.nameEn)
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(FrogTheme.muted)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    Spacer()
+                    MountainStampSeal(mountain: mountain, size: 86, isUnlocked: hasCheckedIn, rotation: .degrees(-4))
                 }
 
                 HStack(alignment: .firstTextBaseline) {
@@ -166,8 +209,12 @@ struct MountainDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(16)
-            .background(Color.white.opacity(0.74))
+            .background(FrogTheme.passport.opacity(0.88))
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(FrogTheme.forest.opacity(0.12), lineWidth: 1)
+            )
         }
         .padding(14)
         .cardStyle()
@@ -264,6 +311,42 @@ private struct DetailStatusPill: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(9)
         .background(Color.black.opacity(0.38), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct DetailStatCard: View {
+    let systemImage: String
+    let value: String
+    let label: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 30, height: 30)
+                .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(value)
+                    .font(.frogNum(22, weight: .semibold))
+                    .foregroundStyle(FrogTheme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(label)
+                    .font(.frogMicro)
+                    .foregroundStyle(FrogTheme.muted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(13)
+        .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: 1)
+        )
     }
 }
 

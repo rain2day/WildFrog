@@ -92,7 +92,7 @@ struct HomeMapListView: View {
                         heroBanner(topInset: topInset)
 
                         VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                            statsStrip
+                            statBand
                             mapOverview(scrollProxy: proxy)
                             recommendedCard
                             featuredRail(scrollProxy: proxy)
@@ -120,25 +120,16 @@ struct HomeMapListView: View {
         return ZStack(alignment: .bottomLeading) {
             MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0)
 
+            // One layered gradient — keep the photo readable top, anchor it bottom.
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0.34),
-                    Color.black.opacity(0.12),
-                    FrogTheme.forest.opacity(0.58),
+                    Color.black.opacity(0.36),
+                    Color.black.opacity(0.05),
+                    FrogTheme.forest.opacity(0.62),
                     Color.black.opacity(0.94)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
-            )
-
-            LinearGradient(
-                colors: [
-                    FrogTheme.orange.opacity(0.28),
-                    Color.clear,
-                    FrogTheme.forest.opacity(0.42)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
             )
 
             VStack(alignment: .leading, spacing: 0) {
@@ -146,17 +137,17 @@ struct HomeMapListView: View {
                     Image("WildFrogWordmark")
                         .resizable()
                         .scaledToFit()
-                        .frame(height: 46)
+                        .frame(height: 30)
                         .shadow(color: Color.black.opacity(0.28), radius: 8, y: 3)
 
                     Spacer()
 
                     Button { showNotifications = true } label: {
-                        Image(systemName: "bell.fill")
-                            .font(.system(size: 15, weight: .bold))
+                        Image(systemName: "bell")
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.white)
-                            .frame(width: 42, height: 42)
-                            .background(Color.white.opacity(0.16), in: Circle())
+                            .frame(width: 40, height: 40)
+                            .background(Color.white.opacity(0.13), in: Circle())
                             .overlay(Circle().stroke(Color.white.opacity(0.24), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
@@ -166,52 +157,49 @@ struct HomeMapListView: View {
 
                 Spacer(minLength: 18)
 
-                Text("已征服香港山峰")
+                Text("已征服 · CONQUERED")
                     .font(.frogEyebrow)
-                    .tracking(1.5)
-                    .foregroundStyle(.white.opacity(0.85))
+                    .tracking(1.8)
+                    .textCase(.uppercase)
+                    .foregroundStyle(.white.opacity(0.6))
 
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("\(conqueredCount)")
-                        .font(.system(size: 86, weight: .black, design: .rounded))
+                        .font(.frogNum(74, weight: .semibold))
                         .foregroundStyle(.white)
                     Text("/ \(MountainCatalog.catalogCount)")
-                        .font(.system(size: 24, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .font(.frogNum(20, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.74))
+                        .padding(.bottom, 9)
                 }
+                .padding(.top, 6)
 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.white.opacity(0.22))
                         Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [FrogTheme.orange, Color(red: 255 / 255, green: 119 / 255, blue: 42 / 255)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .frame(width: max(10, geo.size.width * ratio))
+                            .fill(FrogTheme.leaf)
+                            .frame(width: max(8, geo.size.width * ratio))
                     }
                 }
-                .frame(height: 10)
-                .padding(.top, 14)
+                .frame(height: 5)
+                .padding(.top, 16)
 
                 HStack {
                     Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
-                        .font(.frogCaption.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.82))
+                        .font(.frogCaption)
+                        .foregroundStyle(.white.opacity(0.8))
                     Spacer()
                     Text("\(Int(ratio * 100))%")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .foregroundStyle(FrogTheme.orange)
+                        .font(.frogNum(14, weight: .semibold))
+                        .foregroundStyle(FrogTheme.leaf)
                 }
-                .padding(.top, 9)
+                .padding(.top, 10)
             }
-            .padding(.horizontal, FrogSpace.screenPadding)
-            .padding(.bottom, 22)
+            .padding(.horizontal, FrogSpace.screenPadding + 4)
+            .padding(.bottom, 24)
         }
-        .frame(height: topInset + 330)
+        .frame(height: topInset + 372)
         .clipped()
     }
 
@@ -305,60 +293,48 @@ struct HomeMapListView: View {
         }
     }
 
-    private var statsStrip: some View {
+    /// Dark stat band sitting directly under the hero (css .statband). Three
+    /// figures, hairline dividers — the stats moved OUT of the photo so the
+    /// hero can breathe as one big image.
+    private var statBand: some View {
         HStack(spacing: 0) {
-            heroStat(value: totalAscent.formatted(), unit: "m", label: "累計海拔")
-            heroStatDivider
-            heroStat(value: "\(totalCheckIns)", unit: "次", label: "打卡")
-            heroStatDivider
-            heroStat(value: "\(checkInStore.currentStreak)", unit: "日", label: "連續")
+            statBandItem(value: totalAscent.formatted(), unit: "m", label: "累計海拔")
+            statBandDivider
+            statBandItem(value: "\(totalCheckIns)", unit: "次", label: "打卡")
+            statBandDivider
+            statBandItem(value: "\(checkInStore.currentStreak)", unit: "日", label: "連續")
         }
-        .padding(.vertical, 20)
+        .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [FrogTheme.forest, Color(red: 3 / 255, green: 54 / 255, blue: 38 / 255)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay {
-                    FrogContourLines(color: Color.white.opacity(0.05), lineWidth: 0.8)
-                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                }
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(FrogTheme.forest)
         )
-        .shadow(color: FrogTheme.forest.opacity(0.3), radius: 20, x: 0, y: 12)
     }
 
-    private func heroStat(value: String, unit: String, label: String) -> some View {
-        VStack(spacing: 4) {
+    private func statBandItem(value: String, unit: String, label: String) -> some View {
+        VStack(spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
-                    .font(.system(size: 30, weight: .black, design: .rounded))
+                    .font(.frogNum(26, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 Text(unit)
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(FrogTheme.orange)
+                    .font(.frogNum(12, weight: .semibold))
+                    .foregroundStyle(FrogTheme.leaf)
             }
             Text(label)
-                .font(.frogCaption.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.7))
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.white.opacity(0.62))
         }
         .frame(maxWidth: .infinity)
     }
 
-    private var heroStatDivider: some View {
+    private var statBandDivider: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.14))
-            .frame(width: 1, height: 38)
+            .fill(Color.white.opacity(0.12))
+            .frame(width: 1, height: 32)
     }
 
     private var recommendedCard: some View {
@@ -388,24 +364,11 @@ struct HomeMapListView: View {
                 Image(systemName: "arrow.right")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 42, height: 42)
-                    .background(FrogTheme.orange, in: Circle())
+                    .frame(width: 40, height: 40)
+                    .background(FrogTheme.moss, in: Circle())
             }
-            .padding(12)
-            .background {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color.white)
-                    .overlay {
-                        FrogContourLines(color: FrogTheme.leaf.opacity(0.05), lineWidth: 0.7)
-                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(FrogTheme.forest.opacity(0.06), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 6)
+            .padding(11)
+            .cardStyle(cornerRadius: 16)
         }
         .buttonStyle(.plain)
     }

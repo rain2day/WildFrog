@@ -1,32 +1,57 @@
 import SwiftUI
 
+/// "Field Survey" palette — paper + pine + restrained trail orange.
+/// Mirrors wildfrog.css :root. Names are kept stable so existing call sites
+/// just inherit the warmer, lower-chroma values:
+///   orange == --trail (RESERVED for primary CTA only)
+///   moss   == --pine  (primary green: active state, secondary CTA)
 enum FrogTheme {
-    static let orange = Color(red: 252 / 255, green: 76 / 255, blue: 2 / 255)
-    static let orangeSoft = Color(red: 1, green: 236 / 255, blue: 224 / 255)
-    static let moss = Color(red: 26 / 255, green: 159 / 255, blue: 99 / 255)
-    static let forest = Color(red: 7 / 255, green: 35 / 255, blue: 26 / 255)
-    static let leaf = Color(red: 148 / 255, green: 197 / 255, blue: 91 / 255)
-    static let ink = Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255)
-    static let muted = Color(red: 96 / 255, green: 100 / 255, blue: 108 / 255)
-    static let paper = Color(red: 247 / 255, green: 247 / 255, blue: 244 / 255)
-    static let warmPaper = Color(red: 250 / 255, green: 247 / 255, blue: 239 / 255)
-    static let passport = Color(red: 252 / 255, green: 247 / 255, blue: 229 / 255)
-    static let mapWash = Color(red: 234 / 255, green: 242 / 255, blue: 226 / 255)
-    static let line = Color.black.opacity(0.1)
-    static let gold = Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255)
-    static let slate = Color(red: 91 / 255, green: 100 / 255, blue: 112 / 255)
-    static let warmShadow = Color(red: 40 / 255, green: 28 / 255, blue: 16 / 255)
+    // trail orange — reserved for the single primary CTA / key accent
+    static let orange = Color(red: 197 / 255, green: 83 / 255, blue: 42 / 255)   // #C5532A
+    static let orangeSoft = Color(red: 241 / 255, green: 226 / 255, blue: 214 / 255) // #F1E2D6
+
+    // greens — calm, low-chroma foliage
+    static let moss = Color(red: 46 / 255, green: 99 / 255, blue: 71 / 255)      // #2E6347 pine
+    static let mossSoft = Color(red: 227 / 255, green: 235 / 255, blue: 226 / 255) // #E3EBE2
+    static let forest = Color(red: 18 / 255, green: 42 / 255, blue: 30 / 255)    // #122A1E
+    static let leaf = Color(red: 107 / 255, green: 154 / 255, blue: 87 / 255)    // #6B9A57
+
+    // ink — warm near-black, not cold slate
+    static let ink = Color(red: 27 / 255, green: 32 / 255, blue: 24 / 255)       // #1B2018
+    static let muted = Color(red: 95 / 255, green: 99 / 255, blue: 86 / 255)     // #5F6356
+    static let faint = Color(red: 147 / 255, green: 150 / 255, blue: 138 / 255)  // #93968A
+
+    // surfaces — field-log paper
+    static let paper = Color(red: 241 / 255, green: 238 / 255, blue: 229 / 255)  // #F1EEE5
+    static let warmPaper = Color(red: 246 / 255, green: 242 / 255, blue: 232 / 255) // #F6F2E8
+    static let surface = Color(red: 252 / 255, green: 250 / 255, blue: 244 / 255) // #FCFAF4 raised panel
+    static let surface2 = Color(red: 247 / 255, green: 243 / 255, blue: 234 / 255) // #F7F3EA
+    static let passport = Color(red: 246 / 255, green: 242 / 255, blue: 232 / 255) // #F6F2E8
+    static let mapWash = Color(red: 233 / 255, green: 236 / 255, blue: 221 / 255) // #E9ECDD
+
+    static let line = Color(red: 27 / 255, green: 32 / 255, blue: 24 / 255).opacity(0.13)
+    static let lineSoft = Color(red: 27 / 255, green: 32 / 255, blue: 24 / 255).opacity(0.08)
+    static let gold = Color(red: 171 / 255, green: 132 / 255, blue: 60 / 255)    // #AB843C
+    static let slate = Color(red: 95 / 255, green: 99 / 255, blue: 86 / 255)
+    static let warmShadow = Color(red: 27 / 255, green: 32 / 255, blue: 24 / 255)
 }
 
 extension Font {
-    static let frogDisplay: Font = .system(size: 34, weight: .black, design: .rounded)
-    static let frogTitle: Font = .system(size: 22, weight: .bold, design: .rounded)
-    static let frogRow: Font = .system(size: 17, weight: .semibold)
+    // Field Survey type: no SF Rounded. Latin/CJK on SF Pro (→ PingFang for
+    // Chinese); numerals get .frogNum for a tighter "field instrument" read.
+    static let frogDisplay: Font = .system(size: 32, weight: .heavy)
+    static let frogTitle: Font = .system(size: 20, weight: .bold)
+    static let frogRow: Font = .system(size: 16, weight: .semibold)
     static let frogBody: Font = .system(size: 15, weight: .regular)
     static let frogCaption: Font = .system(size: 13, weight: .medium)
     static let frogMicro: Font = .system(size: 11, weight: .semibold)
-    /// Small section label ("eyebrow"). Pair with .tracking + muted colour.
-    static let frogEyebrow: Font = .system(size: 12, weight: .bold)
+    /// Small section label ("eyebrow"). Pair with .tracking + uppercase + muted.
+    static let frogEyebrow: Font = .system(size: 11, weight: .bold)
+
+    /// Numeral display — large stat figures. SF Pro (Space Grotesk swap = Pass 3).
+    static func frogNum(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
+        .system(size: size, weight: weight)
+    }
 }
 
 enum FrogSpace {
@@ -52,46 +77,68 @@ struct WildFrogBrandMark: View {
     }
 }
 
+struct MountainStampSeal: View {
+    let mountain: Mountain
+    var size: CGFloat = 86
+    var isUnlocked: Bool = true
+    var rotation: Angle = .degrees(-7)
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Image(mountain.stampImageName)
+                .resizable()
+                .scaledToFit()
+                .saturation(isUnlocked ? 1 : 0.15)
+                .opacity(isUnlocked ? 0.96 : 0.54)
+                .shadow(color: Color.black.opacity(0.2), radius: 10, y: 5)
+
+            if !isUnlocked {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: size * 0.13, weight: .black))
+                    .foregroundStyle(FrogTheme.forest)
+                    .frame(width: size * 0.26, height: size * 0.26)
+                    .background(FrogTheme.passport.opacity(0.96), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.7), lineWidth: 1))
+                    .offset(x: -2, y: 2)
+            }
+        }
+        .frame(width: size, height: size)
+        .rotationEffect(rotation)
+        .accessibilityLabel(isUnlocked ? "\(mountain.nameZh) 山印" : "\(mountain.nameZh) 未解鎖山印")
+    }
+}
+
 extension View {
     func appPageBackground(_ color: Color = FrogTheme.warmPaper) -> some View {
         self.background(color.ignoresSafeArea())
     }
 
-    /// Borderless floating surface — depth comes from a soft shadow, not a frame.
-    func cardStyle(cornerRadius: CGFloat = 22) -> some View {
+    /// Field Survey panel — a hairline on warm surface, NOT a floating white card.
+    /// One restrained elevation (wildfrog.css --shadow-soft); no contour noise.
+    func cardStyle(cornerRadius: CGFloat = 18) -> some View {
         self
-            .background {
+            .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color.white)
-                    .overlay {
-                        FrogContourLines(color: FrogTheme.forest.opacity(0.035), lineWidth: 0.7)
-                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                    }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .fill(FrogTheme.surface)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(Color.white.opacity(0.78), lineWidth: 1)
+                    .stroke(FrogTheme.line, lineWidth: 1)
             )
-            .shadow(color: FrogTheme.warmShadow.opacity(0.07), radius: 18, x: 0, y: 10)
+            .shadow(color: FrogTheme.warmShadow.opacity(0.06), radius: 17, x: 0, y: 12)
     }
 
-    func paperCardStyle(cornerRadius: CGFloat = 22) -> some View {
+    func paperCardStyle(cornerRadius: CGFloat = 18) -> some View {
         self
-            .background {
+            .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color.white)
-                    .overlay {
-                        FrogContourLines(color: FrogTheme.leaf.opacity(0.045), lineWidth: 0.7)
-                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                    }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .fill(FrogTheme.surface)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(FrogTheme.forest.opacity(0.045), lineWidth: 1)
+                    .stroke(FrogTheme.line, lineWidth: 1)
             )
-            .shadow(color: FrogTheme.forest.opacity(0.08), radius: 20, x: 0, y: 12)
+            .shadow(color: FrogTheme.warmShadow.opacity(0.05), radius: 18, x: 0, y: 12)
     }
 
     func darkCardStyle() -> some View {
