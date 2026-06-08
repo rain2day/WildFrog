@@ -537,7 +537,7 @@ private struct GuestOnboardingView: View {
             let topInset = proxy.safeAreaInsets.top
 
             ScrollView {
-                ZStack(alignment: .bottom) {
+                ZStack(alignment: .topLeading) {
                     MountainPhoto(mountain: MountainCatalog.mountain(id: "sunset-peak"), dimming: 0)
                         .frame(height: proxy.size.height * 0.62 + topInset)
 
@@ -552,7 +552,7 @@ private struct GuestOnboardingView: View {
                     )
                     .frame(height: proxy.size.height * 0.62 + topInset)
 
-                    content
+                    content(topInset: topInset)
                 }
             }
             .background(FrogTheme.forest)
@@ -560,7 +560,7 @@ private struct GuestOnboardingView: View {
         }
     }
 
-    private var content: some View {
+    private func content(topInset: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 WildFrogBrandMark(size: 40, cornerRadius: 11)
@@ -623,6 +623,7 @@ private struct GuestOnboardingView: View {
                 .padding(.top, 12)
         }
         .padding(.horizontal, 24)
+        .padding(.top, topInset + 36)
         .padding(.bottom, 130)
     }
 }

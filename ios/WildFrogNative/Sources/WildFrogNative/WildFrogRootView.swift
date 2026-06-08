@@ -126,7 +126,11 @@ private struct FrogTabBar: View {
         .padding(.top, 8)
         .padding(.bottom, 4)
         .background {
-            Color.white.opacity(0.94)
+            LinearGradient(
+                colors: [Color.white.opacity(0.96), FrogTheme.warmPaper.opacity(0.92)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
                 .ignoresSafeArea(edges: .bottom)
                 .shadow(color: Color.black.opacity(0.12), radius: 18, x: 0, y: -6)
         }
@@ -154,7 +158,14 @@ private struct FrogTabBar: View {
                 .font(.system(size: 22, weight: .black))
                 .foregroundStyle(.white)
                 .frame(width: 56, height: 56)
-                .background(FrogTheme.orange, in: Circle())
+                .background(
+                    LinearGradient(
+                        colors: [FrogTheme.orange, Color(red: 255 / 255, green: 116 / 255, blue: 39 / 255)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    in: Circle()
+                )
                 .overlay(Circle().stroke(Color.white, lineWidth: 4))
                 .shadow(color: FrogTheme.orange.opacity(active ? 0.44 : 0.28), radius: 12, y: 5)
             Text(tab.title)
@@ -200,7 +211,9 @@ struct StatCard: View {
         VStack(alignment: .leading, spacing: 7) {
             Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(isEmpty ? FrogTheme.muted : tint)
+                .foregroundStyle(isEmpty ? FrogTheme.muted : .white)
+                .frame(width: 30, height: 30)
+                .background(isEmpty ? FrogTheme.ink.opacity(0.06) : tint, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
             Text(value)
                 .font(.system(size: 22, weight: isEmpty ? .semibold : .bold, design: .rounded))
                 .foregroundStyle(isEmpty ? FrogTheme.muted : FrogTheme.ink)

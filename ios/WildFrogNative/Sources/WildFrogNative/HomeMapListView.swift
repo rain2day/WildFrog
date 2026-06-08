@@ -108,7 +108,7 @@ struct HomeMapListView: View {
             }
             .ignoresSafeArea(edges: .top)
         }
-        .nativeInlineTitle()
+        .hiddenNavigationBar()
         .appPageBackground(FrogTheme.warmPaper)
         .sheet(isPresented: $showNotifications) {
             NotificationsView()
@@ -122,22 +122,32 @@ struct HomeMapListView: View {
 
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0.30),
-                    Color.black.opacity(0.10),
-                    Color.black.opacity(0.55),
+                    Color.black.opacity(0.34),
+                    Color.black.opacity(0.12),
+                    FrogTheme.forest.opacity(0.58),
                     Color.black.opacity(0.94)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
+            LinearGradient(
+                colors: [
+                    FrogTheme.orange.opacity(0.28),
+                    Color.clear,
+                    FrogTheme.forest.opacity(0.42)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
-                    WildFrogBrandMark(size: 30, cornerRadius: 8)
-                    Text("WILDFROG")
-                        .font(.system(size: 15, weight: .black, design: .rounded))
-                        .tracking(2)
-                        .foregroundStyle(.white)
+                    Image("WildFrogWordmark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 46)
+                        .shadow(color: Color.black.opacity(0.28), radius: 8, y: 3)
 
                     Spacer()
 
@@ -146,7 +156,8 @@ struct HomeMapListView: View {
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(width: 42, height: 42)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .background(Color.white.opacity(0.16), in: Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.24), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("通知")
@@ -172,7 +183,14 @@ struct HomeMapListView: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.white.opacity(0.22))
-                        Capsule().fill(FrogTheme.orange)
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [FrogTheme.orange, Color(red: 255 / 255, green: 119 / 255, blue: 42 / 255)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .frame(width: max(10, geo.size.width * ratio))
                     }
                 }
@@ -297,7 +315,24 @@ struct HomeMapListView: View {
         }
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity)
-        .background(FrogTheme.forest, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [FrogTheme.forest, Color(red: 3 / 255, green: 54 / 255, blue: 38 / 255)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay {
+                    FrogContourLines(color: Color.white.opacity(0.05), lineWidth: 0.8)
+                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
         .shadow(color: FrogTheme.forest.opacity(0.3), radius: 20, x: 0, y: 12)
     }
 
@@ -357,8 +392,19 @@ struct HomeMapListView: View {
                     .background(FrogTheme.orange, in: Circle())
             }
             .padding(12)
-            .background(Color.white)
+            .background {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color.white)
+                    .overlay {
+                        FrogContourLines(color: FrogTheme.leaf.opacity(0.05), lineWidth: 0.7)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(FrogTheme.forest.opacity(0.06), lineWidth: 1)
+            )
             .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 6)
         }
         .buttonStyle(.plain)
@@ -525,6 +571,7 @@ private struct FeaturedMountainCard: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
+        .shadow(color: FrogTheme.forest.opacity(0.16), radius: 12, x: 0, y: 7)
     }
 }
 

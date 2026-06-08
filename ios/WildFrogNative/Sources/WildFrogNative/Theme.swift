@@ -15,6 +15,7 @@ enum FrogTheme {
     static let line = Color.black.opacity(0.1)
     static let gold = Color(red: 212 / 255, green: 175 / 255, blue: 55 / 255)
     static let slate = Color(red: 91 / 255, green: 100 / 255, blue: 112 / 255)
+    static let warmShadow = Color(red: 40 / 255, green: 28 / 255, blue: 16 / 255)
 }
 
 extension Font {
@@ -59,16 +60,38 @@ extension View {
     /// Borderless floating surface — depth comes from a soft shadow, not a frame.
     func cardStyle(cornerRadius: CGFloat = 22) -> some View {
         self
-            .background(Color.white)
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(Color.white)
+                    .overlay {
+                        FrogContourLines(color: FrogTheme.forest.opacity(0.035), lineWidth: 0.7)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    }
+            }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .shadow(color: Color.black.opacity(0.06), radius: 18, x: 0, y: 10)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(Color.white.opacity(0.78), lineWidth: 1)
+            )
+            .shadow(color: FrogTheme.warmShadow.opacity(0.07), radius: 18, x: 0, y: 10)
     }
 
     func paperCardStyle(cornerRadius: CGFloat = 22) -> some View {
         self
-            .background(Color.white)
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(Color.white)
+                    .overlay {
+                        FrogContourLines(color: FrogTheme.leaf.opacity(0.045), lineWidth: 0.7)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    }
+            }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .shadow(color: FrogTheme.forest.opacity(0.07), radius: 20, x: 0, y: 12)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(FrogTheme.forest.opacity(0.045), lineWidth: 1)
+            )
+            .shadow(color: FrogTheme.forest.opacity(0.08), radius: 20, x: 0, y: 12)
     }
 
     func darkCardStyle() -> some View {
@@ -123,5 +146,31 @@ extension View {
         #else
         self
         #endif
+    }
+}
+
+struct FrogContourLines: View {
+    let color: Color
+    var lineWidth: CGFloat = 1
+
+    var body: some View {
+        GeometryReader { proxy in
+            Path { path in
+                let width = proxy.size.width
+                let height = proxy.size.height
+
+                for index in 0..<8 {
+                    let y = height * CGFloat(index) / 7
+                    path.move(to: CGPoint(x: -24, y: y + CGFloat(index % 2) * 5))
+                    path.addCurve(
+                        to: CGPoint(x: width + 24, y: y + 3),
+                        control1: CGPoint(x: width * 0.28, y: y - 22),
+                        control2: CGPoint(x: width * 0.66, y: y + 28)
+                    )
+                }
+            }
+            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+        }
+        .allowsHitTesting(false)
     }
 }
