@@ -42,6 +42,9 @@ struct CheckInCameraView: View {
     @State private var didCompleteCheckIn = false
     @State private var saveMessage: String?
     @State private var showSignInAlert = false
+    @State private var watermarkPreviewImage: UIImage?
+    @State private var showEnlargedWatermark = false
+    @State private var showSuccess = false
 
     // MARK: - GPS gating helpers
 
@@ -137,6 +140,12 @@ struct CheckInCameraView: View {
                 if mode == .choosing {
                     modeChooserOverlay(topInset: proxy.safeAreaInsets.top)
                 }
+
+                if showSuccess {
+                    checkInSuccessView
+                        .transition(.opacity)
+                        .zIndex(10)
+                }
             }
             .ignoresSafeArea()
         }
@@ -169,6 +178,15 @@ struct CheckInCameraView: View {
                 }
             }
         }
+        .onChange(of: capturedImage) { _, newImage in
+            #if canImport(UIKit)
+            guard let newImage else { watermarkPreviewImage = nil; return }
+            watermarkPreviewImage = renderWatermarkImage(userPhoto: newImage)
+            #endif
+        }
+        .fullScreenCover(isPresented: $showEnlargedWatermark) {
+            watermarkEnlargedView
+        }
     }
 
     // MARK: - Background
@@ -197,11 +215,11 @@ struct CheckInCameraView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 24, weight: .medium))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
-                    .frame(width: 54, height: 54)
-                    .background(Color.white.opacity(0.22), in: Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.34), lineWidth: 1))
+                    .frame(width: 40, height: 40)
+                    .background(Color.white.opacity(0.16), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.26), lineWidth: 1))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("關閉")
@@ -215,7 +233,7 @@ struct CheckInCameraView: View {
             Spacer()
 
             Color.clear
-                .frame(width: 54, height: 54)
+                .frame(width: 40, height: 40)
         }
     }
 
@@ -291,12 +309,9 @@ struct CheckInCameraView: View {
                     .background(FrogTheme.warmPaper)
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     .shadow(color: Color.black.opacity(0.28), radius: 24, y: -8)
-
-                    Spacer(minLength: 0)
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
-                .padding(.top, proxy.safeAreaInsets.top + 120)
-                .padding(.bottom, proxy.safeAreaInsets.bottom + 120)
+                .padding(.bottom, proxy.safeAreaInsets.bottom + 16)
             }
         }
     }
@@ -495,39 +510,54 @@ struct CheckInCameraView: View {
     // MARK: - Watermark preview
 
     private var watermarkPreview: some View {
-        ZStack(alignment: .bottomLeading) {
-            if let img = capturedImage {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-                    .clipped()
-            } else {
-                MountainPhoto(mountain: mountain, dimming: 0.34)
-                    .overlay(
-                        Text("先影相或揀相")
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.82))
-                            .padding(6)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .multilineTextAlignment(.center)
-                    )
+        Button {
+            if watermarkPreviewImage != nil { showEnlargedWatermark = true }
+        } label: {
+            ZStack(alignment: .bottomTrailing) {
+                if let wm = watermarkPreviewImage {
+                    // The actual rendered watermark — what gets saved/shared.
+                    Image(uiImage: wm)
+                        .resizable()
+                        .scaledToFill()
+                        .clipped()
+                } else if let img = capturedImage {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                        .clipped()
+                        .overlay(
+                            LinearGradient(colors: [.clear, .black.opacity(0.64)], startPoint: .center, endPoint: .bottom)
+                        )
+                        .overlay(alignment: .bottomLeading) { previewWatermarkBadge.padding(7) }
+                } else {
+                    MountainPhoto(mountain: mountain, dimming: 0.34)
+                        .overlay(
+                            Text("先影相或揀相")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.82))
+                                .padding(6)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .multilineTextAlignment(.center)
+                        )
+                }
+
+                if watermarkPreviewImage != nil {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundStyle(.white)
+                        .frame(width: 18, height: 18)
+                        .background(.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+                        .padding(5)
+                }
             }
-
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.64)],
-                startPoint: .center,
-                endPoint: .bottom
+            .frame(width: 116, height: 84)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(FrogTheme.line, lineWidth: 1)
             )
-
-            previewWatermarkBadge
-                .padding(7)
         }
-        .frame(width: 116, height: 84)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(FrogTheme.line, lineWidth: 1)
-        )
+        .buttonStyle(.plain)
     }
 
     private var previewWatermarkBadge: some View {
@@ -665,6 +695,177 @@ struct CheckInCameraView: View {
         return "打卡後將生成水印圖並儲存到相簿"
     }
 
+    // MARK: - Enlarged watermark preview
+
+    private var watermarkEnlargedView: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            if let wm = watermarkPreviewImage {
+                Image(uiImage: wm)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(16)
+            }
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Button { showEnlargedWatermark = false } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 40, height: 40)
+                            .background(Color.white.opacity(0.18), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer()
+                Text("打卡時會儲存呢張水印相到你的相簿")
+                    .font(.frogCaption)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 24)
+        }
+    }
+
+    // MARK: - Success screen (design flow 04)
+
+    private var checkInSuccessView: some View {
+        GeometryReader { proxy in
+            ZStack {
+                MountainPhoto(mountain: mountain, dimming: 0)
+                    .ignoresSafeArea()
+
+                LinearGradient(
+                    colors: [
+                        FrogTheme.forest.opacity(0.62),
+                        FrogTheme.forest.opacity(0.42),
+                        Color.black.opacity(0.92)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    Spacer().frame(height: proxy.safeAreaInsets.top + 22)
+
+                    ZStack {
+                        Circle()
+                            .stroke(Color.white.opacity(0.55), lineWidth: 2)
+                            .frame(width: 92, height: 92)
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                            .frame(width: 76, height: 76)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 40, weight: .heavy))
+                            .foregroundStyle(.white)
+                    }
+
+                    Text("VALID CHECK-IN · 有效打卡")
+                        .font(.frogEyebrow)
+                        .tracking(1.8)
+                        .textCase(.uppercase)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.top, 24)
+
+                    Text("\(mountain.nameZh) 已打卡")
+                        .font(.system(size: 30, weight: .black))
+                        .foregroundStyle(.white)
+                        .padding(.top, 10)
+
+                    Text("已記錄到你的 300 峰護照，水印相已儲存到相簿。")
+                        .font(.frogCaption)
+                        .foregroundStyle(.white.opacity(0.78))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 252)
+                        .padding(.top, 8)
+
+                    VStack(spacing: 14) {
+                        if let wm = watermarkPreviewImage {
+                            Image(uiImage: wm)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 150)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        }
+
+                        HStack(spacing: 0) {
+                            successStat(value: "\(checkInStore.count(for: mountain.id))", label: "此山打卡")
+                            successStatDivider
+                            successStat(value: mountain.rankText, label: "300峰排名", tint: FrogTheme.orange)
+                            successStatDivider
+                            successStat(value: "\(checkInStore.distinctMountainCount)", label: "已征服山峰")
+                        }
+                    }
+                    .padding(16)
+                    .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .padding(.top, 26)
+
+                    Spacer(minLength: 16)
+
+                    VStack(spacing: 10) {
+                        if let wm = watermarkPreviewImage {
+                            ShareLink(
+                                item: Image(uiImage: wm),
+                                preview: SharePreview("WildFrog · \(mountain.nameZh)", image: Image(uiImage: wm))
+                            ) {
+                                Label("分享水印相", systemImage: "square.and.arrow.up")
+                                    .font(.headline.weight(.black))
+                                    .foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 54)
+                                    .background(FrogTheme.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            }
+                        }
+
+                        Button { dismiss() } label: {
+                            Text("返回山峰")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(Color.white.opacity(0.34), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.bottom, proxy.safeAreaInsets.bottom + 18)
+                }
+                .padding(.horizontal, 24)
+            }
+            .ignoresSafeArea()
+        }
+    }
+
+    private func successStat(value: String, label: String, tint: Color = .white) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.frogNum(22, weight: .semibold))
+                .foregroundStyle(tint == .white ? FrogTheme.ink : tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(label)
+                .font(.frogMicro)
+                .foregroundStyle(FrogTheme.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var successStatDivider: some View {
+        Rectangle()
+            .fill(FrogTheme.line)
+            .frame(width: 1, height: 28)
+    }
+
     // MARK: - Perform check-in (write store + Firestore + save watermark)
 
     @MainActor
@@ -704,7 +905,7 @@ struct CheckInCameraView: View {
                 checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
                 isSavingWatermark = false
                 saveMessage = "打卡成功！"
-                dismiss()
+                withAnimation(.easeInOut(duration: 0.3)) { showSuccess = true }
             }
 
             // 3. Best-effort Firestore write — failure does not block local success

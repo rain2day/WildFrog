@@ -72,6 +72,13 @@ struct WildFrogRootView: View {
             _homePath = State(initialValue: path)
             _selectedTab = State(initialValue: .home)
         }
+        if let cIndex = arguments.firstIndex(of: "-qaCheckIn"),
+           arguments.indices.contains(arguments.index(after: cIndex)) {
+            var path = NavigationPath()
+            path.append(NativeRoute.checkIn(arguments[arguments.index(after: cIndex)]))
+            _homePath = State(initialValue: path)
+            _selectedTab = State(initialValue: .home)
+        }
         #endif
     }
 

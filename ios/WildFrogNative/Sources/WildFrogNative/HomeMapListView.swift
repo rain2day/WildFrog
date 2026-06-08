@@ -83,7 +83,6 @@ struct HomeMapListView: View {
                         heroBanner(topInset: topInset)
 
                         VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
-                            statBand
                             mapOverview(scrollProxy: proxy)
                             recommendedCard
                             featuredRail(scrollProxy: proxy)
@@ -183,11 +182,25 @@ struct HomeMapListView: View {
                         .foregroundStyle(FrogTheme.leaf)
                 }
                 .padding(.top, 10)
+
+                Rectangle()
+                    .fill(Color.white.opacity(0.16))
+                    .frame(height: 1)
+                    .padding(.top, 18)
+
+                HStack(spacing: 0) {
+                    statBandItem(value: totalAscent.formatted(), unit: "m", label: "累計海拔")
+                    statBandDivider
+                    statBandItem(value: "\(totalCheckIns)", unit: "次", label: "打卡")
+                    statBandDivider
+                    statBandItem(value: "\(checkInStore.currentStreak)", unit: "日", label: "連續")
+                }
+                .padding(.top, 16)
             }
             .padding(.horizontal, FrogSpace.screenPadding + 4)
-            .padding(.bottom, 24)
+            .padding(.bottom, 22)
         }
-        .frame(height: topInset + 372)
+        .frame(height: topInset + 440)
         .clipped()
     }
 
@@ -281,25 +294,7 @@ struct HomeMapListView: View {
         }
     }
 
-    /// Dark stat band sitting directly under the hero (css .statband). Three
-    /// figures, hairline dividers — the stats moved OUT of the photo so the
-    /// hero can breathe as one big image.
-    private var statBand: some View {
-        HStack(spacing: 0) {
-            statBandItem(value: totalAscent.formatted(), unit: "m", label: "累計海拔")
-            statBandDivider
-            statBandItem(value: "\(totalCheckIns)", unit: "次", label: "打卡")
-            statBandDivider
-            statBandItem(value: "\(checkInStore.currentStreak)", unit: "日", label: "連續")
-        }
-        .padding(.vertical, 18)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(FrogTheme.forest)
-        )
-    }
-
+    /// One stat figure for the in-hero stat row (累計海拔 / 打卡 / 連續).
     private func statBandItem(value: String, unit: String, label: String) -> some View {
         VStack(spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
