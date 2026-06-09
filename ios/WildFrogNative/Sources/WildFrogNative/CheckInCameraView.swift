@@ -972,9 +972,8 @@ struct CheckInCameraView: View {
     #if canImport(UIKit)
     @MainActor
     private func renderWatermarkImage(userPhoto: UIImage) -> UIImage? {
-        let currentCount = checkInStore.distinctMountainCount
         let renderer = ImageRenderer(
-            content: CheckInWatermarkExportView(mountain: mountain, userPhoto: userPhoto, checkInCount: currentCount)
+            content: CheckInWatermarkExportView(mountain: mountain, userPhoto: userPhoto, date: Date())
         )
         renderer.scale = 1
         return renderer.uiImage
@@ -1012,96 +1011,81 @@ struct CheckInCameraView: View {
 
 // MARK: - Watermark export view (uses real user photo)
 
+/// Shareable check-in card — a polaroid: the photo centre-cropped inside a warm
+/// white frame, with a caption band (peak name + date chips, a subtle WildFrog
+/// mark + elevation, and a rank badge). No text overlaid on the photo itself.
 private struct CheckInWatermarkExportView: View {
     let mountain: Mountain
     let userPhoto: UIImage
-    let checkInCount: Int
+    let date: Date
 
-    /// The watermark is always a square — the user's photo (portrait OR
-    /// landscape) is centre-cropped to fill it, so all four corner labels stay
-    /// inside the frame regardless of the source aspect ratio.
-    private let side: CGFloat = 1080
+    private let width: CGFloat = 1080
+    private let pad: CGFloat = 72
+
+    private var dateText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd"
+        return formatter.string(from: date)
+    }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            // User's actual photo as the background
+        let photoSide = width - pad * 2
+
+        VStack(spacing: 0) {
+            // The check-in photo — always centre-cropped square so portrait or
+            // landscape sources both sit cleanly inside the frame.
             Image(uiImage: userPhoto)
                 .resizable()
                 .scaledToFill()
-                .frame(width: side, height: side)
+                .frame(width: photoSide, height: photoSide)
                 .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .padding(.top, pad)
+                .padding(.horizontal, pad)
 
-            // Light top + bottom darkening for corner legibility only — no wash.
-            LinearGradient(
-                colors: [.black.opacity(0.5), .clear, .clear, .black.opacity(0.55)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            VStack(spacing: 0) {
-                // Top — logo (left) + peak name · height (right)
-                HStack(alignment: .top) {
-                    HStack(spacing: 18) {
-                        WildFrogBrandMark(size: 86, cornerRadius: 22)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("WildFrog")
-                                .font(.system(size: 58, weight: .black))
-                            Text("MOUNTAIN RANGERS")
-                                .font(.system(size: 22, weight: .heavy))
-                                .tracking(3)
-                        }
-                    }
-
-                    Spacer(minLength: 24)
-
-                    Text("\(mountain.nameZh) · \(mountain.height)m")
-                        .font(.system(size: 38, weight: .black))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                        .multilineTextAlignment(.trailing)
+            // Caption band
+            VStack(alignment: .leading, spacing: 24) {
+                HStack(spacing: 14) {
+                    captionChip(mountain.nameZh, size: 50, weight: .black)
+                    captionChip(dateText, size: 44, weight: .heavy)
+                    Spacer(minLength: 0)
                 }
 
-                Spacer()
-
-                // Bottom — MOUNTAINEER badge (left) + challenge record (right)
-                HStack(alignment: .bottom) {
-                    Text("MOUNTAINEER")
-                        .font(.system(size: 26, weight: .black))
-                        .tracking(3)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 9)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(.white, lineWidth: 2)
-                        )
+                HStack(alignment: .center, spacing: 0) {
+                    WildFrogBrandMark(size: 44, cornerRadius: 12)
+                    Text("  WildFrog · 海拔 \(mountain.height)m")
+                        .font(.system(size: 29, weight: .bold))
+                        .foregroundStyle(FrogTheme.muted)
 
                     Spacer()
 
-                    Text("挑戰紀錄 · \(max(1, checkInCount))/300 mt.")
-                        .font(.system(size: 34, weight: .black))
+                    Text("\(mountain.rankText) · 300峰")
+                        .font(.system(size: 27, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 11)
+                        .background(FrogTheme.forest, in: Capsule())
                 }
             }
-            .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.5), radius: 10)
-            .padding(56)
-
-            // Corner registration ticks (top-right, bottom-left).
-            VStack {
-                HStack {
-                    Spacer()
-                    Rectangle().fill(Color.white).frame(width: 10, height: 130)
-                }
-                Spacer()
-                HStack {
-                    Rectangle().fill(Color.white).frame(width: 10, height: 130)
-                    Spacer()
-                }
-            }
-            .padding(48)
+            .padding(.horizontal, pad)
+            .padding(.top, 32)
+            .padding(.bottom, 56)
         }
-        .frame(width: side, height: side)
-        .background(FrogTheme.ink)
-        .clipped()
+        .frame(width: width)
+        .background(FrogTheme.surface)
+    }
+
+    private func captionChip(_ text: String, size: CGFloat, weight: Font.Weight) -> some View {
+        Text(text)
+            .font(.system(size: size, weight: weight))
+            .foregroundStyle(FrogTheme.ink)
+            .padding(.horizontal, 26)
+            .padding(.vertical, 14)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(FrogTheme.line, lineWidth: 1)
+            )
     }
 }
 
