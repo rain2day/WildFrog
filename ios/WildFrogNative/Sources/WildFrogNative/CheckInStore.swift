@@ -174,6 +174,16 @@ final class CheckInStore: ObservableObject {
         Set(records.map(\.mountainId))
     }
 
+    func visitedCount(inRegion region: String) -> Int {
+        visitedMountainIds.reduce(into: 0) { acc, id in
+            if MountainCatalog.mountain(id: id).region == region { acc += 1 }
+        }
+    }
+
+    var highestVisitedPeakHeight: Int {
+        visitedMountainIds.map { MountainCatalog.mountain(id: $0).height }.max() ?? 0
+    }
+
     func hasVisited(mountainId: String) -> Bool {
         visitedMountainIds.contains(mountainId)
     }
