@@ -54,6 +54,7 @@ struct CheckInCameraView: View {
     @State private var showEnlargedWatermark = false
     @State private var showSuccess = false
     @State private var cardStyle: ShareCardStyle = .polaroid
+    @State private var weatherChip: WeatherSnapshot?
 
     // MARK: - GPS gating helpers
 
@@ -104,6 +105,23 @@ struct CheckInCameraView: View {
             return d <= 500 ? "mappin.circle.fill" : "location.circle.fill"
         @unknown default:
             return "location.circle"
+        }
+    }
+
+    /// Proximity confidence used by the GPS chip dot + the confidence pill: green
+    /// ONLY when actually within range; amber while locating; orange when too far
+    /// or unauthorised (so it never falsely reads "吻合" from a kilometre away).
+    private var gpsConfidence: (icon: String, text: String, tint: Color) {
+        switch locationManager.authorizationStatus {
+        case .notDetermined, .restricted, .denied:
+            return ("location.slash.fill", "需要定位", FrogTheme.orange)
+        case .authorizedWhenInUse, .authorizedAlways:
+            guard let d = distanceMetres else { return ("location.circle", "定位中…", FrogTheme.gold) }
+            return d <= 500
+                ? ("checkmark", "GPS 吻合", FrogTheme.moss)
+                : ("exclamationmark.triangle.fill", "GPS 未夠近", FrogTheme.orange)
+        @unknown default:
+            return ("location.circle", "定位中…", FrogTheme.gold)
         }
     }
 
@@ -284,9 +302,18 @@ struct CheckInCameraView: View {
 
     private var statusStrip: some View {
         HStack(spacing: 9) {
-            CheckInStatusChip(systemImage: gpsChipImage, title: gpsChipTitle, subtitle: nil)
+            CheckInStatusChip(systemImage: gpsChipImage, title: gpsChipTitle, subtitle: nil, tint: gpsConfidence.tint)
             CheckInStatusChip(systemImage: "mountain.2", title: "\(mountain.height)m", subtitle: "summit")
-            CheckInStatusChip(systemImage: "sun.max", title: "Weather", subtitle: "Clear")
+            CheckInStatusChip(
+                systemImage: weatherChip?.symbolName ?? "cloud.sun",
+                title: weatherChip?.temperatureText ?? "—",
+                subtitle: weatherChip?.conditionText ?? "天氣"
+            )
+        }
+        .task {
+            if weatherChip == nil {
+                weatherChip = await WeatherFetcher.snapshot(for: mountain.coordinate)
+            }
         }
     }
 
@@ -652,7 +679,7 @@ struct CheckInCameraView: View {
                         Label("\(mountain.height)m", systemImage: "mountain.2.fill")
                             .font(.frogNum(13, weight: .semibold))
                             .foregroundStyle(FrogTheme.forest)
-                        CheckInConfidencePill(systemImage: "checkmark", text: "GPS 吻合")
+                        CheckInConfidencePill(systemImage: gpsConfidence.icon, text: gpsConfidence.text, tint: gpsConfidence.tint)
                     }
 
                     Text("根據 GPS、海拔及方向核對")
@@ -1319,12 +1346,13 @@ private struct CheckInStatusChip: View {
     let systemImage: String
     let title: String
     let subtitle: String?
+    var tint: Color = FrogTheme.forest
 
     var body: some View {
         HStack(spacing: 9) {
             Image(systemName: systemImage)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(FrogTheme.forest)
+                .foregroundStyle(tint)
                 .frame(width: 24)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -1345,7 +1373,7 @@ private struct CheckInStatusChip: View {
 
             if subtitle == nil {
                 Circle()
-                    .fill(FrogTheme.leaf)
+                    .fill(tint)
                     .frame(width: 7, height: 7)
             }
         }
@@ -1363,21 +1391,22 @@ private struct CheckInStatusChip: View {
 private struct CheckInConfidencePill: View {
     let systemImage: String
     let text: String
+    var tint: Color = FrogTheme.moss
 
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: systemImage)
                 .font(.system(size: 11, weight: .heavy))
-                .foregroundStyle(FrogTheme.moss)
+                .foregroundStyle(tint)
 
             Text(text)
                 .font(.frogCaption.weight(.semibold))
-                .foregroundStyle(FrogTheme.moss)
+                .foregroundStyle(tint)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
         .padding(.horizontal, 9)
         .padding(.vertical, 6)
-        .background(FrogTheme.mossSoft, in: Capsule())
+        .background(tint.opacity(0.16), in: Capsule())
     }
 }
