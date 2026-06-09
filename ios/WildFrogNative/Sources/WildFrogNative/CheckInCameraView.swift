@@ -1133,57 +1133,48 @@ private struct CheckInPassportCardView: View {
         return formatter.string(from: date)
     }
 
+    private let photoH: CGFloat = 720
+    private let stubH: CGFloat = 430
+    private let perfR: CGFloat = 14
+
     var body: some View {
-        VStack(spacing: 0) {
-            Image(uiImage: userPhoto)
-                .resizable()
-                .scaledToFill()
-                .frame(width: width, height: 760)
-                .clipped()
-
-            // Perforated tear line between photo and stub — punched holes.
-            ZStack {
-                FrogTheme.passport
-                HStack(spacing: 0) {
-                    ForEach(0..<22, id: \.self) { _ in
-                        Circle()
-                            .fill(FrogTheme.ink.opacity(0.30))
-                            .frame(width: 16, height: 16)
-                        Spacer(minLength: 0)
-                    }
-                }
-                .padding(.horizontal, 44)
+        ZStack(alignment: .bottom) {
+            // Photo fills the top and extends behind the stub's torn edge so the
+            // real holes reveal it.
+            VStack(spacing: 0) {
+                Image(uiImage: userPhoto)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: width, height: photoH)
+                    .clipped()
+                Spacer(minLength: 0)
             }
-            .frame(height: 50)
 
-            // Ticket stub.
+            // Ticket stub with a genuinely torn (scalloped) top edge.
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
                     HStack(spacing: 14) {
-                        WildFrogBrandMark(size: 48, cornerRadius: 13)
+                        WildFrogBrandMark(size: 46, cornerRadius: 12)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("WILDFROG")
-                                .font(.system(size: 26, weight: .black))
+                                .font(.system(size: 25, weight: .black))
                                 .tracking(2)
                                 .foregroundStyle(FrogTheme.ink)
                             Text("PEAK PASSPORT")
-                                .font(.system(size: 17, weight: .heavy))
+                                .font(.system(size: 16, weight: .heavy))
                                 .tracking(3)
                                 .foregroundStyle(FrogTheme.gold)
                         }
                     }
                     Spacer()
-                    Text(dateText)
-                        .font(.system(size: 30, weight: .heavy))
-                        .foregroundStyle(FrogTheme.muted)
                 }
 
                 Text(mountain.nameZh)
-                    .font(.system(size: 76, weight: .black))
+                    .font(.system(size: 74, weight: .black))
                     .foregroundStyle(FrogTheme.ink)
-                    .padding(.top, 30)
+                    .padding(.top, 26)
                 Text(mountain.nameEn)
-                    .font(.system(size: 33, weight: .bold))
+                    .font(.system(size: 32, weight: .bold))
                     .foregroundStyle(FrogTheme.muted)
                     .padding(.top, 2)
 
@@ -1194,20 +1185,21 @@ private struct CheckInPassportCardView: View {
                     passportStatDivider
                     passportStat("地區", mountain.region)
                 }
-                .padding(.top, 34)
+                .padding(.top, 30)
             }
             .padding(.horizontal, 64)
-            .padding(.top, 40)
-            .padding(.bottom, 60)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(FrogTheme.passport)
+            .padding(.top, 40 + perfR)
+            .padding(.bottom, 54)
+            .frame(width: width, height: stubH, alignment: .topLeading)
+            .background(PerforatedTopShape(radius: perfR, spacing: 38).fill(FrogTheme.passport))
             .overlay(alignment: .topTrailing) {
-                MountainStampSeal(mountain: mountain, size: 190, isUnlocked: true, rotation: .degrees(-8))
-                    .padding(.trailing, 44)
-                    .offset(y: -104)
+                PassportInkStamp(dateText: dateText, ink: FrogTheme.forest)
+                    .frame(width: 200, height: 200)
+                    .padding(.trailing, 40)
+                    .offset(y: -58)
             }
         }
-        .frame(width: width)
+        .frame(width: width, height: photoH + stubH - perfR * 2)
         .background(FrogTheme.passport)
     }
 
@@ -1230,6 +1222,90 @@ private struct CheckInPassportCardView: View {
             .fill(FrogTheme.line)
             .frame(width: 1, height: 52)
             .padding(.horizontal, 16)
+    }
+}
+
+/// A rectangle whose TOP edge is torn into semicircle notches — real cutouts, so
+/// whatever sits behind shows through the holes.
+private struct PerforatedTopShape: Shape {
+    var radius: CGFloat
+    var spacing: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        var x = rect.minX + spacing / 2
+        while x <= rect.maxX {
+            path.addLine(to: CGPoint(x: x - radius, y: rect.minY))
+            path.addArc(
+                center: CGPoint(x: x, y: rect.minY),
+                radius: radius,
+                startAngle: .degrees(180),
+                endAngle: .degrees(0),
+                clockwise: true
+            )
+            x += spacing
+        }
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// Text laid out around a circle (for the ink-stamp ring).
+private struct CircularText: View {
+    let text: String
+    let radius: CGFloat
+    let fontSize: CGFloat
+    let ink: Color
+    var startDegrees: Double = -90
+
+    var body: some View {
+        let chars = Array(text)
+        let per = 360.0 / Double(max(chars.count, 1))
+        GeometryReader { geo in
+            let cx = geo.size.width / 2
+            let cy = geo.size.height / 2
+            ForEach(0..<chars.count, id: \.self) { index in
+                let deg = startDegrees + per * Double(index)
+                let rad = deg * .pi / 180
+                Text(String(chars[index]))
+                    .font(.system(size: fontSize, weight: .heavy))
+                    .foregroundStyle(ink)
+                    .position(x: cx + radius * cos(rad), y: cy + radius * sin(rad))
+                    .rotationEffect(.degrees(deg + 90))
+            }
+        }
+    }
+}
+
+/// A single-colour ink impression — double ring, circular wordmark, the mountain
+/// glyph, and the date — pressed (semi-transparent, slightly rotated) onto paper.
+private struct PassportInkStamp: View {
+    let dateText: String
+    var ink: Color = FrogTheme.forest
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(ink, lineWidth: 5)
+            Circle().stroke(ink, lineWidth: 2.5).padding(11)
+
+            CircularText(text: "· WILDFROG · PEAK PASSPORT ", radius: 74, fontSize: 16, ink: ink)
+
+            VStack(spacing: 7) {
+                WildFrogMark()
+                    .stroke(ink, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                    .frame(width: 54, height: 54)
+                Text(dateText)
+                    .font(.system(size: 19, weight: .heavy))
+                    .foregroundStyle(ink)
+            }
+        }
+        .frame(width: 196, height: 196)
+        .opacity(0.88)
+        .rotationEffect(.degrees(-11))
     }
 }
 
