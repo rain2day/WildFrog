@@ -91,7 +91,7 @@ struct LeaderboardView: View {
 
     private func leaderboardCover(topInset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: "kowloon-peak"), dimming: 0)
 
             LinearGradient(
                 colors: [

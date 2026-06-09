@@ -120,7 +120,7 @@ struct RecordsCalendarView: View {
 
     private func passportCover(topInset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: recentCoverMountain, dimming: 0)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: "sunset-peak"), dimming: 0)
 
             // Single layered gradient — readable photo top, anchored forest bottom.
             LinearGradient(
@@ -175,14 +175,6 @@ struct RecordsCalendarView: View {
         }
         .frame(height: topInset + 290)
         .clipped()
-    }
-
-    private var recentCoverMountain: Mountain {
-        checkInStore.records
-            .sorted { $0.date > $1.date }
-            .first
-            .map { MountainCatalog.mountain(id: $0.mountainId) }
-            ?? MountainCatalog.mountain(id: "lion-rock")
     }
 
     // MARK: - Stamp passport (山峰印章圖鑑)

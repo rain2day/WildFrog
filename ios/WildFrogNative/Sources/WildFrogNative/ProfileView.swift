@@ -56,12 +56,6 @@ struct ProfileView: View {
         return MountainCatalog.mountain(id: "lion-rock")
     }
 
-    /// Hero image source — the user's latest peak, but only when it has artwork
-    /// (some catalog stubs have no image); otherwise a guaranteed-image default.
-    private var heroMountain: Mountain {
-        recentMountain.imageName.isEmpty ? MountainCatalog.mountain(id: "tai-mo-shan") : recentMountain
-    }
-
     var body: some View {
         Group {
             if authService.isSignedIn {
@@ -254,7 +248,7 @@ struct ProfileView: View {
         let currentAvatarData = avatarData
 
         return ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: heroMountain, dimming: 0)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: "ma-on-shan"), dimming: 0)
 
             LinearGradient(
                 colors: [
