@@ -253,7 +253,7 @@ struct MountainCertificateSheet: View {
                 }
             }
         }
-        .onAppear(perform: render)
+        .task { await prepare() }
     }
 
     @ViewBuilder
@@ -299,10 +299,23 @@ struct MountainCertificateSheet: View {
         }
     }
 
+    /// Backfills weather for an older record that never captured it, then renders.
     @MainActor
-    private func render() {
+    private func prepare() async {
         guard rendered == nil, !isRendering else { return }
         isRendering = true
+        if let record = latestRecord, record.weather == nil {
+            let coordinate = MountainCatalog.mountain(id: mountain.id).coordinate
+            if let snapshot = await WeatherFetcher.historicalSnapshot(for: coordinate, at: record.date) {
+                checkInStore.attachWeather(snapshot, to: record.id)
+            }
+        }
+        renderImage()
+        isRendering = false
+    }
+
+    @MainActor
+    private func renderImage() {
         let record = latestRecord
         let photo = Self.loadPhoto(record?.photoFilename)
         let renderer = ImageRenderer(content:
@@ -317,7 +330,6 @@ struct MountainCertificateSheet: View {
         )
         renderer.scale = 2.0
         rendered = renderer.uiImage
-        isRendering = false
     }
 
     /// Loads a summit photo from the documents directory by filename.

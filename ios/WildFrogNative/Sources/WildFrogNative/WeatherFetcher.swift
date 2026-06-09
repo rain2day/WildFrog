@@ -28,6 +28,34 @@ enum WeatherFetcher {
         #endif
     }
 
+    /// Historical weather for a past check-in (date + coordinate), used to backfill
+    /// records that predate live capture. Picks the hour closest to `date`.
+    static func historicalSnapshot(for coordinate: CLLocationCoordinate2D, at date: Date) async -> WeatherSnapshot? {
+        #if canImport(WeatherKit)
+        guard #available(iOS 16.0, *) else { return nil }
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        do {
+            let hourly = try await WeatherService.shared.weather(
+                for: location,
+                including: .hourly(startDate: date.addingTimeInterval(-3600),
+                                   endDate: date.addingTimeInterval(3600))
+            )
+            guard let closest = hourly.min(by: {
+                abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+            }) else { return nil }
+            return WeatherSnapshot(
+                symbolName: closest.symbolName,
+                conditionText: Self.localizedCondition(closest.condition),
+                temperatureC: closest.temperature.converted(to: .celsius).value
+            )
+        } catch {
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }
+
     #if canImport(WeatherKit)
     @available(iOS 16.0, *)
     private static func localizedCondition(_ condition: WeatherCondition) -> String {
