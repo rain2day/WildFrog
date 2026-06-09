@@ -1,0 +1,6 @@
+{
+  "images" : [
+    { "idiom" : "universal", "filename" : "wildfrog-logo.png" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 }
+}

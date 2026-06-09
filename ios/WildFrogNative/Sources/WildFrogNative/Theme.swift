@@ -88,17 +88,17 @@ struct WildFrogMark: Shape {
 struct WildFrogBrandMark: View {
     var size: CGFloat = 34
     var cornerRadius: CGFloat = 9
-    var fill: Color = FrogTheme.forest
-    var markColor: Color = .white
+    var fill: Color = FrogTheme.surface
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(fill)
             .frame(width: size, height: size)
             .overlay(
-                WildFrogMark()
-                    .stroke(markColor, style: StrokeStyle(lineWidth: max(1.5, size * 0.072), lineCap: .round, lineJoin: .round))
-                    .padding(size * 0.27)
+                Image("WildFrogLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .padding(size * 0.1)
             )
             .accessibilityLabel("WildFrog")
     }
@@ -114,16 +114,17 @@ struct WildFrogWordmark: View {
     var body: some View {
         HStack(spacing: 9) {
             RoundedRectangle(cornerRadius: markSize * 0.3, style: .continuous)
-                .fill(onPhoto ? Color.white.opacity(0.14) : FrogTheme.forest)
+                .fill(FrogTheme.surface)
                 .frame(width: markSize, height: markSize)
                 .overlay(
-                    RoundedRectangle(cornerRadius: markSize * 0.3, style: .continuous)
-                        .stroke(onPhoto ? Color.white.opacity(0.28) : Color.clear, lineWidth: 1)
+                    Image("WildFrogLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .padding(markSize * 0.1)
                 )
                 .overlay(
-                    WildFrogMark()
-                        .stroke(.white, style: StrokeStyle(lineWidth: max(1.5, markSize * 0.072), lineCap: .round, lineJoin: .round))
-                        .padding(markSize * 0.27)
+                    RoundedRectangle(cornerRadius: markSize * 0.3, style: .continuous)
+                        .stroke(onPhoto ? Color.white.opacity(0.5) : FrogTheme.line, lineWidth: 1)
                 )
 
             Text("WildFrog")
