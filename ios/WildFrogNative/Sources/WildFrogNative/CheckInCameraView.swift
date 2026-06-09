@@ -147,8 +147,20 @@ struct CheckInCameraView: View {
         .hiddenNavigationBar()
         .background(FrogTheme.warmPaper)
         .onAppear {
-            locationManager.requestAuthorization()
-            locationManager.startUpdating()
+            #if DEBUG
+            let qaRender = ProcessInfo.processInfo.arguments.contains("-qaSuccess")
+                || ProcessInfo.processInfo.arguments.contains("-qaWatermark")
+                || ProcessInfo.processInfo.arguments.contains("-qaPassport")
+            #else
+            let qaRender = false
+            #endif
+
+            // QA card-render launches don't need location — skip the request so
+            // the permission dialog never covers the preview screenshot.
+            if !qaRender {
+                locationManager.requestAuthorization()
+                locationManager.startUpdating()
+            }
             if recorder.isRecording {
                 mode = .recording
             }
@@ -1129,20 +1141,20 @@ private struct CheckInPassportCardView: View {
                 .frame(width: width, height: 760)
                 .clipped()
 
-            // Perforated tear line between photo and stub.
+            // Perforated tear line between photo and stub — punched holes.
             ZStack {
                 FrogTheme.passport
                 HStack(spacing: 0) {
-                    ForEach(0..<30, id: \.self) { _ in
+                    ForEach(0..<22, id: \.self) { _ in
                         Circle()
-                            .fill(FrogTheme.ink.opacity(0.14))
-                            .frame(width: 9, height: 9)
+                            .fill(FrogTheme.ink.opacity(0.30))
+                            .frame(width: 16, height: 16)
                         Spacer(minLength: 0)
                     }
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 44)
             }
-            .frame(height: 40)
+            .frame(height: 50)
 
             // Ticket stub.
             VStack(alignment: .leading, spacing: 0) {
@@ -1190,9 +1202,9 @@ private struct CheckInPassportCardView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(FrogTheme.passport)
             .overlay(alignment: .topTrailing) {
-                MountainStampSeal(mountain: mountain, size: 150, isUnlocked: true, rotation: .degrees(-8))
-                    .padding(.trailing, 52)
-                    .offset(y: -86)
+                MountainStampSeal(mountain: mountain, size: 190, isUnlocked: true, rotation: .degrees(-8))
+                    .padding(.trailing, 44)
+                    .offset(y: -104)
             }
         }
         .frame(width: width)
