@@ -17,6 +17,14 @@ private enum CheckInMode {
     case recording
 }
 
+/// Which share-card layout the user keeps for this check-in.
+private enum ShareCardStyle: String, CaseIterable, Identifiable {
+    case polaroid
+    case passport
+    var id: String { rawValue }
+    var label: String { self == .polaroid ? "拍立得" : "護照" }
+}
+
 struct CheckInCameraView: View {
     let mountain: Mountain
 
@@ -45,6 +53,7 @@ struct CheckInCameraView: View {
     @State private var watermarkPreviewImage: UIImage?
     @State private var showEnlargedWatermark = false
     @State private var showSuccess = false
+    @State private var cardStyle: ShareCardStyle = .polaroid
 
     // MARK: - GPS gating helpers
 
@@ -165,20 +174,16 @@ struct CheckInCameraView: View {
                 mode = .recording
             }
             #if DEBUG
-            if ProcessInfo.processInfo.arguments.contains("-qaSuccess") {
+            let qaArgs = ProcessInfo.processInfo.arguments
+            if qaArgs.contains("-qaPassport") { cardStyle = .passport }
+            if qaArgs.contains("-qaSuccess") {
                 mode = .directCheckIn
                 capturedImage = UIImage(named: mountain.imageName)
                 showSuccess = true
-            }
-            if ProcessInfo.processInfo.arguments.contains("-qaWatermark") {
-                mode = .directCheckIn
-                capturedImage = UIImage(named: mountain.imageName)
-                showEnlargedWatermark = true
-            }
-            if ProcessInfo.processInfo.arguments.contains("-qaPassport") {
+            } else if qaArgs.contains("-qaWatermark") || qaArgs.contains("-qaPassport") {
                 mode = .directCheckIn
                 if let img = UIImage(named: mountain.imageName) {
-                    watermarkPreviewImage = renderPassportImage(userPhoto: img)
+                    watermarkPreviewImage = renderCard(cardStyle, userPhoto: img)
                 }
                 showEnlargedWatermark = true
             }
@@ -207,7 +212,13 @@ struct CheckInCameraView: View {
         .onChange(of: capturedImage) { _, newImage in
             #if canImport(UIKit)
             guard let newImage else { watermarkPreviewImage = nil; return }
-            watermarkPreviewImage = renderWatermarkImage(userPhoto: newImage)
+            watermarkPreviewImage = renderCard(cardStyle, userPhoto: newImage)
+            #endif
+        }
+        .onChange(of: cardStyle) { _, newStyle in
+            #if canImport(UIKit)
+            guard let img = capturedImage else { return }
+            watermarkPreviewImage = renderCard(newStyle, userPhoto: img)
             #endif
         }
         .fullScreenCover(isPresented: $showEnlargedWatermark) {
@@ -809,22 +820,31 @@ struct CheckInCameraView: View {
                         .foregroundStyle(.white)
                         .padding(.top, 12)
 
-                    Text("已記錄到你的 300 峰護照，水印相已儲存到相簿。")
+                    Text("已記錄到你的 300 峰護照，打卡相已儲存到相簿。")
                         .font(.frogCaption)
                         .foregroundStyle(.white.opacity(0.78))
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 252)
                         .padding(.top, 8)
 
+                    Picker("分享卡款式", selection: $cardStyle) {
+                        ForEach(ShareCardStyle.allCases) { style in
+                            Text(style.label).tag(style)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 260)
+                    .padding(.top, 24)
+
                     // record card (.succ .card)
                     VStack(spacing: 14) {
                         if let wm = watermarkPreviewImage {
                             Image(uiImage: wm)
                                 .resizable()
-                                .scaledToFill()
-                                .frame(height: 150)
-                                .clipped()
+                                .scaledToFit()
+                                .frame(maxHeight: 210)
                                 .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                                .onTapGesture { showEnlargedWatermark = true }
                         }
 
                         HStack(spacing: 0) {
@@ -846,7 +866,7 @@ struct CheckInCameraView: View {
                                 item: Image(uiImage: wm),
                                 preview: SharePreview("WildFrog · \(mountain.nameZh)", image: Image(uiImage: wm))
                             ) {
-                                Label("分享水印相", systemImage: "square.and.arrow.up")
+                                Label("分享打卡相", systemImage: "square.and.arrow.up")
                                     .font(.headline.weight(.black))
                                     .foregroundStyle(.white)
                                     .frame(maxWidth: .infinity)
@@ -917,8 +937,8 @@ struct CheckInCameraView: View {
             saveMessage = "請先登入再打卡。"
             return
         }
-        guard let watermarkImage = renderWatermarkImage(userPhoto: capturedImage) else {
-            saveMessage = "未能生成水印圖，請再試一次。"
+        guard let watermarkImage = renderCard(cardStyle, userPhoto: capturedImage) else {
+            saveMessage = "未能生成打卡相，請再試一次。"
             return
         }
 
@@ -1005,6 +1025,14 @@ struct CheckInCameraView: View {
         )
         renderer.scale = 1
         return renderer.uiImage
+    }
+
+    @MainActor
+    private func renderCard(_ style: ShareCardStyle, userPhoto: UIImage) -> UIImage? {
+        switch style {
+        case .polaroid: return renderWatermarkImage(userPhoto: userPhoto)
+        case .passport: return renderPassportImage(userPhoto: userPhoto)
+        }
     }
 
     // `nonisolated`: SwiftUI View methods are implicitly @MainActor, which would
