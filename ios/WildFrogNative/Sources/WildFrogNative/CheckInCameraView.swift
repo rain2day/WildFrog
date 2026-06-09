@@ -1194,9 +1194,8 @@ private struct CheckInPassportCardView: View {
             .background(PerforatedTopShape(radius: perfR, spacing: 38).fill(FrogTheme.passport))
             .overlay(alignment: .topTrailing) {
                 PassportInkStamp(dateText: dateText, ink: FrogTheme.forest)
-                    .frame(width: 200, height: 200)
-                    .padding(.trailing, 40)
-                    .offset(y: -58)
+                    .padding(.trailing, 24)
+                    .offset(y: -210)
             }
         }
         .frame(width: width, height: photoH + stubH - perfR * 2)
@@ -1289,21 +1288,21 @@ private struct PassportInkStamp: View {
 
     var body: some View {
         ZStack {
-            Circle().stroke(ink, lineWidth: 5)
-            Circle().stroke(ink, lineWidth: 2.5).padding(11)
+            Circle().stroke(ink, lineWidth: 10)
+            Circle().stroke(ink, lineWidth: 5).padding(22)
 
-            CircularText(text: "· WILDFROG · PEAK PASSPORT ", radius: 74, fontSize: 16, ink: ink)
+            CircularText(text: "· WILDFROG · PEAK PASSPORT ", radius: 148, fontSize: 32, ink: ink)
 
-            VStack(spacing: 7) {
+            VStack(spacing: 14) {
                 WildFrogMark()
-                    .stroke(ink, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-                    .frame(width: 54, height: 54)
+                    .stroke(ink, style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
+                    .frame(width: 108, height: 108)
                 Text(dateText)
-                    .font(.system(size: 19, weight: .heavy))
+                    .font(.system(size: 38, weight: .heavy))
                     .foregroundStyle(ink)
             }
         }
-        .frame(width: 196, height: 196)
+        .frame(width: 392, height: 392)
         .opacity(0.88)
         .rotationEffect(.degrees(-11))
     }
