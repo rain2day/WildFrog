@@ -667,9 +667,7 @@ private struct TripsSection: View {
                 }
 
                 if trips.count > previewLimit {
-                    NavigationLink {
-                        AllTripsView(trips: trips)
-                    } label: {
+                    NavigationLink(value: NativeRoute.allTrips) {
                         HStack(spacing: 6) {
                             Text("全部行程")
                             Image(systemName: "arrow.right")
@@ -709,8 +707,15 @@ private struct TripsSection: View {
 }
 
 /// Full chronological list of every completed trip, reached via "全部行程 →".
-private struct AllTripsView: View {
-    let trips: [CheckInRecord]
+/// Internal + parameter-free so it's a clean `.allTrips` value-route target
+/// (mixing a destination-closure push with value links inside caused a nav loop);
+/// reads trips straight from the store.
+struct AllTripsView: View {
+    @EnvironmentObject private var checkInStore: CheckInStore
+
+    private var trips: [CheckInRecord] {
+        checkInStore.records.sorted { $0.date > $1.date }
+    }
 
     var body: some View {
         ScrollView {

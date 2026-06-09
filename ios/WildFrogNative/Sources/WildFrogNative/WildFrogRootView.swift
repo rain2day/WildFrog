@@ -6,6 +6,7 @@ enum NativeRoute: Hashable {
     case tripDetail(UUID)
     case routeToCheckpoint(String)
     case allMountains
+    case allTrips
 }
 
 enum AppTab: String, CaseIterable, Identifiable {
@@ -207,6 +208,8 @@ extension View {
                 RouteToCheckpointView(mountain: MountainCatalog.mountain(id: id))
             case .allMountains:
                 MountainDirectoryView()
+            case .allTrips:
+                AllTripsView()
             }
         }
     }
