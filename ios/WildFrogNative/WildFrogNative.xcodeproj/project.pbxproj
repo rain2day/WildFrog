@@ -287,6 +287,9 @@
 							com.apple.SignInWithApple = {
 								enabled = 1;
 							};
+							com.apple.WeatherKit = {
+								enabled = 1;
+							};
 						};
 					};
 					F1000000000000000000000A = {
