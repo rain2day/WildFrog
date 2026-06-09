@@ -102,40 +102,48 @@ struct TripDetailView: View {
 
     @ViewBuilder
     private func summitPhotoPanel(for record: CheckInRecord, mountain: Mountain) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            if let summitPhoto {
-                Image(uiImage: summitPhoto)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                MountainPhoto(mountain: mountain, dimming: 0.18)
+        // A fixed-size clear box defines the width (screen − padding), so the
+        // scaledToFill photo can never drive the panel — and thus the whole page —
+        // wider than the screen.
+        Color.clear
+            .frame(maxWidth: .infinity)
+            .frame(height: 280)
+            .overlay {
+                if let summitPhoto {
+                    Image(uiImage: summitPhoto)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    MountainPhoto(mountain: mountain, dimming: 0.18)
+                }
             }
-            LinearGradient(
-                colors: [.clear, Color.black.opacity(0.74)],
-                startPoint: .center,
-                endPoint: .bottom
+            .overlay(alignment: .bottom) {
+                LinearGradient(
+                    colors: [.clear, Color.black.opacity(0.74)],
+                    startPoint: .center,
+                    endPoint: .bottom
+                )
+            }
+            .overlay(alignment: .bottomLeading) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(mountain.displayName)
+                        .font(.frogTitle)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.72)
+                    Text("\(mountain.region) · \(mountain.height)m")
+                        .font(.frogCaption.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .foregroundStyle(.white)
+                .padding(16)
+            }
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(FrogTheme.line, lineWidth: 1)
             )
-            VStack(alignment: .leading, spacing: 4) {
-                Text(mountain.displayName)
-                    .font(.frogTitle)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.72)
-                Text("\(mountain.region) · \(mountain.height)m")
-                    .font(.frogCaption.weight(.semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .foregroundStyle(.white)
-            .padding(16)
-        }
-        .frame(height: 280)
-        .frame(maxWidth: .infinity)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(FrogTheme.line, lineWidth: 1)
-        )
     }
 
     // MARK: - Stats

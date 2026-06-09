@@ -112,18 +112,18 @@ struct WildFrogWordmark: View {
     var onPhoto: Bool = true
 
     var body: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: 10) {
             Image("WildFrogLogo")
                 .resizable()
                 .scaledToFit()
-                .frame(width: markSize * 1.18, height: markSize * 1.18)
-                .shadow(color: .black.opacity(0.35), radius: 4, y: 1)
+                .frame(height: markSize * 1.8)
 
-            Text("WildFrog")
-                .font(.system(size: markSize * 0.62, weight: .bold))
-                .tracking(0.6)
-                .foregroundStyle(textColor)
+            Image("WildFrogWordmarkText")
+                .resizable()
+                .scaledToFit()
+                .frame(height: markSize * 1.05)
         }
+        .shadow(color: .black.opacity(0.35), radius: 4, y: 1)
         .accessibilityElement()
         .accessibilityLabel("WildFrog")
     }
