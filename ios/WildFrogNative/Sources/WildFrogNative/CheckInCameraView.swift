@@ -163,6 +163,13 @@ struct CheckInCameraView: View {
                 capturedImage = UIImage(named: mountain.imageName)
                 showEnlargedWatermark = true
             }
+            if ProcessInfo.processInfo.arguments.contains("-qaPassport") {
+                mode = .directCheckIn
+                if let img = UIImage(named: mountain.imageName) {
+                    watermarkPreviewImage = renderPassportImage(userPhoto: img)
+                }
+                showEnlargedWatermark = true
+            }
             #endif
         }
         .onDisappear {
@@ -979,6 +986,15 @@ struct CheckInCameraView: View {
         return renderer.uiImage
     }
 
+    @MainActor
+    private func renderPassportImage(userPhoto: UIImage) -> UIImage? {
+        let renderer = ImageRenderer(
+            content: CheckInPassportCardView(mountain: mountain, userPhoto: userPhoto, date: Date())
+        )
+        renderer.scale = 1
+        return renderer.uiImage
+    }
+
     // `nonisolated`: SwiftUI View methods are implicitly @MainActor, which would
     // make these completion-handler closures @MainActor-isolated. Photos invokes
     // them on a background queue, tripping the Swift concurrency isolation check
@@ -1086,6 +1102,122 @@ private struct CheckInWatermarkExportView: View {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(FrogTheme.line, lineWidth: 1)
             )
+    }
+}
+
+/// Style 2 — passport / ticket-stub share card: photo on top, a perforated tear
+/// line, then a cream stub with WILDFROG · PEAK PASSPORT, the big peak name, a
+/// stat row, and the mountain stamp seal placed like a passport entry stamp.
+private struct CheckInPassportCardView: View {
+    let mountain: Mountain
+    let userPhoto: UIImage
+    let date: Date
+
+    private let width: CGFloat = 1080
+
+    private var dateText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd"
+        return formatter.string(from: date)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Image(uiImage: userPhoto)
+                .resizable()
+                .scaledToFill()
+                .frame(width: width, height: 760)
+                .clipped()
+
+            // Perforated tear line between photo and stub.
+            ZStack {
+                FrogTheme.passport
+                HStack(spacing: 0) {
+                    ForEach(0..<30, id: \.self) { _ in
+                        Circle()
+                            .fill(FrogTheme.ink.opacity(0.14))
+                            .frame(width: 9, height: 9)
+                        Spacer(minLength: 0)
+                    }
+                }
+                .padding(.horizontal, 40)
+            }
+            .frame(height: 40)
+
+            // Ticket stub.
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center) {
+                    HStack(spacing: 14) {
+                        WildFrogBrandMark(size: 48, cornerRadius: 13)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("WILDFROG")
+                                .font(.system(size: 26, weight: .black))
+                                .tracking(2)
+                                .foregroundStyle(FrogTheme.ink)
+                            Text("PEAK PASSPORT")
+                                .font(.system(size: 17, weight: .heavy))
+                                .tracking(3)
+                                .foregroundStyle(FrogTheme.gold)
+                        }
+                    }
+                    Spacer()
+                    Text(dateText)
+                        .font(.system(size: 30, weight: .heavy))
+                        .foregroundStyle(FrogTheme.muted)
+                }
+
+                Text(mountain.nameZh)
+                    .font(.system(size: 76, weight: .black))
+                    .foregroundStyle(FrogTheme.ink)
+                    .padding(.top, 30)
+                Text(mountain.nameEn)
+                    .font(.system(size: 33, weight: .bold))
+                    .foregroundStyle(FrogTheme.muted)
+                    .padding(.top, 2)
+
+                HStack(spacing: 0) {
+                    passportStat("海拔", "\(mountain.height)m")
+                    passportStatDivider
+                    passportStat("全港排名", mountain.rankText)
+                    passportStatDivider
+                    passportStat("地區", mountain.region)
+                }
+                .padding(.top, 34)
+            }
+            .padding(.horizontal, 64)
+            .padding(.top, 40)
+            .padding(.bottom, 60)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(FrogTheme.passport)
+            .overlay(alignment: .topTrailing) {
+                MountainStampSeal(mountain: mountain, size: 150, isUnlocked: true, rotation: .degrees(-8))
+                    .padding(.trailing, 52)
+                    .offset(y: -86)
+            }
+        }
+        .frame(width: width)
+        .background(FrogTheme.passport)
+    }
+
+    private func passportStat(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(label)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(FrogTheme.muted)
+            Text(value)
+                .font(.system(size: 38, weight: .black))
+                .foregroundStyle(FrogTheme.forest)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var passportStatDivider: some View {
+        Rectangle()
+            .fill(FrogTheme.line)
+            .frame(width: 1, height: 52)
+            .padding(.horizontal, 16)
     }
 }
 
