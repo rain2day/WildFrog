@@ -40,6 +40,8 @@
 	<string>WildFrog uses the camera to capture summit check-in proof photos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>WildFrog uses your location to verify summit check-ins near mountain checkpoints.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>用於將打卡水印圖儲存到相簿。</string>
 	<key>NSPhotoLibraryUsageDescription</key>

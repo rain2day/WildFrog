@@ -30,6 +30,9 @@
 		B540CE4DD26C65E9B3819386 /* WildFrogRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */; };
 		B5A24300016C74DBF86696E7 /* CheckInCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */; };
 		C4B3001CB3001CB3001CB301 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B3001CB3001CB3001CB300 /* CameraPicker.swift */; };
+		F10000000000000000000001 /* WildFrogTrackLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* WildFrogTrackLiveActivity.swift */; };
+		F10000000000000000000002 /* WildFrogTrackActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */; };
+		F10000000000000000000003 /* WildFrogLiveActivityWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BF8E87849CA3D87AD857D148 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F03F5A280CF251A80908152 /* Foundation.framework */; };
 		DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6441CFCB65614B5EB60E9C /* Mountain.swift */; };
 		E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */; };
@@ -41,6 +44,30 @@
 		B6001A0000000031 /* ProviderPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000030 /* ProviderPickerSheet.swift */; };
 		CF001A0000000041 /* CheckInMapPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF001A0000000040 /* CheckInMapPickerView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F1000000000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 888FCF4DC7670D318E2ABAB9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F1000000000000000000000A;
+			remoteInfo = WildFrogLiveActivityWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F1000000000000000000000C /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F10000000000000000000003 /* WildFrogLiveActivityWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		093DD82643FC8812EB3E887B /* MountainPhoto.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainPhoto.swift; sourceTree = "<group>"; };
@@ -68,6 +95,9 @@
 		FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = WildFrogNative.entitlements; sourceTree = "<group>"; };
 		8F03F5A280CF251A80908152 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		A20B579DFF0F858858406436 /* RecordsCalendarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RecordsCalendarView.swift; sourceTree = "<group>"; };
+		F10000000000000000000004 /* WildFrogTrackLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogTrackLiveActivity.swift; sourceTree = "<group>"; };
+		F10000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildFrogLiveActivityWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8B042D4E250FA2146378FC0 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		DF6441CFCB65614B5EB60E9C /* Mountain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mountain.swift; sourceTree = "<group>"; };
 		CF001A0000000040 /* CheckInMapPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInMapPickerView.swift; sourceTree = "<group>"; };
@@ -90,6 +120,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F10000000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -107,6 +144,7 @@
 				EE05A65EB6E233A3FCC8399F /* Products */,
 				3AB8056BBC21B5F4E74DB598 /* Frameworks */,
 				C03E06C409DD5430D0F57BF7 /* WildFrogNative */,
+				F10000000000000000000009 /* LiveActivityWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -160,13 +198,41 @@
 			isa = PBXGroup;
 			children = (
 				4CE39EE12F9218B47E286134 /* WildFrogNative.app */,
+				F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		F10000000000000000000009 /* LiveActivityWidget */ = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000004 /* WildFrogTrackLiveActivity.swift */,
+				F10000000000000000000005 /* Info.plist */,
+			);
+			name = LiveActivityWidget;
+			path = LiveActivityWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		F1000000000000000000000A /* WildFrogLiveActivityWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000000000000000000011 /* Build configuration list for PBXNativeTarget "WildFrogLiveActivityWidgetExtension" */;
+			buildPhases = (
+				F1000000000000000000000D /* Sources */,
+				F10000000000000000000007 /* Frameworks */,
+				F10000000000000000000008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WildFrogLiveActivityWidgetExtension;
+			productName = WildFrogLiveActivityWidgetExtension;
+			productReference = F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		E274215E7C1F68276494571D /* WildFrogNative */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2FB2AFF5F9FB654801F9FB1F /* Build configuration list for PBXNativeTarget "WildFrogNative" */;
@@ -174,10 +240,12 @@
 				7EF617AFA016EBC0EC032367 /* Sources */,
 				CB9180D260419EBF3F5C90AC /* Frameworks */,
 				ABF7A322F569D32E0AC21352 /* Resources */,
+				F1000000000000000000000C /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F1000000000000000000000E /* PBXTargetDependency */,
 			);
 			name = WildFrogNative;
 			packageProductDependencies = (
@@ -209,6 +277,9 @@
 							};
 						};
 					};
+					F1000000000000000000000A = {
+						CreatedOnToolsVersion = 26.0;
+					};
 				};
 			};
 			buildConfigurationList = 332097D04318A2A3830979DD /* Build configuration list for PBXProject "WildFrogNative" */;
@@ -231,6 +302,7 @@
 			);
 			targets = (
 				E274215E7C1F68276494571D /* WildFrogNative */,
+				F1000000000000000000000A /* WildFrogLiveActivityWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -242,6 +314,13 @@
 			files = (
 				49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */,
 				A18AAA85EBE65F04DE3A8860 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F10000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,7 +360,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1000000000000000000000D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F10000000000000000000001 /* WildFrogTrackLiveActivity.swift in Sources */,
+				F10000000000000000000002 /* WildFrogTrackActivity.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F1000000000000000000000E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = WildFrogLiveActivityWidgetExtension;
+			target = F1000000000000000000000A /* WildFrogLiveActivityWidgetExtension */;
+			targetProxy = F1000000000000000000000B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		0AD2A1D9AA3EB7E627994A2E /* Release */ = {
@@ -456,6 +553,69 @@
 			};
 			name = Debug;
 		};
+		F1000000000000000000000F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N6972VY494;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LiveActivityWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		F10000000000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N6972VY494;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LiveActivityWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -473,6 +633,15 @@
 			buildConfigurations = (
 				7F455D25E56E9A96C5E0B4C6 /* Debug */,
 				4210CF5CB031B7B9195CF883 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F10000000000000000000011 /* Build configuration list for PBXNativeTarget "WildFrogLiveActivityWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F10000000000000000000010 /* Debug */,
+				F1000000000000000000000F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

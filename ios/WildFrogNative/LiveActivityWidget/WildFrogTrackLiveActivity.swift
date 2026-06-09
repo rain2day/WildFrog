@@ -1,16 +1,8 @@
 // WildFrog — Track recording Live Activity (Dynamic Island + Lock Screen).
 //
-// ⚠️ This file belongs to a FUTURE Widget Extension target, NOT the app target.
-// It is intentionally kept OUT of ios/WildFrogNative/Sources/ so the app keeps
-// building. To activate the Dynamic Island end-to-end:
-//   1. Xcode → File → New → Target → Widget Extension (check "Include Live Activity").
-//   2. Add THIS file to the widget target, and also add the app's
-//      Sources/WildFrogNative/WildFrogTrackActivity.swift to the widget target
-//      (the WildFrogTrackAttributes type must be shared by both).
-//   3. Make this bundle the widget's @main (replace the template bundle).
-//   4. In the APP's Info.plist set  NSSupportsLiveActivities = YES.
-// `TrackRecorder` already starts/updates/ends the activity; once the above is
-// wired the island lights up automatically while recording.
+// This file is built by the WildFrogLiveActivityWidgetExtension target. The
+// app target starts/updates/ends the activity from `TrackRecorder`; this target
+// renders the Dynamic Island + Lock Screen UI while recording.
 
 import ActivityKit
 import SwiftUI
