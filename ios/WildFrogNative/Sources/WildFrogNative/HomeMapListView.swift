@@ -122,6 +122,8 @@ struct HomeMapListView: View {
                 endPoint: .bottom
             )
 
+            ConquestRidgelineOverlay(progress: ratio)
+
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
                     WildFrogWordmark(markSize: 30)
@@ -161,8 +163,16 @@ struct HomeMapListView: View {
                 }
                 .padding(.top, 6)
 
-                MountainProgressBar(progress: ratio)
-                    .padding(.top, 16)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.22))
+                        Capsule()
+                            .fill(FrogTheme.leaf)
+                            .frame(width: max(8, geo.size.width * ratio))
+                    }
+                }
+                .frame(height: 5)
+                .padding(.top, 16)
 
                 HStack {
                     Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
@@ -713,67 +723,69 @@ struct MountainDirectoryView: View {
     }
 }
 
-// MARK: - Mountain-range progress bar
+// MARK: - Conquest ridgeline (hero overlay)
 
-/// A jagged mountain skyline filling the bottom of its rect — the silhouette
-/// drawn across the conquest progress bar.
-private struct MountainSkyline: Shape {
+/// A complex mountain ridgeline spanning the hero. `closed`: a filled silhouette
+/// (ridge top closed down to the rect bottom) used for the conquered colour-fill;
+/// open: just the ridge top edge, used for the bright outline.
+private struct ConquestRidgeline: Shape {
+    var closed: Bool
+    // (x-fraction, y-fraction); lower y = higher peak. Kept ~0.28–0.74 so the
+    // ridge sits in the hero's mid band, behind the headline number.
+    private static let pts: [(CGFloat, CGFloat)] = [
+        (0.00, 0.66), (0.03, 0.58), (0.07, 0.71), (0.11, 0.43), (0.14, 0.56),
+        (0.18, 0.33), (0.21, 0.49), (0.25, 0.63), (0.29, 0.40), (0.33, 0.29),
+        (0.37, 0.51), (0.41, 0.45), (0.45, 0.65), (0.49, 0.37), (0.53, 0.50),
+        (0.57, 0.32), (0.61, 0.57), (0.65, 0.44), (0.69, 0.69), (0.73, 0.35),
+        (0.77, 0.54), (0.81, 0.41), (0.85, 0.61), (0.89, 0.47), (0.93, 0.64),
+        (0.97, 0.50), (1.00, 0.61)
+    ]
     func path(in rect: CGRect) -> Path {
         let w = rect.width, h = rect.height
-        // (x-fraction, y-fraction-from-top); lower y = taller peak.
-        let pts: [(CGFloat, CGFloat)] = [
-            (0.00, 0.72), (0.09, 0.90), (0.17, 0.34), (0.27, 0.74),
-            (0.39, 0.14), (0.49, 0.62), (0.59, 0.36), (0.69, 0.80),
-            (0.79, 0.24), (0.89, 0.66), (1.00, 0.44)
-        ]
         var path = Path()
-        path.move(to: CGPoint(x: 0, y: h))
-        for (fx, fy) in pts {
-            path.addLine(to: CGPoint(x: fx * w, y: fy * h))
+        let first = Self.pts[0]
+        path.move(to: CGPoint(x: first.0 * w, y: first.1 * h))
+        for pt in Self.pts.dropFirst() {
+            path.addLine(to: CGPoint(x: pt.0 * w, y: pt.1 * h))
         }
-        path.addLine(to: CGPoint(x: w, y: h))
-        path.closeSubpath()
+        if closed {
+            path.addLine(to: CGPoint(x: w, y: h))
+            path.addLine(to: CGPoint(x: 0, y: h))
+            path.closeSubpath()
+        }
         return path
     }
 }
 
-/// Conquest progress as a mountain range: a faint semi-transparent skyline across
-/// the whole bar, with the peaks up to `progress` filled solid as they're conquered.
-private struct MountainProgressBar: View {
+/// Conquest ridgeline drawn across the whole hero: a bright outline always
+/// visible, with the area under the ridge "filled in" with colour up to the
+/// conquered % from the left.
+private struct ConquestRidgelineOverlay: View {
     var progress: Double
-    var height: CGFloat = 20
 
     var body: some View {
         GeometryReader { geo in
-            let fillWidth = max(0, min(1, progress)) * geo.size.width
+            let fillWidth = CGFloat(max(0, min(1, progress))) * geo.size.width
             ZStack(alignment: .leading) {
-                Color.white.opacity(0.16)
-
-                MountainSkyline()
-                    .fill(Color.white.opacity(0.32))
-
-                MountainSkyline()
+                ConquestRidgeline(closed: true)
                     .fill(
                         LinearGradient(
-                            colors: [FrogTheme.leaf, FrogTheme.moss],
+                            stops: [
+                                .init(color: FrogTheme.leaf.opacity(0.55), location: 0.28),
+                                .init(color: FrogTheme.leaf.opacity(0.0), location: 0.74)
+                            ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .mask(alignment: .leading) {
-                        Rectangle().frame(width: fillWidth)
-                    }
+                    .mask(alignment: .leading) { Rectangle().frame(width: fillWidth) }
 
-                // Progress front marker so the % reads even across a valley.
-                Rectangle()
-                    .fill(FrogTheme.leaf)
-                    .frame(width: 2)
-                    .offset(x: max(0, fillWidth - 1))
-                    .opacity(progress > 0.01 && progress < 0.99 ? 0.9 : 0)
+                ConquestRidgeline(closed: false)
+                    .stroke(FrogTheme.leaf, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+                    .shadow(color: FrogTheme.leaf.opacity(0.45), radius: 5)
             }
         }
-        .frame(height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-        .animation(.easeInOut(duration: 0.4), value: progress)
+        .allowsHitTesting(false)
+        .animation(.easeInOut(duration: 0.5), value: progress)
     }
 }
