@@ -9,6 +9,7 @@ struct MountainDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var mapCamera: MapCameraPosition = .automatic
+    @State private var routeCamera: MapCameraPosition = .automatic
 
     /// The signed-in user's own live check-ins for this peak (account-bound),
     /// NOT the static catalog seed `mountain.checkIns`.
@@ -66,6 +67,7 @@ struct MountainDetailView: View {
                         statCards
                         checkInAction
                         trailFactsPanel
+                        recordedRoutePanel
                         checkpointMap
                         certificatePreview
                     }
@@ -287,6 +289,79 @@ struct MountainDetailView: View {
         }
         .padding(FrogSpace.cardPadding)
         .cardStyle()
+    }
+
+    @ViewBuilder
+    private var recordedRoutePanel: some View {
+        let track = checkInStore.records
+            .filter { $0.mountainId == mountain.id && $0.track != nil }
+            .sorted { $0.date > $1.date }
+            .first?.track
+        if let track {
+            let coords = track.coordinates.map(\.coordinate)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    Label("我的路線", systemImage: "point.topleft.down.curvedto.point.bottomright.up.fill")
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(FrogTheme.ink)
+                    Spacer()
+                    Text("MY ROUTE")
+                        .font(.frogMicro.weight(.black))
+                        .foregroundStyle(FrogTheme.moss)
+                }
+
+                Map(position: $routeCamera) {
+                    if coords.count > 1 {
+                        MapPolyline(coordinates: coords)
+                            .stroke(FrogTheme.orange, lineWidth: 4)
+                        if let start = coords.first {
+                            Marker("起點", systemImage: "flag.fill", coordinate: start)
+                                .tint(FrogTheme.moss)
+                        }
+                        if let end = coords.last {
+                            Marker("終點", systemImage: "flag.checkered", coordinate: end)
+                                .tint(FrogTheme.orange)
+                        }
+                    } else {
+                        Marker(mountain.nameZh, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
+                            .tint(FrogTheme.orange)
+                    }
+                }
+                .mapControlVisibility(.hidden)
+                .frame(height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .onAppear {
+                    guard coords.count > 1 else {
+                        routeCamera = .region(MKCoordinateRegion(
+                            center: mountain.coordinate,
+                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                        ))
+                        return
+                    }
+                    var minLat = coords[0].latitude, maxLat = coords[0].latitude
+                    var minLon = coords[0].longitude, maxLon = coords[0].longitude
+                    for c in coords {
+                        minLat = min(minLat, c.latitude); maxLat = max(maxLat, c.latitude)
+                        minLon = min(minLon, c.longitude); maxLon = max(maxLon, c.longitude)
+                    }
+                    routeCamera = .region(MKCoordinateRegion(
+                        center: CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2),
+                        span: MKCoordinateSpan(latitudeDelta: max((maxLat - minLat) * 1.4, 0.005), longitudeDelta: max((maxLon - minLon) * 1.4, 0.005))
+                    ))
+                }
+
+                HStack(spacing: 10) {
+                    StatCard(value: TrackFormat.distance(track.distanceMeters), label: "距離", systemImage: "ruler", tint: FrogTheme.moss)
+                        .frame(maxWidth: .infinity)
+                    StatCard(value: TrackFormat.duration(track.durationSeconds), label: "時間", systemImage: "clock", tint: FrogTheme.orange)
+                        .frame(maxWidth: .infinity)
+                    StatCard(value: "\(Int(track.ascentMeters))m", label: "累積上升", systemImage: "arrow.up.forward", tint: FrogTheme.gold)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(14)
+            .cardStyle()
+        }
     }
 
     private var checkpointMap: some View {
