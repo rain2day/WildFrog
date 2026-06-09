@@ -1134,7 +1134,7 @@ private struct CheckInPassportCardView: View {
     }
 
     private let photoH: CGFloat = 720
-    private let stubH: CGFloat = 430
+    private let stubH: CGFloat = 376
     private let perfR: CGFloat = 14
 
     var body: some View {
@@ -1152,31 +1152,34 @@ private struct CheckInPassportCardView: View {
 
             // Ticket stub with a genuinely torn (scalloped) top edge.
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .center) {
-                    HStack(spacing: 14) {
-                        WildFrogBrandMark(size: 46, cornerRadius: 12)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("WILDFROG")
-                                .font(.system(size: 25, weight: .black))
-                                .tracking(2)
-                                .foregroundStyle(FrogTheme.ink)
-                            Text("PEAK PASSPORT")
-                                .font(.system(size: 16, weight: .heavy))
-                                .tracking(3)
-                                .foregroundStyle(FrogTheme.gold)
-                        }
-                    }
-                    Spacer()
+                HStack(spacing: 12) {
+                    WildFrogBrandMark(size: 42, cornerRadius: 11)
+                    (
+                        Text("WILDFROG ").foregroundStyle(FrogTheme.ink)
+                        + Text("· PEAK PASSPORT").foregroundStyle(FrogTheme.gold)
+                    )
+                    .font(.system(size: 22, weight: .heavy))
+                    .tracking(1.5)
+                    Spacer(minLength: 0)
                 }
 
-                Text(mountain.nameZh)
-                    .font(.system(size: 74, weight: .black))
-                    .foregroundStyle(FrogTheme.ink)
+                HStack(alignment: .firstTextBaseline, spacing: 14) {
+                    Text(mountain.nameZh)
+                        .font(.system(size: 78, weight: .black))
+                        .foregroundStyle(FrogTheme.ink)
+                    Text(mountain.nameEn)
+                        .font(.system(size: 30, weight: .bold))
+                        .foregroundStyle(FrogTheme.muted)
+                    Spacer(minLength: 0)
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.top, 20)
+
+                Rectangle()
+                    .fill(FrogTheme.line)
+                    .frame(height: 1)
                     .padding(.top, 26)
-                Text(mountain.nameEn)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(FrogTheme.muted)
-                    .padding(.top, 2)
 
                 HStack(spacing: 0) {
                     passportStat("海拔", "\(mountain.height)m")
@@ -1185,17 +1188,34 @@ private struct CheckInPassportCardView: View {
                     passportStatDivider
                     passportStat("地區", mountain.region)
                 }
-                .padding(.top, 30)
+                .padding(.top, 22)
             }
             .padding(.horizontal, 64)
-            .padding(.top, 40 + perfR)
-            .padding(.bottom, 54)
+            .padding(.top, 38 + perfR)
+            .padding(.bottom, 44)
             .frame(width: width, height: stubH, alignment: .topLeading)
             .background(PerforatedTopShape(radius: perfR, spacing: 38).fill(FrogTheme.passport))
             .overlay(alignment: .topTrailing) {
-                PassportInkStamp(dateText: dateText, ink: FrogTheme.forest)
-                    .padding(.trailing, 24)
-                    .offset(y: -210)
+                ZStack {
+                    // The half over the dark photo is printed in white; the half
+                    // on the cream stub keeps the forest ink.
+                    PassportInkStamp(dateText: dateText, ink: .white)
+                        .mask(
+                            VStack(spacing: 0) {
+                                Color.black.frame(height: 210)
+                                Color.clear
+                            }
+                        )
+                    PassportInkStamp(dateText: dateText, ink: FrogTheme.forest)
+                        .mask(
+                            VStack(spacing: 0) {
+                                Color.clear.frame(height: 210)
+                                Color.black
+                            }
+                        )
+                }
+                .padding(.trailing, 24)
+                .offset(y: -210)
             }
         }
         .frame(width: width, height: photoH + stubH - perfR * 2)
