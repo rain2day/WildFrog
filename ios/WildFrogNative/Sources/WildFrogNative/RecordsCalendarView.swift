@@ -32,28 +32,22 @@ struct RecordsCalendarView: View {
         checkInStore.days(year: displayedYear, month: displayedMonthNumber)
     }
 
-    /// Map from active day → first matched check-in record for calendar tiles.
-    private var activeRecords: [Int: CheckInRecord] {
-        var result: [Int: CheckInRecord] = [:]
-        for day in activeDays {
-            let matchingRecord = checkInStore.records.first { record in
-                let cal = Calendar.current
-                let comps = cal.dateComponents([.year, .month, .day], from: record.date)
-                return comps.year == displayedYear && comps.month == displayedMonthNumber && comps.day == day
-            }
-            if let matchingRecord {
-                result[day] = matchingRecord
-            }
+    /// Map from day-of-month → ALL check-in records that day (newest first), so a
+    /// day with multiple summits shows every one — not just the first.
+    private var recordsByDay: [Int: [CheckInRecord]] {
+        let cal = Calendar.current
+        var result: [Int: [CheckInRecord]] = [:]
+        for record in checkInStore.records {
+            let comps = cal.dateComponents([.year, .month, .day], from: record.date)
+            guard comps.year == displayedYear, comps.month == displayedMonthNumber, let day = comps.day else { continue }
+            result[day, default: []].append(record)
         }
-        return result
+        return result.mapValues { $0.sorted { $0.date > $1.date } }
     }
 
-    private var selectedRecord: CheckInRecord? {
-        activeRecords[selectedDay]
-    }
-
-    private var selectedMountain: Mountain? {
-        selectedRecord.map { MountainCatalog.mountain(id: $0.mountainId) }
+    /// Every record on the selected day (newest first); empty when none.
+    private var selectedRecords: [CheckInRecord] {
+        recordsByDay[selectedDay] ?? []
     }
 
     private var monthDays: [Int] {
@@ -263,7 +257,8 @@ struct RecordsCalendarView: View {
                     } label: {
                         CalendarTile(
                             day: cell.day,
-                            record: cell.isCurrentMonth ? activeRecords[cell.day] : nil,
+                            record: cell.isCurrentMonth ? recordsByDay[cell.day]?.first : nil,
+                            recordCount: cell.isCurrentMonth ? (recordsByDay[cell.day]?.count ?? 0) : 0,
                             isSelected: cell.isCurrentMonth && selectedDay == cell.day,
                             isCurrentMonth: cell.isCurrentMonth
                         )
@@ -291,7 +286,7 @@ struct RecordsCalendarView: View {
                         .foregroundStyle(FrogTheme.ink)
                 }
 
-                if selectedRecord == nil {
+                if selectedRecords.isEmpty {
                     Rectangle()
                         .fill(FrogTheme.line)
                         .frame(width: 1, height: 52)
@@ -307,43 +302,47 @@ struct RecordsCalendarView: View {
                     }
                 } else {
                     Spacer(minLength: 0)
-                }
 
-                if let selectedRecord {
-                    NavigationLink(value: NativeRoute.tripDetail(selectedRecord.id)) {
-                        Text("查看行程")
-                            .font(.frogCaption.weight(.semibold))
-                            .foregroundStyle(FrogTheme.ink)
-                            .padding(.horizontal, 14)
-                            .frame(height: 36)
-                            .overlay(
-                                Capsule().stroke(FrogTheme.line, lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
+                    Text("\(selectedRecords.count) 次打卡")
+                        .font(.frogCaption.weight(.semibold))
+                        .foregroundStyle(FrogTheme.moss)
+                        .padding(.horizontal, 12)
+                        .frame(height: 30)
+                        .background(FrogTheme.moss.opacity(0.12), in: Capsule())
                 }
             }
 
-            if let selectedRecord, let selectedMountain {
-                ZStack(alignment: .bottomLeading) {
-                    CheckInRecordPhoto(record: selectedRecord, mountain: selectedMountain, dimming: 0)
-                        .frame(height: 172)
-                    LinearGradient(
-                        colors: [.clear, FrogTheme.forest.opacity(0.8)],
-                        startPoint: .center,
-                        endPoint: .bottom
-                    )
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(selectedMountain.displayName)
-                            .font(.frogTitle)
-                        Text("第 \(checkInStore.count(for: selectedMountain.id)) 次登頂 · \(selectedMountain.height)m")
-                            .font(.frogNum(13, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.82))
+            // One banner per summit that day — tap any to open its trip.
+            ForEach(selectedRecords) { record in
+                let mountain = MountainCatalog.mountain(id: record.mountainId)
+                NavigationLink(value: NativeRoute.tripDetail(record.id)) {
+                    ZStack(alignment: .bottomLeading) {
+                        CheckInRecordPhoto(record: record, mountain: mountain, dimming: 0)
+                            .frame(height: 172)
+                        LinearGradient(
+                            colors: [.clear, FrogTheme.forest.opacity(0.8)],
+                            startPoint: .center,
+                            endPoint: .bottom
+                        )
+                        HStack(alignment: .bottom, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(mountain.displayName)
+                                    .font(.frogTitle)
+                                Text("第 \(checkInStore.count(for: mountain.id)) 次登頂 · \(mountain.height)m")
+                                    .font(.frogNum(13, weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.82))
+                            }
+                            Spacer(minLength: 0)
+                            Text(record.date.formatted(date: .omitted, time: .shortened))
+                                .font(.frogNum(12, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.82))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(14)
                     }
-                    .foregroundStyle(.white)
-                    .padding(14)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .buttonStyle(.plain)
             }
         }
         .padding(FrogSpace.cardPadding)
@@ -378,6 +377,7 @@ private struct CalendarNavButton: View {
 private struct CalendarTile: View {
     let day: Int
     let record: CheckInRecord?
+    var recordCount: Int = 0
     let isSelected: Bool
     let isCurrentMonth: Bool
 
@@ -405,6 +405,18 @@ private struct CalendarTile: View {
                     lineWidth: isSelected ? 2 : 1
                 )
         )
+        // Count badge when a day has more than one summit.
+        .overlay(alignment: .topTrailing) {
+            if recordCount > 1 {
+                Text("\(recordCount)")
+                    .font(.system(size: 9, weight: .black))
+                    .foregroundStyle(.white)
+                    .frame(width: 16, height: 16)
+                    .background(FrogTheme.orange, in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 1))
+                    .padding(2)
+            }
+        }
         .opacity(isCurrentMonth ? 1 : 0.4)
     }
 }
