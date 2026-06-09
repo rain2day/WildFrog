@@ -1134,7 +1134,7 @@ private struct CheckInPassportCardView: View {
     }
 
     private let photoH: CGFloat = 720
-    private let stubH: CGFloat = 376
+    private let stubH: CGFloat = 408
     private let perfR: CGFloat = 14
 
     var body: some View {
@@ -1161,9 +1161,6 @@ private struct CheckInPassportCardView: View {
                     .font(.system(size: 22, weight: .heavy))
                     .tracking(1.5)
                     Spacer(minLength: 0)
-                    Text(dateText)
-                        .font(.system(size: 24, weight: .heavy))
-                        .foregroundStyle(FrogTheme.muted)
                 }
 
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
@@ -1192,6 +1189,12 @@ private struct CheckInPassportCardView: View {
                     passportStat("地區", mountain.region)
                 }
                 .padding(.top, 22)
+
+                Spacer(minLength: 12)
+
+                Text("打卡日期 · \(dateText)")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(FrogTheme.faint)
             }
             .padding(.horizontal, 64)
             .padding(.top, 38 + perfR)
@@ -1201,8 +1204,8 @@ private struct CheckInPassportCardView: View {
             // Our own designed mountain stamp (1 of 330), pressed onto the photo.
             .overlay(alignment: .topTrailing) {
                 MountainStampSeal(mountain: mountain, size: 360, isUnlocked: true, rotation: .degrees(-8))
-                    .padding(.trailing, 28)
-                    .offset(y: -384)
+                    .padding(.trailing, 26)
+                    .offset(y: -180)
             }
         }
         .frame(width: width, height: photoH + stubH - perfR * 2)
