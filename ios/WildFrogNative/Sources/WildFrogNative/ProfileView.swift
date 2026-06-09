@@ -259,24 +259,7 @@ struct ProfileView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
-                    HStack(spacing: 9) {
-                        Image("WildFrogLogo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 38, height: 38)
-                            .shadow(color: .black.opacity(0.3), radius: 4, y: 1)
-
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("WILDFROG")
-                                .font(.frogNum(14, weight: .bold))
-                                .tracking(0.84)
-                            Text("PEAK PASSPORT")
-                                .font(.frogNum(8, weight: .semibold))
-                                .tracking(1.28)
-                                .foregroundStyle(FrogTheme.orange)
-                        }
-                    }
-                    .foregroundStyle(.white)
+                    WildFrogWordmark(markSize: 30)
 
                     Spacer()
 

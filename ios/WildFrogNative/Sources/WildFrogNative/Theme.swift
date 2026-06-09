@@ -116,12 +116,12 @@ struct WildFrogWordmark: View {
             Image("WildFrogLogo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: markSize * 1.8)
+                .frame(height: markSize * 1.5)
 
             Image("WildFrogWordmarkText")
                 .resizable()
                 .scaledToFit()
-                .frame(height: markSize * 1.05)
+                .frame(height: markSize * 1.5)
         }
         .shadow(color: .black.opacity(0.35), radius: 4, y: 1)
         .accessibilityElement()
