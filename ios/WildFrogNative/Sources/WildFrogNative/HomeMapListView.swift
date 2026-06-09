@@ -723,66 +723,71 @@ struct MountainDirectoryView: View {
     }
 }
 
-// MARK: - Conquest ridgeline (hero overlay)
+// MARK: - Conquest mountain range (hero silhouette overlay)
 
-/// A complex mountain ridgeline spanning the hero. `closed`: a filled silhouette
-/// (ridge top closed down to the rect bottom) used for the conquered colour-fill;
-/// open: just the ridge top edge, used for the bright outline.
-private struct ConquestRidgeline: Shape {
-    var closed: Bool
-    // (x-fraction, y-fraction); lower y = higher peak. Kept ~0.28–0.74 so the
-    // ridge sits in the hero's mid band, behind the headline number.
-    private static let pts: [(CGFloat, CGFloat)] = [
-        (0.00, 0.66), (0.03, 0.58), (0.07, 0.71), (0.11, 0.43), (0.14, 0.56),
-        (0.18, 0.33), (0.21, 0.49), (0.25, 0.63), (0.29, 0.40), (0.33, 0.29),
-        (0.37, 0.51), (0.41, 0.45), (0.45, 0.65), (0.49, 0.37), (0.53, 0.50),
-        (0.57, 0.32), (0.61, 0.57), (0.65, 0.44), (0.69, 0.69), (0.73, 0.35),
-        (0.77, 0.54), (0.81, 0.41), (0.85, 0.61), (0.89, 0.47), (0.93, 0.64),
-        (0.97, 0.50), (1.00, 0.61)
-    ]
+/// A FILLED mountain-range silhouette: a peak/valley ridge closed down to the
+/// rect's bottom, so the straight slopes read as solid triangular mountains
+/// (not a thin zig-zag line).
+private struct MountainRange: Shape {
+    let peaks: [(CGFloat, CGFloat)]   // (x-fraction, y-fraction); lower y = taller
     func path(in rect: CGRect) -> Path {
         let w = rect.width, h = rect.height
         var path = Path()
-        let first = Self.pts[0]
-        path.move(to: CGPoint(x: first.0 * w, y: first.1 * h))
-        for pt in Self.pts.dropFirst() {
-            path.addLine(to: CGPoint(x: pt.0 * w, y: pt.1 * h))
+        path.move(to: CGPoint(x: 0, y: h))
+        for pk in peaks {
+            path.addLine(to: CGPoint(x: pk.0 * w, y: pk.1 * h))
         }
-        if closed {
-            path.addLine(to: CGPoint(x: w, y: h))
-            path.addLine(to: CGPoint(x: 0, y: h))
-            path.closeSubpath()
-        }
+        path.addLine(to: CGPoint(x: w, y: h))
+        path.closeSubpath()
         return path
     }
 }
 
-/// Conquest ridgeline drawn across the whole hero: a bright outline always
-/// visible, with the area under the ridge "filled in" with colour up to the
-/// conquered % from the left.
+/// Conquest as a layered mountain-range silhouette across the hero: a taller,
+/// faint back range + a nearer front range, both semi-transparent with bases
+/// dissolving into the photo, and the peaks up to the conquered % filled with
+/// solid colour from the left.
 private struct ConquestRidgelineOverlay: View {
     var progress: Double
+
+    // Few, deliberate triangular peaks of varied height — a range, not a saw-tooth.
+    private let backPeaks: [(CGFloat, CGFloat)] = [
+        (0.00, 0.66), (0.13, 0.36), (0.27, 0.58), (0.42, 0.24),
+        (0.58, 0.52), (0.73, 0.32), (0.88, 0.56), (1.00, 0.42)
+    ]
+    private let frontPeaks: [(CGFloat, CGFloat)] = [
+        (0.00, 0.80), (0.10, 0.60), (0.22, 0.78), (0.34, 0.50),
+        (0.47, 0.74), (0.60, 0.56), (0.74, 0.76), (0.87, 0.58), (1.00, 0.76)
+    ]
 
     var body: some View {
         GeometryReader { geo in
             let fillWidth = CGFloat(max(0, min(1, progress))) * geo.size.width
+            // Bases fade into the photo so the headline + stats stay readable.
+            let baseFade = LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0.0),
+                    .init(color: .black, location: 0.52),
+                    .init(color: .clear, location: 0.92)
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
             ZStack(alignment: .leading) {
-                ConquestRidgeline(closed: true)
-                    .fill(
-                        LinearGradient(
-                            stops: [
-                                .init(color: FrogTheme.leaf.opacity(0.55), location: 0.28),
-                                .init(color: FrogTheme.leaf.opacity(0.0), location: 0.74)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                MountainRange(peaks: backPeaks)
+                    .fill(Color.white.opacity(0.12))
+                    .mask(baseFade)
+                MountainRange(peaks: backPeaks)
+                    .fill(FrogTheme.moss.opacity(0.85))
                     .mask(alignment: .leading) { Rectangle().frame(width: fillWidth) }
+                    .mask(baseFade)
 
-                ConquestRidgeline(closed: false)
-                    .stroke(FrogTheme.leaf, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-                    .shadow(color: FrogTheme.leaf.opacity(0.45), radius: 5)
+                MountainRange(peaks: frontPeaks)
+                    .fill(Color.white.opacity(0.20))
+                    .mask(baseFade)
+                MountainRange(peaks: frontPeaks)
+                    .fill(FrogTheme.leaf.opacity(0.95))
+                    .mask(alignment: .leading) { Rectangle().frame(width: fillWidth) }
+                    .mask(baseFade)
             }
         }
         .allowsHitTesting(false)
