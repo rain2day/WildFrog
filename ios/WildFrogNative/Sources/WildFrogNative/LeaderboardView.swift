@@ -1,16 +1,25 @@
 import SwiftUI
 
+/// 排行榜 — "田野紀錄冊 / Field Ledger" layout (design Option B): a full-bleed image
+/// hero (matching the other pages), a 今月/總榜 segment, a deep-green 本月領隊 leader
+/// band, a precise tabular ranking with ▲▼ rank-deltas, and a pinned 我的名次 bar.
 struct LeaderboardView: View {
     @State private var showAllLeaderboard = false
+    @State private var scope: Scope = .month
     @EnvironmentObject private var checkInStore: CheckInStore
     @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
 
-    // Demo cross-user data — rank 18 / checkIns are placeholder until Cloud Function
-    private let demoUsers: [LeaderboardUser] = [
-        LeaderboardUser(rank: 1, name: "Kin", subtitle: "九龍 · 連續 21 日", checkIns: 58, climbed: 83, avatarMountainId: "tai-mo-shan"),
-        LeaderboardUser(rank: 2, name: "Mandy", subtitle: "新界 · 週末登山", checkIns: 46, climbed: 79, avatarMountainId: "sunset-peak"),
-        LeaderboardUser(rank: 3, name: "阿峯", subtitle: "港島 · 清晨路線", checkIns: 41, climbed: 74, avatarMountainId: "lion-rock"),
-        LeaderboardUser(rank: 21, name: "Aud", subtitle: "大嶼山 · 日落線", checkIns: 29, climbed: 21, avatarMountainId: "lantau-peak"),
+    private enum Scope { case month, all }
+
+    // Demo cross-user data — placeholder until a Cloud Function backs the real board.
+    private let leader = LbUser(rank: 1, name: "Kin", meta: "九龍 · 連續 21 日 · 最高 957m",
+                                count: 58, avatar: "tai-mo-shan", delta: .flat, deltaN: 0)
+    private let rows: [LbUser] = [
+        LbUser(rank: 2, name: "Mandy", meta: "新界 · 週末登山", count: 46, avatar: "lantau-peak", delta: .up, deltaN: 1),
+        LbUser(rank: 3, name: "阿峯", meta: "港島 · 清晨路線", count: 41, avatar: "lion-rock", delta: .down, deltaN: 1),
+        LbUser(rank: 4, name: "Wing", meta: "西貢 · 行山隊", count: 38, avatar: "lion-rock", delta: .up, deltaN: 2),
+        LbUser(rank: 5, name: "阿康", meta: "大嶼山 · 日出線", count: 35, avatar: "lantau-peak", delta: .flat, deltaN: 0),
+        LbUser(rank: 6, name: "Tina", meta: "新界 · 越野跑", count: 33, avatar: "tai-mo-shan", delta: .up, deltaN: 4),
     ]
 
     /// Real personal stats from CheckInStore (true data, personal only).
@@ -24,6 +33,21 @@ struct LeaderboardView: View {
         return MountainCatalog.mountain(id: equippedTitleId).unlockTitle
     }
 
+    private var myAvatarId: String {
+        checkInStore.records.sorted { $0.date > $1.date }.first?.mountainId ?? "lantau-peak"
+    }
+
+    /// Current month label for the hero period chip, e.g. "2026 · 6月".
+    private var periodText: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_Hant_HK")
+        f.dateFormat = "yyyy · M月"
+        return f.string(from: Date())
+    }
+
+    /// .note text colour (#8a5a3e) — restrained brick-brown on trail-soft.
+    private static let brickBrown = Color(red: 138 / 255, green: 90 / 255, blue: 62 / 255)
+
     var body: some View {
         GeometryReader { outer in
             let topInset = outer.safeAreaInsets.top
@@ -32,14 +56,15 @@ struct LeaderboardView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     leaderboardCover(topInset: topInset)
 
-                    VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        scopeSegment
                         crossUserDisclaimer
-                        myRankCard
-                        podiumPanel
-                        topUsers
-                        mountainHeatList
+                        leaderBand
+                        rankingTable
+                        completeRankLink
+                        myRankBar
                     }
-                    .padding(FrogSpace.screenPadding)
+                    .padding(.horizontal, FrogSpace.screenPadding)
                     .padding(.top, FrogSpace.cardGap)
                     .padding(.bottom, 110)
                 }
@@ -62,8 +87,8 @@ struct LeaderboardView: View {
         }
     }
 
-    /// Full-bleed image hero matching the other pages (home / passport / profile):
-    /// a big MountainPhoto background, forest gradient, title + my stats overlaid.
+    // MARK: - Hero (full-bleed image, matches the other pages)
+
     private func leaderboardCover(topInset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
             MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0)
@@ -86,14 +111,14 @@ struct LeaderboardView: View {
                     Spacer()
 
                     HStack(spacing: 5) {
-                        Image(systemName: "trophy.fill")
+                        Image(systemName: "calendar")
                             .font(.system(size: 11, weight: .bold))
-                        Text("RANKING")
-                            .font(.frogNum(10, weight: .bold))
-                            .tracking(0.8)
+                        Text(periodText)
+                            .font(.frogNum(11, weight: .bold))
+                            .tracking(0.4)
                     }
                     .foregroundStyle(FrogTheme.forest)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 11)
                     .padding(.vertical, 6)
                     .background(FrogTheme.leaf, in: Capsule())
                 }
@@ -126,8 +151,33 @@ struct LeaderboardView: View {
         .clipped()
     }
 
+    // MARK: - Scope segment (今月 / 總榜)
+
+    private var scopeSegment: some View {
+        HStack(spacing: 0) {
+            segItem("今月", isOn: scope == .month) { scope = .month }
+            segItem("總榜", isOn: scope == .all) { scope = .all }
+        }
+        .padding(3)
+        .background(FrogTheme.surface2, in: Capsule())
+        .overlay(Capsule().stroke(FrogTheme.line, lineWidth: 1))
+    }
+
+    private func segItem(_ title: String, isOn: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13.5, weight: .semibold))
+                .foregroundStyle(isOn ? .white : FrogTheme.muted)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(isOn ? FrogTheme.forest : .clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Cross-user disclaimer
+
     private var crossUserDisclaimer: some View {
-        // .note: trail-soft bg, small brick-brown text (#8a5a3e), info glyph.
         HStack(spacing: 7) {
             Image(systemName: "info.circle")
                 .font(.frogMicro.weight(.semibold))
@@ -141,179 +191,264 @@ struct LeaderboardView: View {
         .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
-    /// .note text colour (#8a5a3e) — restrained brick-brown on trail-soft.
-    private static let brickBrown = Color(red: 138 / 255, green: 90 / 255, blue: 62 / 255)
+    // MARK: - 本月領隊 leader band (b-leader)
 
-    private var myRankCard: some View {
-        // .myrank: left = eyebrow + big rank number + "總打卡 · N 座山" + streak;
-        // right = tilted poster photo (white border). Plain hairline card.
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("我的紀錄 · MY RECORD")
-                    .font(.frogEyebrow)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(FrogTheme.moss)
+    private var leaderBand: some View {
+        ZStack(alignment: .leading) {
+            MountainPhoto(mountain: MountainCatalog.mountain(id: leader.avatar), dimming: 0)
 
-                if let equippedTitle {
-                    HStack(spacing: 5) {
-                        Image(systemName: "rosette")
-                            .font(.frogMicro.weight(.black))
-                            .foregroundStyle(FrogTheme.gold)
-                        Text(equippedTitle)
-                            .font(.frogCaption.weight(.bold))
-                            .foregroundStyle(FrogTheme.forest)
-                    }
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 4)
-                    .background(FrogTheme.gold.opacity(0.14), in: Capsule())
-                    .padding(.top, 7)
-                }
+            // 105°-ish gradient: dark on the left (legible text) → photo on the right.
+            LinearGradient(
+                colors: [
+                    Color(red: 8 / 255, green: 14 / 255, blue: 10 / 255).opacity(0.90),
+                    FrogTheme.forest.opacity(0.62),
+                    FrogTheme.forest.opacity(0.16)
+                ],
+                startPoint: UnitPoint(x: -0.05, y: 0.2),
+                endPoint: UnitPoint(x: 1.0, y: 0.85)
+            )
 
-                Text("\(myTotalCheckIns)")
-                    .font(.frogNum(62, weight: .semibold))
-                    .tracking(-1.5)
-                    .foregroundStyle(FrogTheme.forest)
-                    .lineLimit(1)
-                    .padding(.top, 4)
+            HStack(spacing: 14) {
+                TrigMarkSeal(size: 52)
 
-                // .sub — count is a numeral data-accent (gold), not orange.
-                (
-                    Text("總打卡 · ")
-                        .font(.frogCaption)
-                        .foregroundStyle(FrogTheme.muted)
-                    + Text("\(myDistinctMountains)")
-                        .font(.frogNum(14, weight: .bold))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("本月領隊 · LEADER")
+                        .font(.frogNum(10, weight: .bold))
+                        .tracking(1.8)
                         .foregroundStyle(FrogTheme.gold)
-                    + Text(" 座山")
-                        .font(.frogCaption)
-                        .foregroundStyle(FrogTheme.muted)
-                )
-                .padding(.top, 8)
-
-                HStack(spacing: 5) {
-                    Image(systemName: "flame.fill")
-                        .font(.frogMicro.weight(.bold))
-                        .foregroundStyle(FrogTheme.moss)
-                    Text("連續 \(checkInStore.currentStreak) 日")
-                        .font(.frogCaption)
-                        .foregroundStyle(FrogTheme.muted)
+                    Text(leader.name)
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundStyle(.white)
+                    Text(leader.meta)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.white.opacity(0.72))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
-                .padding(.top, 9)
+
+                Spacer(minLength: 0)
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(leader.count)")
+                        .font(.frogNum(40, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Text("次打卡")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
+            }
+            .padding(.horizontal, 17)
+            .padding(.vertical, 16)
+        }
+        .frame(minHeight: 118)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    // MARK: - Tabular ranking (b-colhead + b-row)
+
+    private var rankingTable: some View {
+        VStack(spacing: 0) {
+            // column header
+            HStack(spacing: 11) {
+                Text("名次").frame(width: 26, alignment: .leading)
+                Text(" ").frame(width: 30, alignment: .leading)
+                Text("登山者")
+                Spacer(minLength: 0)
+                Text("本月")
+            }
+            .font(.frogNum(9.5, weight: .semibold))
+            .tracking(1.0)
+            .foregroundStyle(FrogTheme.faint)
+            .padding(.bottom, 9)
+            .overlay(alignment: .bottom) { FrogTheme.line.frame(height: 1) }
+
+            ForEach(rows) { u in
+                rankRow(u)
+            }
+        }
+    }
+
+    private func rankRow(_ u: LbUser) -> some View {
+        HStack(spacing: 11) {
+            Text("\(u.rank)")
+                .font(.frogNum(16, weight: .semibold))
+                .foregroundStyle(FrogTheme.forest)
+                .frame(width: 26, alignment: .leading)
+
+            DeltaBadge(dir: u.delta, n: u.deltaN)
+                .frame(width: 30, alignment: .leading)
+
+            HStack(spacing: 11) {
+                LbAvatar(mountainId: u.avatar)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(u.name)
+                        .font(.system(size: 14.5, weight: .bold))
+                        .foregroundStyle(FrogTheme.ink)
+                    Text(u.meta)
+                        .font(.system(size: 11))
+                        .foregroundStyle(FrogTheme.muted)
+                        .lineLimit(1)
+                }
             }
 
             Spacer(minLength: 0)
 
-            MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0.05)
-                .frame(width: 104, height: 100)
-                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .stroke(Color.white, lineWidth: 6)
-                )
-                .shadow(color: FrogTheme.warmShadow.opacity(0.14), radius: 9, x: 0, y: 5)
-                .rotationEffect(.degrees(1.5))
+            Text("\(u.count)")
+                .font(.frogNum(17, weight: .semibold))
+                .foregroundStyle(FrogTheme.ink)
         }
-        .padding(18)
-        .cardStyle()
+        .padding(.vertical, 11)
+        .overlay(alignment: .bottom) { FrogTheme.lineSoft.frame(height: 1) }
     }
 
-    private var podiumPanel: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            sectionHeader("TOP 3")
+    private var completeRankLink: some View {
+        Button { showAllLeaderboard = true } label: {
+            HStack(spacing: 5) {
+                Text("完整排行")
+                    .font(.frogCaption.weight(.semibold))
+                Image(systemName: "arrow.right")
+                    .font(.frogMicro.weight(.bold))
+            }
+            .foregroundStyle(FrogTheme.moss)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(FrogTheme.line, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
 
-            // .podium: 3 cards end-aligned; first centred + elevated (gold tint).
-            HStack(alignment: .bottom, spacing: 10) {
-                ForEach(podiumOrder) { user in
-                    PodiumCard(user: user, height: user.rank == 1 ? 158 : 138)
+    // MARK: - 我的名次 bar (b-mybar)
+
+    private var myRankBar: some View {
+        HStack(spacing: 11) {
+            Text("21")
+                .font(.frogNum(17, weight: .bold))
+                .foregroundStyle(FrogTheme.leaf)
+                .frame(width: 26, alignment: .leading)
+
+            DeltaBadge(dir: .up, n: 2)
+                .frame(width: 30, alignment: .leading)
+
+            HStack(spacing: 11) {
+                LbAvatar(mountainId: myAvatarId, border: FrogTheme.leaf)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("你")
+                        .font(.system(size: 14.5, weight: .bold))
+                        .foregroundStyle(.white)
+                    Text(equippedTitle ?? "你的紀錄")
+                        .font(.system(size: 10.5))
+                        .foregroundStyle(.white.opacity(0.66))
+                        .lineLimit(1)
                 }
             }
+
+            Spacer(minLength: 0)
+
+            Text("\(myTotalCheckIns)")
+                .font(.frogNum(18, weight: .semibold))
+                .foregroundStyle(.white)
         }
-    }
-
-    /// Podium display order: 2nd · 1st · 3rd (winner centred), matching the design.
-    private var podiumOrder: [LeaderboardUser] {
-        let top = Array(demoUsers.prefix(3))
-        let first = top.first { $0.rank == 1 }
-        let second = top.first { $0.rank == 2 }
-        let third = top.first { $0.rank == 3 }
-        return [second, first, third].compactMap { $0 }
-    }
-
-    /// .wf-section: eyebrow label + trailing hairline rule.
-    private func sectionHeader(_ label: String) -> some View {
-        HStack(spacing: 12) {
-            Text(label)
-                .font(.frogEyebrow)
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(FrogTheme.moss)
-            Rectangle()
-                .fill(FrogTheme.line)
-                .frame(height: 1)
-        }
-    }
-
-    private var topUsers: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            sectionHeader("排行榜（示範）")
-
-            // .lb-row list — the current-user row (.me) gets a trail-soft highlight.
-            VStack(spacing: 0) {
-                ForEach(demoUsers) { user in
-                    LeaderboardRow(user: user, isCurrentUser: false)
-                }
-            }
-            .padding(.top, 6)
-
-            // 完整排行 → opens the full ranking list.
-            Button { showAllLeaderboard = true } label: {
-                HStack(spacing: 5) {
-                    Text("完整排行")
-                        .font(.frogCaption.weight(.semibold))
-                    Image(systemName: "arrow.right")
-                        .font(.frogMicro.weight(.bold))
-                }
-                .foregroundStyle(FrogTheme.moss)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(FrogTheme.line, lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 6)
-        }
-    }
-
-    private var mountainHeatList: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            sectionHeader("熱門山峰 · HOT PEAKS")
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(MountainCatalog.mountains.prefix(6)) { mountain in
-                        NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
-                            HotMountainCard(mountain: mountain)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
+        .padding(.horizontal, 19)
+        .padding(.vertical, 14)
+        .background(FrogTheme.forest, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 
-private struct LeaderboardUser: Identifiable {
+// MARK: - Models + components
+
+private struct LbUser: Identifiable {
     let rank: Int
     let name: String
-    let subtitle: String
-    let checkIns: Int
-    let climbed: Int
-    let avatarMountainId: String
-
+    let meta: String
+    let count: Int
+    let avatar: String
+    let delta: LbDelta
+    let deltaN: Int
     var id: Int { rank }
+}
+
+private enum LbDelta { case up, down, flat }
+
+/// ▲▼ rank-delta badge: up = leaf, down = trail-orange, flat = faint dash.
+private struct DeltaBadge: View {
+    let dir: LbDelta
+    let n: Int
+
+    var body: some View {
+        switch dir {
+        case .flat:
+            Text("—")
+                .font(.frogNum(11, weight: .semibold))
+                .foregroundStyle(FrogTheme.faint)
+        case .up:
+            badge(systemImage: "arrow.up", tint: FrogTheme.leaf)
+        case .down:
+            badge(systemImage: "arrow.down", tint: FrogTheme.orange)
+        }
+    }
+
+    private func badge(systemImage: String, tint: Color) -> some View {
+        HStack(spacing: 1) {
+            Image(systemName: systemImage)
+                .font(.system(size: 9, weight: .black))
+            Text("\(n)")
+                .font(.frogNum(11, weight: .semibold))
+        }
+        .foregroundStyle(tint)
+    }
+}
+
+/// Round survey-benchmark seal (trig point: triangle + centre dot) used for #1.
+private struct TrigMarkSeal: View {
+    var size: CGFloat = 52
+
+    var body: some View {
+        ZStack {
+            Circle().strokeBorder(FrogTheme.gold, lineWidth: 1.5)
+            Circle()
+                .strokeBorder(FrogTheme.gold.opacity(0.55), style: StrokeStyle(lineWidth: 1, dash: [2.5, 2.5]))
+                .padding(3)
+            ZStack {
+                TrigTriangle()
+                    .stroke(FrogTheme.gold, style: StrokeStyle(lineWidth: 1.8, lineJoin: .round))
+                Circle()
+                    .fill(FrogTheme.gold)
+                    .frame(width: size * 0.1, height: size * 0.1)
+                    .offset(y: size * 0.06)
+            }
+            .frame(width: size * 0.5, height: size * 0.5)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+private struct TrigTriangle: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.midX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// Circular mountain-photo avatar for ranking rows.
+private struct LbAvatar: View {
+    let mountainId: String
+    var size: CGFloat = 36
+    var border: Color = .white
+
+    var body: some View {
+        MountainPhoto(mountain: MountainCatalog.mountain(id: mountainId), dimming: 0)
+            .frame(width: size, height: size)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(border, lineWidth: 2))
+            .shadow(color: FrogTheme.warmShadow.opacity(0.14), radius: 4, y: 2)
+    }
 }
 
 /// Stat pill on the leaderboard hero — mirrors the passport cover's metric.
@@ -348,163 +483,5 @@ private struct LeaderboardCoverMetric: View {
             RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .stroke(Color.white.opacity(0.16), lineWidth: 1)
         )
-    }
-}
-
-private struct PodiumCard: View {
-    let user: LeaderboardUser
-    let height: CGFloat
-
-    private var isFirst: Bool { user.rank == 1 }
-
-    /// .pod .rk colour — first gold, second pine, third faint (ink-3).
-    private var rankColor: Color {
-        switch user.rank {
-        case 1: FrogTheme.gold
-        case 2: FrogTheme.moss
-        default: FrogTheme.faint
-        }
-    }
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("\(user.rank)")
-                .font(.frogNum(20, weight: .semibold))
-                .foregroundStyle(rankColor)
-
-            LeaderboardAvatar(user: user, size: isFirst ? 58 : 50)
-
-            VStack(spacing: 4) {
-                Text(user.name)
-                    .font(.frogCaption.weight(.bold))
-                    .foregroundStyle(FrogTheme.ink)
-                    .lineLimit(1)
-
-                Text("\(user.checkIns)")
-                    .font(.frogNum(18, weight: .semibold))
-                    .foregroundStyle(isFirst ? FrogTheme.forest : FrogTheme.moss)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: height)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 8)
-        .background {
-            // .pod: plain surface + hairline; .pod.first gets a gold tint.
-            if isFirst {
-                LinearGradient(
-                    colors: [FrogTheme.surface, FrogTheme.gold.opacity(0.12)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            } else {
-                FrogTheme.surface
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(FrogTheme.line, lineWidth: 1)
-        )
-    }
-}
-
-private struct LeaderboardRow: View {
-    let user: LeaderboardUser
-    let isCurrentUser: Bool
-
-    var body: some View {
-        HStack(spacing: 13) {
-            Text("\(user.rank)")
-                .font(.frogNum(16, weight: .semibold))
-                .foregroundStyle(FrogTheme.forest)
-                .frame(width: 26, alignment: .leading)
-
-            LeaderboardAvatar(user: user, size: 38, borderWidth: 2)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(isCurrentUser ? "你 · \(user.name)" : user.name)
-                    .font(.frogRow.weight(.bold))
-                    .foregroundStyle(FrogTheme.ink)
-                    .lineLimit(1)
-                Text(user.subtitle)
-                    .font(.frogCaption)
-                    .foregroundStyle(FrogTheme.muted)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 1) {
-                Text("\(user.checkIns)")
-                    .font(.frogNum(17, weight: .semibold))
-                    .foregroundStyle(isCurrentUser ? FrogTheme.orange : FrogTheme.ink)
-                Text("次")
-                    .font(.frogMicro)
-                    .foregroundStyle(FrogTheme.faint)
-            }
-        }
-        .padding(.vertical, 13)
-        .padding(.horizontal, isCurrentUser ? 12 : 4)
-        .background {
-            // .lb-row.me: trail-soft highlight, rounded; others = hairline divider.
-            if isCurrentUser {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(FrogTheme.orangeSoft)
-            }
-        }
-        .overlay(alignment: .bottom) {
-            if !isCurrentUser {
-                Rectangle()
-                    .fill(FrogTheme.lineSoft)
-                    .frame(height: 1)
-            }
-        }
-    }
-}
-
-private struct LeaderboardAvatar: View {
-    let user: LeaderboardUser
-    let size: CGFloat
-    var borderWidth: CGFloat = 3
-
-    var body: some View {
-        MountainPhoto(mountain: MountainCatalog.mountain(id: user.avatarMountainId), dimming: 0.02)
-            .frame(width: size, height: size)
-            .clipShape(Circle())
-            .overlay(Circle().stroke(Color.white, lineWidth: borderWidth))
-            .shadow(color: FrogTheme.warmShadow.opacity(0.12), radius: 5, y: 2)
-    }
-}
-
-private struct HotMountainCard: View {
-    let mountain: Mountain
-
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: mountain, dimming: 0.16)
-
-            LinearGradient(
-                colors: [.clear, Color.black.opacity(0.72)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(mountain.nameZh)
-                    .font(.frogRow.weight(.black))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text("\(mountain.totalCheckIns) 次打卡")
-                    .font(.frogCaption.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.8))
-                    .lineLimit(1)
-            }
-            .padding(10)
-        }
-        .frame(width: 128, height: 116)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
