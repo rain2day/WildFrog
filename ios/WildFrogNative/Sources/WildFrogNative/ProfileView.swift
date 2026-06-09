@@ -247,7 +247,12 @@ struct ProfileView: View {
             MountainPhoto(mountain: heroMountain, dimming: 0)
 
             LinearGradient(
-                colors: [FrogTheme.forest.opacity(0.45), FrogTheme.forest.opacity(0.96)],
+                colors: [
+                    .black.opacity(0.22),
+                    .clear,
+                    FrogTheme.forest.opacity(0.5),
+                    FrogTheme.forest.opacity(0.96)
+                ],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -412,7 +417,7 @@ struct ProfileView: View {
                     NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
                         MountainStampSeal(
                             mountain: mountain,
-                            size: 46,
+                            size: 54,
                             isUnlocked: checkInStore.visitedMountainIds.contains(mountain.id),
                             rotation: .degrees(0)
                         )
@@ -544,8 +549,8 @@ struct ProfileView: View {
                                  isUnlocked: checkInStore.distinctMountainCount >= 1)
                 AchievementBadge(title: "Summit", systemImage: "mountain.2.fill", tint: FrogTheme.moss,
                                  isUnlocked: checkInStore.distinctMountainCount >= 10)
-                AchievementBadge(title: "Sunrise", systemImage: "sun.max", tint: FrogTheme.orange,
-                                 isUnlocked: checkInStore.currentStreak >= 7)
+                AchievementBadge(title: "Active", systemImage: "sun.max", tint: FrogTheme.orange,
+                                 isUnlocked: checkInStore.totalActiveDays >= 7)
                 AchievementBadge(title: "10+", systemImage: "star", tint: FrogTheme.gold,
                                  isUnlocked: checkInStore.totalCheckIns >= 10)
             }
