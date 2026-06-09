@@ -959,20 +959,26 @@ struct CheckInCameraView: View {
             let filename = await savePhotoToDocuments(capturedImage)
 
             // 2. Write to local CheckInStore (account-bound), binding the track
-            await MainActor.run {
-                checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
+            let newRecord = await MainActor.run { () -> CheckInRecord? in
+                let record = checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
                 isSavingWatermark = false
                 saveMessage = "打卡成功！"
                 withAnimation(.easeInOut(duration: 0.3)) { showSuccess = true }
+                return record
             }
 
-            // 3. Best-effort Firestore write — failure does not block local success
-            Task {
-                try? await FirestoreService().recordCheckIn(
-                    userId: uid,
-                    mountainId: mountain.id,
-                    date: Date()
-                )
+            // 3. Best-effort Firestore write — failure does not block local success.
+            // Pass the record's stable id + date so the cloud echo reconciles back
+            // onto the local record (which holds the photo + track) on the next sync.
+            if let newRecord {
+                Task {
+                    try? await FirestoreService().recordCheckIn(
+                        id: newRecord.id,
+                        userId: uid,
+                        mountainId: mountain.id,
+                        date: newRecord.date
+                    )
+                }
             }
 
             // 4. Save watermark image to photo library

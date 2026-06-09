@@ -17,9 +17,10 @@ struct FirestoreService {
         return formatter
     }()
 
-    func recordCheckIn(userId: String, mountainId: String, date: Date) async throws {
+    func recordCheckIn(id: UUID, userId: String, mountainId: String, date: Date) async throws {
         #if canImport(FirebaseFirestore)
         let data: [String: Any] = [
+            "clientId": id.uuidString,
             "userId": userId,
             "mountainId": mountainId,
             "dayKey": Self.dayKeyFormatter.string(from: date),
@@ -50,8 +51,9 @@ struct FirestoreService {
                 date = Date()
             }
 
+            let clientId = (data["clientId"] as? String).flatMap(UUID.init(uuidString:)) ?? UUID()
             return CheckInRecord(
-                id: UUID(),
+                id: clientId,
                 mountainId: mountainId,
                 date: date,
                 photoFilename: nil

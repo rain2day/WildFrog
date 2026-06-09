@@ -66,6 +66,13 @@ final class CheckInStore: ObservableObject {
         return calendar
     }()
 
+    /// Mountain+day natural key used to suppress duplicate echoes of legacy remote
+    /// docs written before a stable `clientId` was stored.
+    private static func dayKey(for date: Date) -> String {
+        let c = hongKongCalendar.dateComponents([.year, .month, .day], from: date)
+        return "\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)"
+    }
+
     init(defaults: UserDefaults = .standard, firestoreService: FirestoreService = FirestoreService()) {
         self.defaults = defaults
         self.firestoreService = firestoreService
@@ -97,27 +104,27 @@ final class CheckInStore: ObservableObject {
             records.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
+        let localKeys = Set(records.map { "\($0.mountainId)|\(Self.dayKey(for: $0.date))" })
 
-        let reconciled = remote.map { record -> CheckInRecord in
-            var record = record
-            let local = localById[record.id]
-            if record.photoFilename == nil, let localPhoto = local?.photoFilename {
-                record.photoFilename = localPhoto
-            }
-            if record.track == nil, let localTrack = local?.track {
-                record.track = localTrack
-            }
-            return record
+        // Keep every local record (they carry the photo + track), and append only
+        // the remote records that are genuinely new to this device — matched neither
+        // by stable id nor by mountain+day. This never overwrites local-only data.
+        var merged = records
+        for remoteRecord in remote where localById[remoteRecord.id] == nil {
+            let key = "\(remoteRecord.mountainId)|\(Self.dayKey(for: remoteRecord.date))"
+            if localKeys.contains(key) { continue }
+            merged.append(remoteRecord)
         }
 
-        records = reconciled
+        records = merged.sorted { $0.date < $1.date }
         saveCache(for: uid)
     }
 
     // MARK: - Mutations
 
-    func addCheckIn(mountainId: String, photoFilename: String? = nil, track: TrackSummary? = nil) {
-        guard let currentUserId else { return }
+    @discardableResult
+    func addCheckIn(mountainId: String, photoFilename: String? = nil, track: TrackSummary? = nil) -> CheckInRecord? {
+        guard let currentUserId else { return nil }
         let record = CheckInRecord(
             mountainId: mountainId,
             date: Date(),
@@ -126,6 +133,7 @@ final class CheckInStore: ObservableObject {
         )
         records.append(record)
         saveCache(for: currentUserId)
+        return record
     }
 
     #if DEBUG
