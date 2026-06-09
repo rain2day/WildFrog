@@ -18,7 +18,7 @@ struct Mountain: Identifiable, Equatable {
     }
 
     var rankText: String {
-        topRank.map { "#\($0)" } ?? "未排名"
+        MountainCatalog.heightRank(for: id).map { "#\($0)" } ?? "未排名"
     }
 
     var stampImageName: String {
@@ -32,6 +32,24 @@ struct Mountain: Identifiable, Equatable {
 
 enum MountainCatalog {
     static let catalogCount = 330
+
+    /// Complete 1-based ranking by height (tallest = #1) covering every peak, so
+    /// none shows "未排名". Ties broken by id for a stable order. ("300" stays the
+    /// brand label; the rank value is real catalog data.)
+    static let heightRankById: [String: Int] = {
+        let sorted = mountains.sorted { lhs, rhs in
+            lhs.height != rhs.height ? lhs.height > rhs.height : lhs.id < rhs.id
+        }
+        var map: [String: Int] = [:]
+        for (index, mountain) in sorted.enumerated() {
+            map[mountain.id] = index + 1
+        }
+        return map
+    }()
+
+    static func heightRank(for mountainId: String) -> Int? {
+        heightRankById[mountainId]
+    }
 
     static func stampImageName(for mountainId: String) -> String {
         let index = mountains.firstIndex { $0.id == mountainId } ?? 0
