@@ -137,7 +137,25 @@ final class CheckInStore: ObservableObject {
         )
         records.append(record)
         saveCache(for: currentUserId)
+        captureWeather(for: record.id, mountainId: mountainId)
         return record
+    }
+
+    /// Best-effort: fetch the summit's current weather and attach it to the record
+    /// (local only, like the photo/track). Never blocks the check-in.
+    private func captureWeather(for recordId: UUID, mountainId: String) {
+        let coordinate = MountainCatalog.mountain(id: mountainId).coordinate
+        Task { [weak self] in
+            guard let snapshot = await WeatherFetcher.snapshot(for: coordinate) else { return }
+            self?.attachWeather(snapshot, to: recordId)
+        }
+    }
+
+    /// Stores a captured weather snapshot on an existing record and persists it.
+    func attachWeather(_ snapshot: WeatherSnapshot, to recordId: UUID) {
+        guard let index = records.firstIndex(where: { $0.id == recordId }) else { return }
+        records[index].weather = snapshot
+        if let currentUserId { saveCache(for: currentUserId) }
     }
 
     #if DEBUG
