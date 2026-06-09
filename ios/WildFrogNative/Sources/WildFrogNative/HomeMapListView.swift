@@ -151,12 +151,11 @@ struct HomeMapListView: View {
                     .foregroundStyle(.white.opacity(0.6))
 
                 ZStack(alignment: .bottomLeading) {
-                    // ~3x taller silhouette, but its layout footprint stays compact
-                    // (bottom-anchored) so it rises up from the bar without pushing
-                    // the stats off the fixed-height hero.
+                    // Height near the art's natural aspect (≈ width / 2.25) so the
+                    // massif keeps its real shape instead of stretching into a flat
+                    // "cut" mesa; full-width + flush on the bar, peak fully visible.
                     ConquestMountainBackdrop(progress: ratio)
-                        .frame(height: 288)
-                        .frame(height: 100, alignment: .bottom)
+                        .frame(height: 158)
 
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text("\(conqueredCount)")
