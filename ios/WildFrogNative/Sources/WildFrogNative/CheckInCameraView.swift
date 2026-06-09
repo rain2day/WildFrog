@@ -473,7 +473,7 @@ struct CheckInCameraView: View {
 
     private func startRecordingMode() {
         mode = .recording
-        recorder.start()
+        recorder.start(mountainName: mountain.nameZh)
     }
 
     private func stopRecordingMode() {

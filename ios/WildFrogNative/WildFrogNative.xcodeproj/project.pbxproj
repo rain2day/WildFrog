@@ -17,6 +17,7 @@
 		A1F0E5C2D3B41A0792C5B041 /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */; };
 		B5A1000000000000000000A1 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000A0 /* Track.swift */; };
 		B5A1000000000000000000B1 /* TrackRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000B0 /* TrackRecorder.swift */; };
+		B5A1000000000000000000C1 /* WildFrogTrackActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */; };
 		B5A100000000000000000101 /* RouteToCheckpointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A100000000000000000100 /* RouteToCheckpointView.swift */; };
 		B5A1000000000000000000E1 /* TripDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000E0 /* TripDetailView.swift */; };
 		5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */; };
@@ -48,6 +49,7 @@
 		A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 		B5A1000000000000000000A0 /* Track.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
 		B5A1000000000000000000B0 /* TrackRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackRecorder.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogTrackActivity.swift; sourceTree = "<group>"; };
 		B5A1000000000000000000E0 /* TripDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripDetailView.swift; sourceTree = "<group>"; };
 		B5A100000000000000000100 /* RouteToCheckpointView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RouteToCheckpointView.swift; sourceTree = "<group>"; };
 		0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInCameraView.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */,
 				B5A1000000000000000000A0 /* Track.swift */,
 				B5A1000000000000000000B0 /* TrackRecorder.swift */,
+				B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */,
 				B5A1000000000000000000E0 /* TripDetailView.swift */,
 				B5A100000000000000000100 /* RouteToCheckpointView.swift */,
 				3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */,
@@ -256,6 +259,7 @@
 				A1F0E5C2D3B41A0792C5B041 /* FirestoreService.swift in Sources */,
 				B5A1000000000000000000A1 /* Track.swift in Sources */,
 				B5A1000000000000000000B1 /* TrackRecorder.swift in Sources */,
+				B5A1000000000000000000C1 /* WildFrogTrackActivity.swift in Sources */,
 				B5A1000000000000000000E1 /* TripDetailView.swift in Sources */,
 				B5A100000000000000000101 /* RouteToCheckpointView.swift in Sources */,
 				F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */,

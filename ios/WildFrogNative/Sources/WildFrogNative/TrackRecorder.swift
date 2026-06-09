@@ -11,6 +11,10 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
     @Published private(set) var ascentMeters: Double = 0
     @Published private(set) var points: [TrackPoint] = []
 
+    #if canImport(ActivityKit)
+    private let liveActivity = TrackLiveActivityController()
+    #endif
+
     private let manager = CLLocationManager()
     private var timer: Timer?
     private var startDate: Date?
@@ -37,7 +41,7 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
 
     // MARK: - Control
 
-    func start() {
+    func start(mountainName: String = "") {
         guard !isRecording else { return }
 
         if manager.authorizationStatus == .notDetermined {
@@ -63,6 +67,9 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
 
         manager.startUpdatingLocation()
         startTimer()
+        #if canImport(ActivityKit)
+        liveActivity.start(mountainName: mountainName, elapsedSeconds: 0, distanceMeters: 0, ascentMeters: 0)
+        #endif
     }
 
     /// Stops recording and returns the finished `Track` (nil if no points were captured).
@@ -71,6 +78,9 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         guard isRecording else { return nil }
         isRecording = false
         manager.stopUpdatingLocation()
+        #if canImport(ActivityKit)
+        liveActivity.end()
+        #endif
         if Self.backgroundLocationDeclared {
             manager.allowsBackgroundLocationUpdates = false
         }
@@ -119,6 +129,15 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
             Task { @MainActor in
                 guard let self, let startDate = self.startDate, self.isRecording else { return }
                 self.elapsedSeconds = Date().timeIntervalSince(startDate)
+                #if canImport(ActivityKit)
+                if Int(self.elapsedSeconds) % 5 == 0 {
+                    self.liveActivity.update(
+                        elapsedSeconds: Int(self.elapsedSeconds),
+                        distanceMeters: self.distanceMeters,
+                        ascentMeters: self.ascentMeters
+                    )
+                }
+                #endif
             }
         }
         RunLoop.main.add(timer, forMode: .common)
