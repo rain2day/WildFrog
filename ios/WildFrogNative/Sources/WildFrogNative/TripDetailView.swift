@@ -54,10 +54,12 @@ struct TripDetailView: View {
             loadPhoto(record.photoFilename)
         }
         .sheet(isPresented: $showCertificate) {
-            CertificateShareSheet(
-                mountainCount: checkInStore.distinctMountainCount,
-                onDismiss: { showCertificate = false }
+            MountainCertificateSheet(
+                mountain: mountain,
+                checkInCount: checkInStore.count(for: mountain.id),
+                recordId: record.id
             )
+            .environmentObject(checkInStore)
         }
     }
 

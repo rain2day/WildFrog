@@ -44,7 +44,6 @@
 		F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */; };
 		B6001A0000000001 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000000 /* NotificationsView.swift */; };
 		B6001A0000000011 /* AllAchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000010 /* AllAchievementsView.swift */; };
-		B6001A0000000021 /* CertificateShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000020 /* CertificateShareSheet.swift */; };
 		B6001A0000000031 /* ProviderPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000030 /* ProviderPickerSheet.swift */; };
 		CF001A0000000041 /* CheckInMapPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF001A0000000040 /* CheckInMapPickerView.swift */; };
 /* End PBXBuildFile section */
@@ -111,7 +110,6 @@
 		CF001A0000000040 /* CheckInMapPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInMapPickerView.swift; sourceTree = "<group>"; };
 		B6001A0000000000 /* NotificationsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		B6001A0000000010 /* AllAchievementsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AllAchievementsView.swift; sourceTree = "<group>"; };
-		B6001A0000000020 /* CertificateShareSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CertificateShareSheet.swift; sourceTree = "<group>"; };
 		B6001A0000000030 /* ProviderPickerSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProviderPickerSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -195,7 +193,6 @@
 				3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */,
 				B6001A0000000000 /* NotificationsView.swift */,
 				B6001A0000000010 /* AllAchievementsView.swift */,
-				B6001A0000000020 /* CertificateShareSheet.swift */,
 				B6001A0000000030 /* ProviderPickerSheet.swift */,
 				CF001A0000000040 /* CheckInMapPickerView.swift */,
 				84A431EB3110467D0BCDBA30 /* Info.plist */,
@@ -373,7 +370,6 @@
 				3806A07E31B047FB446ED6FB /* ProfileView.swift in Sources */,
 				B6001A0000000001 /* NotificationsView.swift in Sources */,
 				B6001A0000000011 /* AllAchievementsView.swift in Sources */,
-				B6001A0000000021 /* CertificateShareSheet.swift in Sources */,
 				B6001A0000000031 /* ProviderPickerSheet.swift in Sources */,
 				CF001A0000000041 /* CheckInMapPickerView.swift in Sources */,
 			);

@@ -215,15 +215,21 @@ struct MountainCertificateCard: View {
 struct MountainCertificateSheet: View {
     let mountain: Mountain
     let checkInCount: Int
+    /// When set, the certificate is for this exact check-in; otherwise the most
+    /// recent one for the peak (used by the Profile shortcut).
+    var recordId: UUID? = nil
 
     @EnvironmentObject private var checkInStore: CheckInStore
     @Environment(\.dismiss) private var dismiss
     @State private var rendered: UIImage?
     @State private var isRendering = false
 
-    /// The user's most recent check-in for this peak (drives photo, date, weather).
-    private var latestRecord: CheckInRecord? {
-        checkInStore.records
+    /// The check-in this certificate represents (drives photo, date, weather).
+    private var targetRecord: CheckInRecord? {
+        if let recordId {
+            return checkInStore.records.first { $0.id == recordId }
+        }
+        return checkInStore.records
             .filter { $0.mountainId == mountain.id }
             .sorted { $0.date > $1.date }
             .first
@@ -304,7 +310,7 @@ struct MountainCertificateSheet: View {
     private func prepare() async {
         guard rendered == nil, !isRendering else { return }
         isRendering = true
-        if let record = latestRecord, record.weather == nil {
+        if let record = targetRecord, record.weather == nil {
             let coordinate = MountainCatalog.mountain(id: mountain.id).coordinate
             if let snapshot = await WeatherFetcher.historicalSnapshot(for: coordinate, at: record.date) {
                 checkInStore.attachWeather(snapshot, to: record.id)
@@ -316,7 +322,7 @@ struct MountainCertificateSheet: View {
 
     @MainActor
     private func renderImage() {
-        let record = latestRecord
+        let record = targetRecord
         let photo = Self.loadPhoto(record?.photoFilename)
         let renderer = ImageRenderer(content:
             MountainCertificateCard(

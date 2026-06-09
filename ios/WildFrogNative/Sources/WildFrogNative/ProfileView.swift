@@ -21,7 +21,6 @@ struct ProfileView: View {
     @State private var showProviderPicker = false
     @State private var showCertificateShare = false
     @State private var showAllAchievements = false
-    @State private var renderedCertificate: UIImage?
     @State private var showDeleteAccount = false
 
     init() {
@@ -90,12 +89,11 @@ struct ProfileView: View {
                     }
             }
         }
-        .sheet(isPresented: $showCertificateShare, onDismiss: { renderedCertificate = nil }) {
-            CertificateShareSheet(
-                mountainCount: checkInStore.distinctMountainCount,
-                onDismiss: { showCertificateShare = false }
-            )
-            .environmentObject(checkInStore)
+        .sheet(isPresented: $showCertificateShare) {
+            if let latest = latestConqueredMountain {
+                MountainCertificateSheet(mountain: latest, checkInCount: checkInStore.count(for: latest.id))
+                    .environmentObject(checkInStore)
+            }
         }
         .onChange(of: selectedAvatar) { _, item in
             Task {
@@ -537,30 +535,48 @@ struct ProfileView: View {
         }
     }
 
+    /// The most recently conquered peak — the certificate the Profile shortcut shows.
+    private var latestConqueredMountain: Mountain? {
+        checkInStore.records
+            .sorted { $0.date > $1.date }
+            .first
+            .map { MountainCatalog.mountain(id: $0.mountainId) }
+    }
+
     private var certificateCard: some View {
-        HStack(spacing: 12) {
-            WildFrogBrandMark(size: 46, cornerRadius: 11)
+        let latest = latestConqueredMountain
+        return HStack(spacing: 12) {
+            if let latest {
+                MountainStampSeal(mountain: latest, size: 46, isUnlocked: true, rotation: .degrees(-4))
+            } else {
+                WildFrogBrandMark(size: 46, cornerRadius: 11)
+            }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Peak Explorer Certificate")
+                Text("登頂證書")
                     .font(.frogRow.weight(.bold))
                     .foregroundStyle(FrogTheme.ink)
-                Text("You've completed \(checkInStore.distinctMountainCount) Hong Kong peaks.")
+                Text(latest == nil
+                     ? "完成打卡後解鎖你的收藏證書"
+                     : "最近征服 \(latest!.nameZh) · 收藏證書")
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
+                    .lineLimit(2)
             }
 
             Spacer(minLength: 8)
 
-            Button { showCertificateShare = true } label: {
-                Text("VIEW & SHARE")
-                    .font(.frogMicro.weight(.bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-                    .background(FrogTheme.orange, in: Capsule())
+            if latest != nil {
+                Button { showCertificateShare = true } label: {
+                    Text("查看")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 9)
+                        .background(FrogTheme.orange, in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(FrogSpace.cardPadding)
         .background(FrogTheme.surface2)
