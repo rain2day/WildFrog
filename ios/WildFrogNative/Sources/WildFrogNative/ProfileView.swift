@@ -22,6 +22,7 @@ struct ProfileView: View {
     @State private var showCertificateShare = false
     @State private var showAllAchievements = false
     @State private var renderedCertificate: UIImage?
+    @State private var showDeleteAccount = false
 
     init() {
         let storedAvatar = UserDefaults.standard.data(forKey: Self.avatarStorageKey) ?? Data()
@@ -45,27 +46,10 @@ struct ProfileView: View {
         return MountainCatalog.mountain(id: "lion-rock")
     }
 
-    /// Subtitle for the signed-in account panel. Never shows a "not signed in"
-    /// string while a session exists — falls back to the account identifier so
-    /// the UI can't contradict the signed-in header.
-    private var accountStatusMessage: String {
-        guard let session = authService.session else {
-            return authService.statusMessage
-        }
-
-        let raw = authService.statusMessage
-        let staleStates = ["未登入", "已登出", "已回到訪客模式"]
-        if !raw.isEmpty, !staleStates.contains(raw) {
-            return raw
-        }
-
-        if let email = session.email, !email.isEmpty {
-            return "已登入 · \(email)"
-        }
-        if let phone = session.phoneNumber, !phone.isEmpty {
-            return "已登入 · \(phone)"
-        }
-        return "已以\(session.providerLabel)登入，紀錄已雲端同步。"
+    /// Hero image source — the user's latest peak, but only when it has artwork
+    /// (some catalog stubs have no image); otherwise a guaranteed-image default.
+    private var heroMountain: Mountain {
+        recentMountain.imageName.isEmpty ? MountainCatalog.mountain(id: "tai-mo-shan") : recentMountain
     }
 
     var body: some View {
@@ -107,6 +91,14 @@ struct ProfileView: View {
                 await loadAvatar(from: item)
             }
         }
+        .alert("刪除帳戶？", isPresented: $showDeleteAccount) {
+            Button("永久刪除", role: .destructive) {
+                Task { await authService.deleteAccount() }
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("此動作無法復原。你的帳戶同雲端打卡紀錄會被永久刪除。")
+        }
         #if DEBUG
         .overlay(alignment: .bottomTrailing) {
             mockFloatingButton
@@ -132,7 +124,6 @@ struct ProfileView: View {
                         recentCheckInCard
                         certificateCard
                         achievementsPanel
-                        accountPanel
                     }
                     .padding(.horizontal, FrogSpace.screenPadding)
                     .padding(.top, FrogSpace.cardGap)
@@ -253,7 +244,7 @@ struct ProfileView: View {
         let currentAvatarData = avatarData
 
         return ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: "sunset-peak"), dimming: 0)
+            MountainPhoto(mountain: heroMountain, dimming: 0)
 
             LinearGradient(
                 colors: [FrogTheme.forest.opacity(0.45), FrogTheme.forest.opacity(0.96)],
@@ -292,6 +283,8 @@ struct ProfileView: View {
                     Spacer()
 
                     syncChip
+
+                    accountMenu
                 }
                 .padding(.top, topInset + 8)
 
@@ -367,6 +360,27 @@ struct ProfileView: View {
         .padding(.vertical, 5)
         .background(FrogTheme.leaf.opacity(0.92), in: Capsule())
         .overlay(Capsule().stroke(Color.white.opacity(0.4), lineWidth: 1))
+    }
+
+    private var accountMenu: some View {
+        Menu {
+            Button {
+                authService.signOut()
+            } label: {
+                Label("登出", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+            Button(role: .destructive) {
+                showDeleteAccount = true
+            } label: {
+                Label("刪除帳戶", systemImage: "trash")
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle.fill")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(.white)
+                .shadow(color: Color.black.opacity(0.3), radius: 4, y: 1)
+        }
+        .accessibilityLabel("帳戶選項")
     }
 
     private var peakPassportCard: some View {
@@ -536,45 +550,6 @@ struct ProfileView: View {
                                  isUnlocked: checkInStore.totalCheckIns >= 10)
             }
         }
-    }
-
-    private var accountPanel: some View {
-        HStack(spacing: 12) {
-            // .ic — trail-soft icon chip
-            Image(systemName: "checkmark.shield")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(FrogTheme.orange)
-                .frame(width: 38, height: 38)
-                .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-
-            // .mid
-            VStack(alignment: .leading, spacing: 2) {
-                Text(authService.session?.statusTitle ?? "已登入")
-                    .font(.frogRow.weight(.bold))
-                    .foregroundStyle(FrogTheme.ink)
-                Text(accountStatusMessage)
-                    .font(.frogCaption)
-                    .foregroundStyle(FrogTheme.muted)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.78)
-            }
-
-            Spacer(minLength: 8)
-
-            // .out
-            Button("登出") {
-                authService.signOut()
-            }
-            .font(.frogCaption.weight(.bold))
-            .foregroundStyle(FrogTheme.orange)
-        }
-        .padding(15)
-        .background(FrogTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(FrogTheme.line, lineWidth: 1)
-        )
     }
 
     @MainActor

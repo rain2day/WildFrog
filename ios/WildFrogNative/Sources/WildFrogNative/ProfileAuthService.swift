@@ -381,6 +381,44 @@ final class ProfileAuthService {
         #endif
     }
 
+    func deleteAccount() async {
+        #if canImport(FirebaseAuth)
+        guard let user = Auth.auth().currentUser else {
+            session = nil
+            statusMessage = "已回到訪客模式"
+            return
+        }
+        let uid = user.uid
+        isBusy = true
+        defer { isBusy = false }
+
+        // Best-effort: remove the user's cloud check-ins before deleting the auth user.
+        try? await FirestoreService().deleteUserCheckIns(userId: uid)
+
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                user.delete { error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
+            #if canImport(GoogleSignIn)
+            GIDSignIn.sharedInstance.signOut()
+            #endif
+            session = nil
+            statusMessage = "帳戶已刪除"
+        } catch {
+            statusMessage = Self.readableAuthError(error)
+        }
+        #else
+        session = nil
+        statusMessage = "帳戶已刪除（示範）"
+        #endif
+    }
+
     func noteAvatarUpdated() {
         statusMessage = "頭像已更新"
     }

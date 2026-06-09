@@ -63,4 +63,18 @@ struct FirestoreService {
         throw FirestoreServiceError.sdkUnavailable
         #endif
     }
+
+    func deleteUserCheckIns(userId: String) async throws {
+        #if canImport(FirebaseFirestore)
+        let snapshot = try await Firestore.firestore()
+            .collection("checkIns")
+            .whereField("userId", isEqualTo: userId)
+            .getDocuments()
+        for document in snapshot.documents {
+            try await document.reference.delete()
+        }
+        #else
+        throw FirestoreServiceError.sdkUnavailable
+        #endif
+    }
 }
