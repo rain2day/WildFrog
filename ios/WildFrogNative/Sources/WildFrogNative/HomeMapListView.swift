@@ -151,8 +151,12 @@ struct HomeMapListView: View {
                     .foregroundStyle(.white.opacity(0.6))
 
                 ZStack(alignment: .bottomLeading) {
+                    // ~3x taller silhouette, but its layout footprint stays compact
+                    // (bottom-anchored) so it rises up from the bar without pushing
+                    // the stats off the fixed-height hero.
                     ConquestMountainBackdrop(progress: ratio)
-                        .frame(height: 96)
+                        .frame(height: 288)
+                        .frame(height: 100, alignment: .bottom)
 
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text("\(conqueredCount)")
