@@ -716,71 +716,39 @@ struct MountainDirectoryView: View {
     }
 }
 
-// MARK: - Conquest mountain bar (smooth natural silhouette, clipped to the bar)
+// MARK: - Conquest mountain silhouette (real reference art, filled by progress)
 
-/// A smooth, natural mountain-range silhouette — Catmull-Rom curves through the
-/// ridge points (NOT straight zig-zag lines), closed down to the rect's bottom.
-private struct SmoothMountainRange: Shape {
-    let ridge: [(CGFloat, CGFloat)]   // normalised (x, y); y from top, lower = taller
-
-    func path(in rect: CGRect) -> Path {
-        let w = rect.width, h = rect.height
-        let pts = ridge.map { CGPoint(x: $0.0 * w, y: $0.1 * h) }
-        guard pts.count > 1 else { return Path() }
-        var path = Path()
-        path.move(to: CGPoint(x: 0, y: h))
-        path.addLine(to: pts[0])
-        for i in 0..<(pts.count - 1) {
-            let p0 = pts[max(i - 1, 0)]
-            let p1 = pts[i]
-            let p2 = pts[i + 1]
-            let p3 = pts[min(i + 2, pts.count - 1)]
-            let c1 = CGPoint(x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6)
-            let c2 = CGPoint(x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6)
-            path.addCurve(to: p2, control1: c1, control2: c2)
-        }
-        path.addLine(to: CGPoint(x: w, y: h))
-        path.closeSubpath()
-        return path
-    }
-}
-
-/// Conquest progress as a smooth, natural mountain silhouette drawn ONLY inside
-/// the bar (clipped, never overflows). A faint full range, with the peaks up to
-/// the conquered % filled solid from the left.
 /// Conquest as a smooth, natural mountain silhouette that sits BEHIND the headline
-/// number (no background box — straight on the photo). A faint full range, with
-/// the peaks up to the conquered % filled solid from the left. Sized by its parent.
+/// number (no background box — straight on the photo). Uses the real reference
+/// silhouette art (`ConquestRidge`, a soft organic range): a faint full range,
+/// with the peaks up to the conquered % filled left-to-right with the leaf→moss
+/// gradient. Sized + bottom-anchored by its parent.
 private struct ConquestMountainBackdrop: View {
     var progress: Double
 
-    // Smooth, rounded natural range (Catmull-Rom): a dominant rounded peak, gentle
-    // secondary peaks and tapering tails — like the reference silhouette, not a
-    // jagged saw-tooth. y from top — lower = taller.
-    private let ridge: [(CGFloat, CGFloat)] = [
-        (0.00, 0.95), (0.08, 0.72), (0.16, 0.81), (0.25, 0.55), (0.33, 0.64),
-        (0.42, 0.30), (0.50, 0.10), (0.57, 0.33), (0.64, 0.24), (0.72, 0.47),
-        (0.80, 0.38), (0.88, 0.60), (0.94, 0.73), (1.00, 0.95)
-    ]
-
     var body: some View {
         GeometryReader { geo in
-            let fillWidth = CGFloat(max(0, min(1, progress))) * geo.size.width
-            ZStack(alignment: .leading) {
-                SmoothMountainRange(ridge: ridge)
-                    .fill(Color.white.opacity(0.24))
+            let w = geo.size.width, h = geo.size.height
+            let fillWidth = CGFloat(max(0, min(1, progress))) * w
+            let silhouette = Image("ConquestRidge")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: w, height: h, alignment: .bottom)
 
-                SmoothMountainRange(ridge: ridge)
-                    .fill(
-                        LinearGradient(
-                            colors: [FrogTheme.leaf, FrogTheme.moss],
-                            startPoint: .top, endPoint: .bottom
-                        )
+            silhouette
+                .foregroundStyle(.white.opacity(0.22))          // faint full range
+                .overlay(alignment: .leading) {
+                    LinearGradient(
+                        colors: [FrogTheme.leaf, FrogTheme.moss],
+                        startPoint: .top, endPoint: .bottom
                     )
-                    .mask(alignment: .leading) { Rectangle().frame(width: fillWidth) }
-            }
-            .frame(width: geo.size.width, height: geo.size.height)
-            .clipped()
+                    .frame(width: w, height: h)
+                    .mask { silhouette }                        // shaped to the ridge
+                    .mask(alignment: .leading) {                // revealed by progress
+                        Rectangle().frame(width: fillWidth)
+                    }
+                }
         }
         .allowsHitTesting(false)
         .animation(.easeInOut(duration: 0.4), value: progress)
