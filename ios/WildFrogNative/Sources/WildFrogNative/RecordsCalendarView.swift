@@ -107,9 +107,9 @@ struct RecordsCalendarView: View {
 
                     VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
                         TripsSection()
-                        passportStrip
                         calendarPanel
                         selectedRecordCard
+                        passportStrip
                     }
                     .padding(FrogSpace.screenPadding)
                     .padding(.top, FrogSpace.cardGap)
@@ -204,6 +204,8 @@ struct RecordsCalendarView: View {
             MountainStampGrid(
                 unlockedMountainIds: checkInStore.visitedMountainIds,
                 columnsCount: 5,
+                limit: 15,
+                prioritizesUnlocked: true,
                 showsLabels: true
             )
             .padding(FrogSpace.cardPadding)
@@ -768,8 +770,10 @@ private struct TripRow: View {
     @ViewBuilder
     private var thumbnailView: some View {
         PhotoFallbackView(image: thumbnail, mountain: mountain, dimming: 0.1)
-        .frame(width: 60, height: 60)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .scaledToFill()
+            .frame(width: 60, height: 60)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     @ViewBuilder
