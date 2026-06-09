@@ -167,9 +167,9 @@ struct HomeMapListView: View {
                 }
                 .padding(.top, 6)
 
-                // Progress bar anchored at the mountain's base.
+                // Progress bar the mountain's base sits flush on.
                 ConquestProgressBar(progress: ratio)
-                    .padding(.top, 9)
+                    .padding(.top, 1)
 
                 HStack {
                     Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
