@@ -35,6 +35,7 @@
 		F10000000000000000000003 /* WildFrogLiveActivityWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BF8E87849CA3D87AD857D148 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F03F5A280CF251A80908152 /* Foundation.framework */; };
 		DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6441CFCB65614B5EB60E9C /* Mountain.swift */; };
+		DF10A0FE000000000000B11D /* MountainLore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE000000000000C0DE /* MountainLore.swift */; };
 		E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */; };
 		ED0FE6ACC5ECB5340D0482A9 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B042D4E250FA2146378FC0 /* Theme.swift */; };
 		F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */; };
@@ -100,6 +101,7 @@
 		F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildFrogLiveActivityWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8B042D4E250FA2146378FC0 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		DF6441CFCB65614B5EB60E9C /* Mountain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mountain.swift; sourceTree = "<group>"; };
+		DF10A0FE000000000000C0DE /* MountainLore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainLore.swift; sourceTree = "<group>"; };
 		CF001A0000000040 /* CheckInMapPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInMapPickerView.swift; sourceTree = "<group>"; };
 		B6001A0000000000 /* NotificationsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		B6001A0000000010 /* AllAchievementsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AllAchievementsView.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				B5A100000000000000000100 /* RouteToCheckpointView.swift */,
 				3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */,
 				DF6441CFCB65614B5EB60E9C /* Mountain.swift */,
+				DF10A0FE000000000000C0DE /* MountainLore.swift */,
 				4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */,
 				A20B579DFF0F858858406436 /* RecordsCalendarView.swift */,
 				B8B042D4E250FA2146378FC0 /* Theme.swift */,
@@ -343,6 +346,7 @@
 				B5A100000000000000000101 /* RouteToCheckpointView.swift in Sources */,
 				F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */,
 				DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */,
+				DF10A0FE000000000000B11D /* MountainLore.swift in Sources */,
 				16F867A7AFB70C1DA8B771A1 /* MountainDetailView.swift in Sources */,
 				0E00D28CB7BC9BE04BE1A582 /* RecordsCalendarView.swift in Sources */,
 				ED0FE6ACC5ECB5340D0482A9 /* Theme.swift in Sources */,
