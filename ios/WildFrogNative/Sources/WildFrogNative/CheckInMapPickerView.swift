@@ -53,6 +53,17 @@ struct CheckInPickerView: View {
 
 // MARK: - Map mode
 
+/// Full visual identity for a check-in map marker. Including visited/near in
+/// `id` forces SwiftUI + MapKit to rebuild the marker when those flip —
+/// otherwise the Map caches the annotation by mountain id and the pin stays
+/// stale after a check-in until some unrelated change rebuilds the map.
+private struct CheckInMapMarker: Identifiable {
+    let mountain: Mountain
+    let isVisited: Bool
+    let isNear: Bool
+    var id: String { "\(mountain.id)|\(isVisited)|\(isNear)" }
+}
+
 private struct CheckInMapMode: View {
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var checkInStore: CheckInStore
@@ -113,19 +124,28 @@ private struct CheckInMapMode: View {
         return mapMountains.first { $0.id == id }
     }
 
+    private var mapMarkers: [CheckInMapMarker] {
+        let near = nearestIds
+        return mapMountains.map {
+            CheckInMapMarker(
+                mountain: $0,
+                isVisited: checkInStore.count(for: $0.id) > 0,
+                isNear: near.contains($0.id)
+            )
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Map(position: $mapPosition, selection: $selectedMountainId) {
-                ForEach(mapMountains) { mountain in
-                    let isVisited = checkInStore.count(for: mountain.id) > 0
-                    let isNear = nearestIds.contains(mountain.id)
+                ForEach(mapMarkers) { pin in
                     Marker(
-                        mountain.nameZh,
-                        systemImage: isVisited ? "checkmark.seal.fill" : (isNear ? "mappin.circle.fill" : "mappin"),
-                        coordinate: mountain.coordinate
+                        pin.mountain.nameZh,
+                        systemImage: pin.isVisited ? "checkmark.seal.fill" : (pin.isNear ? "mappin.circle.fill" : "mappin"),
+                        coordinate: pin.mountain.coordinate
                     )
-                    .tint(isVisited ? FrogTheme.moss : (isNear ? FrogTheme.orange : FrogTheme.leaf))
-                    .tag(mountain.id)
+                    .tint(pin.isVisited ? FrogTheme.moss : (pin.isNear ? FrogTheme.orange : FrogTheme.leaf))
+                    .tag(pin.mountain.id)
                 }
             }
             .mapStyle(.standard)

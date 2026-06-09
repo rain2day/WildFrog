@@ -204,12 +204,25 @@ struct HomeMapListView: View {
         .clipped()
     }
 
+    /// Marker identity includes visited state so the Map rebuilds the pin when a
+    /// mountain is checked in — without this, MapKit caches the annotation by
+    /// mountain id and the pin stays stale after returning from check-in.
+    private struct HomeMapMarker: Identifiable {
+        let mountain: Mountain
+        let isVisited: Bool
+        var id: String { "\(mountain.id)|\(isVisited)" }
+    }
+
+    private var mapMarkers: [HomeMapMarker] {
+        mapMountains.map { HomeMapMarker(mountain: $0, isVisited: checkInStore.hasVisited(mountainId: $0.id)) }
+    }
+
     private func mapOverview(scrollProxy: ScrollViewProxy) -> some View {
         ZStack(alignment: .topLeading) {
             Map(position: $mapPosition) {
-                ForEach(mapMountains) { mountain in
-                    Marker(mountain.nameZh, systemImage: checkInStore.hasVisited(mountainId: mountain.id) ? "checkmark.circle.fill" : "mappin", coordinate: mountain.coordinate)
-                        .tint(checkInStore.hasVisited(mountainId: mountain.id) ? FrogTheme.orange : FrogTheme.moss)
+                ForEach(mapMarkers) { pin in
+                    Marker(pin.mountain.nameZh, systemImage: pin.isVisited ? "checkmark.circle.fill" : "mappin", coordinate: pin.mountain.coordinate)
+                        .tint(pin.isVisited ? FrogTheme.orange : FrogTheme.moss)
                 }
             }
             .mapStyle(mapStyleHybrid ? .hybrid : .standard)
