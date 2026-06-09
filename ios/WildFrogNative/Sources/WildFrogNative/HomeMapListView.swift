@@ -152,7 +152,7 @@ struct HomeMapListView: View {
 
                 ZStack(alignment: .bottomLeading) {
                     ConquestMountainBackdrop(progress: ratio)
-                        .frame(height: 150)
+                        .frame(height: 118)
 
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text("\(conqueredCount)")
@@ -730,11 +730,13 @@ private struct ConquestMountainBackdrop: View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
             let fillWidth = CGFloat(max(0, min(1, progress))) * w
+            // Stretched to fill the band exactly (full width, parent-controlled
+            // height) so the peak hugs the number instead of being pinned to the
+            // art's natural aspect — a slightly flatter ridge still reads natural.
             let silhouette = Image("ConquestRidge")
                 .renderingMode(.template)
                 .resizable()
-                .scaledToFit()
-                .frame(width: w, height: h, alignment: .bottom)
+                .frame(width: w, height: h)
 
             silhouette
                 .foregroundStyle(.white.opacity(0.22))          // faint full range
