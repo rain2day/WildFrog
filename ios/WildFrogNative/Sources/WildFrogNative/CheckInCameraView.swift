@@ -1195,27 +1195,12 @@ private struct CheckInPassportCardView: View {
             .padding(.bottom, 44)
             .frame(width: width, height: stubH, alignment: .topLeading)
             .background(PerforatedTopShape(radius: perfR, spacing: 38).fill(FrogTheme.passport))
+            // Stamp pressed onto the photo itself (top-right), printed white so it
+            // reads on the scenery — a full, uncropped impression.
             .overlay(alignment: .topTrailing) {
-                ZStack {
-                    // The half over the dark photo is printed in white; the half
-                    // on the cream stub keeps the forest ink.
-                    PassportInkStamp(dateText: dateText, ink: .white)
-                        .mask(
-                            VStack(spacing: 0) {
-                                Color.black.frame(height: 210)
-                                Color.clear
-                            }
-                        )
-                    PassportInkStamp(dateText: dateText, ink: FrogTheme.forest)
-                        .mask(
-                            VStack(spacing: 0) {
-                                Color.clear.frame(height: 210)
-                                Color.black
-                            }
-                        )
-                }
-                .padding(.trailing, 24)
-                .offset(y: -210)
+                PassportInkStamp(dateText: dateText, ink: .white)
+                    .padding(.trailing, 30)
+                    .offset(y: -400)
             }
         }
         .frame(width: width, height: photoH + stubH - perfR * 2)
@@ -1273,28 +1258,33 @@ private struct PerforatedTopShape: Shape {
     }
 }
 
-/// Text laid out around a circle (for the ink-stamp ring).
+/// Text laid out along a circular arc. `centerDegrees` aims the middle of the arc
+/// (-90 = top, 90 = bottom); `flipped` keeps bottom-arc text the right way up.
 private struct CircularText: View {
     let text: String
     let radius: CGFloat
     let fontSize: CGFloat
     let ink: Color
-    var startDegrees: Double = -90
+    var arcDegrees: Double = 360
+    var centerDegrees: Double = -90
+    var flipped: Bool = false
 
     var body: some View {
         let chars = Array(text)
-        let per = 360.0 / Double(max(chars.count, 1))
+        let count = max(chars.count, 1)
+        let per = arcDegrees / Double(count)
+        let start = centerDegrees - arcDegrees / 2 + per / 2
         GeometryReader { geo in
             let cx = geo.size.width / 2
             let cy = geo.size.height / 2
             ForEach(0..<chars.count, id: \.self) { index in
-                let deg = startDegrees + per * Double(index)
+                let deg = start + per * Double(index)
                 let rad = deg * .pi / 180
                 Text(String(chars[index]))
                     .font(.system(size: fontSize, weight: .heavy))
                     .foregroundStyle(ink)
                     .position(x: cx + radius * cos(rad), y: cy + radius * sin(rad))
-                    .rotationEffect(.degrees(deg + 90))
+                    .rotationEffect(.degrees(deg + (flipped ? -90 : 90)))
             }
         }
     }
@@ -1308,23 +1298,26 @@ private struct PassportInkStamp: View {
 
     var body: some View {
         ZStack {
-            Circle().stroke(ink, lineWidth: 10)
-            Circle().stroke(ink, lineWidth: 5).padding(22)
+            Circle().stroke(ink, lineWidth: 9)
+            Circle().stroke(ink, lineWidth: 4).padding(20)
 
-            CircularText(text: "· WILDFROG · PEAK PASSPORT ", radius: 148, fontSize: 32, ink: ink)
+            CircularText(text: "WILDFROG · PEAK PASSPORT", radius: 150, fontSize: 30, ink: ink,
+                         arcDegrees: 215, centerDegrees: -90)
+            CircularText(text: "香港 · HONG KONG", radius: 150, fontSize: 26, ink: ink,
+                         arcDegrees: 120, centerDegrees: 90, flipped: true)
 
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
                 WildFrogMark()
                     .stroke(ink, style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
-                    .frame(width: 108, height: 108)
+                    .frame(width: 104, height: 104)
                 Text(dateText)
-                    .font(.system(size: 38, weight: .heavy))
+                    .font(.system(size: 36, weight: .heavy))
                     .foregroundStyle(ink)
             }
         }
         .frame(width: 392, height: 392)
-        .opacity(0.88)
-        .rotationEffect(.degrees(-11))
+        .opacity(0.92)
+        .rotationEffect(.degrees(-8))
     }
 }
 
