@@ -12,8 +12,6 @@ struct AllAchievementsView: View {
         let systemImage: String
         let tint: Color
         let threshold: Int
-
-        var isUnlocked: Bool { false }
     }
 
     private var achievements: [Achievement] {
@@ -29,8 +27,18 @@ struct AllAchievementsView: View {
         ]
     }
 
+    private func isUnlocked(_ badge: Achievement) -> Bool {
+        let progress: Int
+        switch badge.id {
+        case "streak7": progress = checkInStore.currentStreak
+        case "ten1": progress = checkInStore.totalCheckIns
+        default: progress = checkInStore.distinctMountainCount
+        }
+        return progress >= badge.threshold
+    }
+
     private var unlockedCount: Int {
-        achievements.filter { checkInStore.distinctMountainCount >= $0.threshold }.count
+        achievements.filter { isUnlocked($0) }.count
     }
 
     var body: some View {
@@ -54,7 +62,7 @@ struct AllAchievementsView: View {
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
                     ForEach(achievements) { badge in
-                        let unlocked = checkInStore.distinctMountainCount >= badge.threshold
+                        let unlocked = isUnlocked(badge)
                         VStack(spacing: 10) {
                             StampBadge(
                                 systemImage: badge.systemImage,
@@ -166,7 +174,7 @@ private struct AllLeaderboardRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text("\(user.rank)")
+            Text(isCurrentUser ? "—" : "\(user.rank)")
                 .font(.headline.weight(.black))
                 .foregroundStyle(rankColor)
                 .frame(width: 34, alignment: .leading)

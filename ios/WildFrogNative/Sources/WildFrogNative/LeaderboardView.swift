@@ -1,16 +1,8 @@
 import SwiftUI
 
 struct LeaderboardView: View {
-    @State private var scope = LeaderboardScope.month
     @State private var showAllLeaderboard = false
     @EnvironmentObject private var checkInStore: CheckInStore
-
-    private enum LeaderboardScope: String, CaseIterable, Identifiable {
-        case month = "今月"
-        case allTime = "總榜"
-
-        var id: String { rawValue }
-    }
 
     // Demo cross-user data — rank 18 / checkIns are placeholder until Cloud Function
     private let demoUsers: [LeaderboardUser] = [
@@ -28,7 +20,6 @@ struct LeaderboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 leaderboardHeader
-                scopeSelector
                 crossUserDisclaimer
                 myRankCard
                 podiumPanel
@@ -68,33 +59,6 @@ struct LeaderboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 12)
     }
-
-    private var scopeSelector: some View {
-        // .seg: surface-2 track + hairline; active segment = forest fill, white text.
-        HStack(spacing: 0) {
-            ForEach(LeaderboardScope.allCases) { item in
-                Button {
-                    scope = item
-                } label: {
-                    Text(item.rawValue)
-                        .font(.frogRow.weight(.semibold))
-                        .foregroundStyle(scope == item ? .white : FrogTheme.muted)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 38)
-                        .background {
-                            if scope == item {
-                                Capsule().fill(FrogTheme.forest)
-                            }
-                        }
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(3)
-        .background(FrogTheme.surface2, in: Capsule())
-        .overlay(Capsule().stroke(FrogTheme.line, lineWidth: 1))
-    }
-
 
     private var crossUserDisclaimer: some View {
         // .note: trail-soft bg, small brick-brown text (#8a5a3e), info glyph.
@@ -216,7 +180,7 @@ struct LeaderboardView: View {
             // .lb-row list — the current-user row (.me) gets a trail-soft highlight.
             VStack(spacing: 0) {
                 ForEach(demoUsers) { user in
-                    LeaderboardRow(user: user, isCurrentUser: isCurrentUser(user))
+                    LeaderboardRow(user: user, isCurrentUser: false)
                 }
             }
             .padding(.top, 6)
@@ -240,11 +204,6 @@ struct LeaderboardView: View {
             .buttonStyle(.plain)
             .padding(.top, 6)
         }
-    }
-
-    /// Existing "me" detection — the draft user row in the demo set.
-    private func isCurrentUser(_ user: LeaderboardUser) -> Bool {
-        user.name == "Aud"
     }
 
     private var mountainHeatList: some View {

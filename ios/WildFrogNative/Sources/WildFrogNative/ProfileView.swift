@@ -28,10 +28,6 @@ struct ProfileView: View {
         _avatarData = State(initialValue: storedAvatar)
     }
 
-    private var checkedMountains: [Mountain] {
-        MountainCatalog.mountains.filter { $0.checkIns > 0 }
-    }
-
     private var completionRatio: Double {
         guard MountainCatalog.catalogCount > 0 else { return 0 }
         return min(1, Double(checkInStore.distinctMountainCount) / Double(MountainCatalog.catalogCount))
@@ -43,7 +39,10 @@ struct ProfileView: View {
     }
 
     private var recentMountain: Mountain {
-        checkedMountains.first ?? MountainCatalog.mountain(id: "lion-rock")
+        if let latest = checkInStore.records.sorted(by: { $0.date > $1.date }).first {
+            return MountainCatalog.mountain(id: latest.mountainId)
+        }
+        return MountainCatalog.mountain(id: "lion-rock")
     }
 
     /// Subtitle for the signed-in account panel. Never shows a "not signed in"
@@ -360,7 +359,7 @@ struct ProfileView: View {
         HStack(spacing: 5) {
             Image(systemName: "checkmark.icloud")
                 .font(.system(size: 11, weight: .bold))
-            Text("已雲端同步")
+            Text("雲端帳戶")
                 .font(.frogNum(10, weight: .bold))
         }
         .foregroundStyle(.white)
@@ -458,7 +457,7 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(recentMountain.displayName)
                             .font(.frogTitle)
-                        Text("\(recentMountain.height)m · \(recentMountain.region) · \(recentMountain.checkIns) 次")
+                        Text("\(recentMountain.height)m · \(recentMountain.region) · \(checkInStore.count(for: recentMountain.id)) 次")
                             .font(.frogCaption)
                     }
                     .foregroundStyle(.white)
@@ -527,10 +526,14 @@ struct ProfileView: View {
 
             // .achv — 4-up circular stamp badges
             HStack(spacing: 10) {
-                AchievementBadge(title: "Trail", systemImage: "figure.hiking", tint: FrogTheme.moss)
-                AchievementBadge(title: "Summit", systemImage: "mountain.2.fill", tint: FrogTheme.moss)
-                AchievementBadge(title: "Sunrise", systemImage: "sun.max", tint: FrogTheme.orange)
-                AchievementBadge(title: "10+", systemImage: "star", tint: FrogTheme.gold)
+                AchievementBadge(title: "Trail", systemImage: "figure.hiking", tint: FrogTheme.moss,
+                                 isUnlocked: checkInStore.distinctMountainCount >= 1)
+                AchievementBadge(title: "Summit", systemImage: "mountain.2.fill", tint: FrogTheme.moss,
+                                 isUnlocked: checkInStore.distinctMountainCount >= 10)
+                AchievementBadge(title: "Sunrise", systemImage: "sun.max", tint: FrogTheme.orange,
+                                 isUnlocked: checkInStore.currentStreak >= 7)
+                AchievementBadge(title: "10+", systemImage: "star", tint: FrogTheme.gold,
+                                 isUnlocked: checkInStore.totalCheckIns >= 10)
             }
         }
     }

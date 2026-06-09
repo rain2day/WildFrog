@@ -15,10 +15,6 @@ struct RecordsCalendarView: View {
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 7), count: 7)
 
-    private var checkedMountains: [Mountain] {
-        MountainCatalog.mountains.filter { $0.checkIns > 0 }
-    }
-
     private var displayedYear: Int {
         Calendar.current.component(.year, from: displayedMonth)
     }
@@ -188,7 +184,11 @@ struct RecordsCalendarView: View {
     }
 
     private var recentCoverMountain: Mountain {
-        checkedMountains.first ?? MountainCatalog.mountain(id: "lion-rock")
+        checkInStore.records
+            .sorted { $0.date > $1.date }
+            .first
+            .map { MountainCatalog.mountain(id: $0.mountainId) }
+            ?? MountainCatalog.mountain(id: "lion-rock")
     }
 
     // MARK: - Stamp passport (山峰印章圖鑑)

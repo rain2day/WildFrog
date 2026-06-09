@@ -142,7 +142,7 @@ struct RouteToCheckpointView: View {
 
     private func recomputeIfNeeded() {
         guard route == nil, !isLoading else { return }
-        guard hasLocation, let origin = locationManager.currentLocation else {
+        guard hasLocation, let origin = locationManager.resolvedLocation else {
             statusMessage = hasLocation ? "定位中…" : "開啟定位以計算步行路線"
             return
         }

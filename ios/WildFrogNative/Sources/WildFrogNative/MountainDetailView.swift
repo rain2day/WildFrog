@@ -191,8 +191,9 @@ struct MountainDetailView: View {
                         Text("登頂次數")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(FrogTheme.muted)
-                        Text("第 \(max(1, myCheckIns)) 次登頂")
+                        Text(hasCheckedIn ? "第 \(myCheckIns) 次登頂" : "未登頂")
                             .font(.title3.weight(.black))
+                            .foregroundStyle(hasCheckedIn ? FrogTheme.ink : FrogTheme.muted)
                     }
 
                     Spacer()
