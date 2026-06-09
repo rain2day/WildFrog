@@ -32,41 +32,80 @@ struct MountainCertificateCard: View {
             details
         }
         .frame(width: width)
-        .background(FrogTheme.passport)
-        .overlay(
-            Rectangle()
-                .strokeBorder(FrogTheme.gold.opacity(0.55), lineWidth: 6)
+        .background(certificateBackground)
+        .overlay(certificateFrame)
+    }
+
+    /// Warm passport paper with a faint top-edge tint so the header feels
+    /// "letterhead" rather than a flat fill.
+    private var certificateBackground: some View {
+        LinearGradient(
+            colors: [FrogTheme.gold.opacity(0.05), FrogTheme.passport],
+            startPoint: .top,
+            endPoint: .init(x: 0.5, y: 0.22)
         )
+        .background(FrogTheme.passport)
+    }
+
+    /// Engraved double rule — a confident gold border with a hairline inset,
+    /// the signature of an official document rather than a single thin stroke.
+    private var certificateFrame: some View {
+        ZStack {
+            Rectangle()
+                .strokeBorder(FrogTheme.gold.opacity(0.85), lineWidth: 7)
+            Rectangle()
+                .strokeBorder(FrogTheme.gold.opacity(0.30), lineWidth: 2)
+                .padding(13)
+        }
     }
 
     // MARK: header
 
     private var header: some View {
-        HStack(spacing: 18) {
-            WildFrogBrandMark(size: 64, cornerRadius: 16)
-            VStack(alignment: .leading, spacing: 3) {
-                (
-                    Text("WILDFROG ").foregroundStyle(FrogTheme.ink)
-                    + Text("· 登頂證書").foregroundStyle(FrogTheme.gold)
-                )
-                .font(.system(size: 40, weight: .heavy))
-                .tracking(1.2)
-                Text("PEAK CONQUEST CERTIFICATE")
-                    .font(.system(size: 24, weight: .bold))
-                    .tracking(2.4)
-                    .foregroundStyle(FrogTheme.muted)
+        VStack(spacing: 22) {
+            HStack(spacing: 20) {
+                WildFrogBrandMark(size: 66, cornerRadius: 17)
+                VStack(alignment: .leading, spacing: 5) {
+                    (
+                        Text("WILDFROG").foregroundStyle(FrogTheme.forest)
+                        + Text(" 登頂證書").foregroundStyle(FrogTheme.gold)
+                    )
+                    .font(.system(size: 44, weight: .heavy))
+                    .tracking(0.5)
+                    Text("PEAK CONQUEST CERTIFICATE")
+                        .font(.system(size: 23, weight: .bold))
+                        .tracking(4.0)
+                        .foregroundStyle(FrogTheme.gold.opacity(0.85))
+                }
+                Spacer(minLength: 0)
+                rankMedal
             }
-            Spacer(minLength: 0)
-            Text(mountain.rankText)
-                .font(.system(size: 36, weight: .black))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 8)
-                .background(FrogTheme.orange, in: Capsule())
+
+            // Gold seal rule closing the letterhead off from the photo.
+            FrogTheme.gold.opacity(0.35)
+                .frame(height: 2)
         }
-        .padding(.horizontal, 56)
-        .padding(.top, 48)
-        .padding(.bottom, 28)
+        .padding(.horizontal, 60)
+        .padding(.top, 56)
+        .padding(.bottom, 30)
+    }
+
+    /// Rank as an earned medal — the one place trail-orange is spent, so #1
+    /// reads hot against the calm paper.
+    private var rankMedal: some View {
+        VStack(spacing: 1) {
+            Text("全港排名")
+                .font(.system(size: 17, weight: .heavy))
+                .tracking(2.0)
+                .foregroundStyle(.white.opacity(0.85))
+            Text(mountain.rankText)
+                .font(.system(size: 40, weight: .black))
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 26)
+        .padding(.vertical, 12)
+        .background(FrogTheme.orange, in: Capsule())
+        .shadow(color: FrogTheme.orange.opacity(0.28), radius: 12, y: 5)
     }
 
     // MARK: hero photo + pressed stamp
@@ -80,131 +119,177 @@ struct MountainCertificateCard: View {
                     Image(mountain.imageName).resizable().scaledToFill()
                 }
             }
-            .frame(width: width - 112, height: 560)
+            .frame(width: width - 120, height: 560)
             .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            // Mounted-print frame: gold edge + a fine inner highlight + soft drop.
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(FrogTheme.gold, lineWidth: 5)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(FrogTheme.gold.opacity(0.9), lineWidth: 5)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.22), lineWidth: 1.5)
+                    .padding(5)
+            )
+            .shadow(color: FrogTheme.warmShadow.opacity(0.18), radius: 22, y: 10)
 
             MountainStampSeal(mountain: mountain, size: 300, isUnlocked: true, rotation: .degrees(-8))
                 .padding(20)
                 .offset(x: 18, y: -18)
         }
-        .padding(.horizontal, 56)
+        .padding(.horizontal, 60)
     }
 
     // MARK: details
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 16) {
+            // Eyebrow — small gold label that frames the name as the certified subject.
+            Text("此證頒予征服")
+                .font(.system(size: 25, weight: .bold))
+                .tracking(3.0)
+                .foregroundStyle(FrogTheme.gold)
+                .padding(.top, 34)
+
+            // Monumental peak name — the single deepest-ink voice on the card.
+            HStack(alignment: .lastTextBaseline, spacing: 18) {
                 Text(mountain.nameZh)
-                    .font(.system(size: 88, weight: .black))
-                    .foregroundStyle(FrogTheme.ink)
-                Text(mountain.nameEn)
-                    .font(.system(size: 38, weight: .bold))
-                    .foregroundStyle(FrogTheme.muted)
+                    .font(.system(size: 96, weight: .black))
+                    .tracking(-1)
+                    .foregroundStyle(FrogTheme.forest)
+                if !mountain.nameEn.isEmpty {
+                    Text(mountain.nameEn)
+                        .font(.system(size: 36, weight: .semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                        .padding(.bottom, 8)
+                }
                 Spacer(minLength: 0)
             }
             .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .padding(.top, 30)
+            .minimumScaleFactor(0.55)
+            .padding(.top, 10)
 
-            // 稱號 — the honorific unlocked by conquering this peak.
-            HStack(spacing: 12) {
-                Image(systemName: "rosette")
-                    .font(.system(size: 36, weight: .black))
-                    .foregroundStyle(FrogTheme.gold)
-                Text("稱號")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(FrogTheme.muted)
-                Text(mountain.unlockTitle)
-                    .font(.system(size: 56, weight: .black))
-                    .foregroundStyle(FrogTheme.forest)
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, 18)
-            .padding(.horizontal, 26)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(FrogTheme.gold.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .padding(.top, 22)
+            // 稱號 — honorific seal line. Moss (live/earned) on the title, gold rosette,
+            // bracketed by gold rules so it reads as a conferred rank, not a tinted chip.
+            titleSeal
+                .padding(.top, 30)
 
-            // Facts strip.
+            // Facts ledger — ruled like an official record. Labels in gold (document
+            // voice), values in moss (the live data the climber earned).
             HStack(spacing: 0) {
-                fact("海拔", "\(mountain.height)m")
+                fact("海拔", "\(mountain.height)", unit: "m")
                 factDivider
-                fact("全港排名", mountain.rankText)
+                fact("全港排名", mountain.rankText, unit: "")
                 factDivider
-                fact("地區", mountain.region)
+                fact("地區", mountain.region, unit: "")
                 factDivider
-                fact("登頂", "第 \(max(checkInCount, 1)) 次")
+                fact("登頂", "\(max(checkInCount, 1))", unit: "次")
             }
-            .padding(.top, 30)
+            .padding(.vertical, 30)
+            .overlay(alignment: .top) { FrogTheme.gold.opacity(0.30).frame(height: 2) }
+            .overlay(alignment: .bottom) { FrogTheme.gold.opacity(0.30).frame(height: 2) }
+            .padding(.top, 38)
 
             if let weather {
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     Image(systemName: weather.symbolName)
                         .font(.system(size: 40, weight: .semibold))
                         .foregroundStyle(FrogTheme.moss)
-                    Text("當時天氣 · \(weather.conditionText) · \(weather.temperatureText)")
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundStyle(FrogTheme.ink)
+                        .symbolRenderingMode(.hierarchical)
+                    Text("登頂當時 · \(weather.conditionText) · \(weather.temperatureText)")
+                        .font(.system(size: 35, weight: .semibold))
+                        .foregroundStyle(FrogTheme.muted)
                     Spacer(minLength: 0)
                 }
-                .padding(.top, 26)
+                .padding(.top, 30)
             }
 
-            // Story blurb.
+            // Story blurb — warm ink body, the narrative voice.
             Text(mountain.blurb)
-                .font(.system(size: 42, weight: .medium))
-                .foregroundStyle(FrogTheme.ink.opacity(0.86))
-                .lineSpacing(13)
+                .font(.system(size: 44, weight: .regular))
+                .foregroundStyle(FrogTheme.ink.opacity(0.84))
+                .lineSpacing(15)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 28)
+                .padding(.top, weather == nil ? 34 : 26)
 
-            Rectangle()
-                .fill(FrogTheme.line)
-                .frame(height: 1)
-                .padding(.top, 30)
-
-            HStack {
-                Text("頒發日期 · \(dateText)")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(FrogTheme.muted)
+            // Official footer — date (muted) and motto (forest) on a hairline.
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("頒發日期")
+                        .font(.system(size: 22, weight: .heavy))
+                        .tracking(2.0)
+                        .foregroundStyle(FrogTheme.gold)
+                    Text(dateText)
+                        .font(.system(size: 33, weight: .bold))
+                        .foregroundStyle(FrogTheme.ink)
+                }
                 Spacer(minLength: 0)
                 Text("愛自然 · 愛運動 · 愛香港")
-                    .font(.system(size: 32, weight: .heavy))
+                    .font(.system(size: 31, weight: .heavy))
                     .foregroundStyle(FrogTheme.forest)
             }
-            .padding(.top, 22)
+            .padding(.top, 40)
+            .overlay(alignment: .top) {
+                FrogTheme.line.frame(height: 1).offset(y: -20)
+            }
         }
-        .padding(.horizontal, 56)
-        .padding(.top, 14)
-        .padding(.bottom, 52)
+        .padding(.horizontal, 60)
+        .padding(.top, 8)
+        .padding(.bottom, 58)
     }
 
-    private func fact(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+    /// 稱號 honorific, presented as a conferred seal: gold rosette + label, the
+    /// title itself in moss, flanked by gold rules instead of a tinted box.
+    private var titleSeal: some View {
+        HStack(spacing: 16) {
+            Image(systemName: "rosette")
+                .font(.system(size: 40, weight: .black))
+                .foregroundStyle(FrogTheme.gold)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("稱號")
+                    .font(.system(size: 24, weight: .heavy))
+                    .tracking(3.0)
+                    .foregroundStyle(FrogTheme.gold)
+                Text(mountain.unlockTitle)
+                    .font(.system(size: 60, weight: .black))
+                    .foregroundStyle(FrogTheme.moss)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// One ledger column. Label = gold (document voice), value = moss (earned data),
+    /// optional unit set smaller so the figure stays the hero.
+    private func fact(_ label: String, _ value: String, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             Text(label)
-                .font(.system(size: 30, weight: .bold))
-                .foregroundStyle(FrogTheme.muted)
-            Text(value)
-                .font(.system(size: 48, weight: .black))
-                .foregroundStyle(FrogTheme.forest)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
+                .font(.system(size: 26, weight: .bold))
+                .tracking(1.0)
+                .foregroundStyle(FrogTheme.gold)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 52, weight: .black))
+                    .foregroundStyle(FrogTheme.moss)
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.system(size: 30, weight: .bold))
+                        .foregroundStyle(FrogTheme.moss.opacity(0.7))
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var factDivider: some View {
-        Rectangle()
-            .fill(FrogTheme.line)
-            .frame(width: 1, height: 70)
-            .padding(.horizontal, 12)
+        FrogTheme.gold.opacity(0.22)
+            .frame(width: 1.5, height: 78)
+            .padding(.horizontal, 14)
     }
 }
 
