@@ -25,17 +25,26 @@ struct LeaderboardView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                leaderboardHeader
-                crossUserDisclaimer
-                myRankCard
-                podiumPanel
-                topUsers
-                mountainHeatList
+        GeometryReader { outer in
+            let topInset = outer.safeAreaInsets.top
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    leaderboardCover(topInset: topInset)
+
+                    VStack(alignment: .leading, spacing: 18) {
+                        crossUserDisclaimer
+                        myRankCard
+                        podiumPanel
+                        topUsers
+                        mountainHeatList
+                    }
+                    .padding(FrogSpace.screenPadding)
+                    .padding(.top, FrogSpace.cardGap)
+                    .padding(.bottom, 110)
+                }
             }
-            .padding(FrogSpace.screenPadding)
-            .padding(.bottom, 110)
+            .ignoresSafeArea(edges: .top)
         }
         .hiddenNavigationBar()
         .appPageBackground(FrogTheme.warmPaper)
@@ -53,19 +62,68 @@ struct LeaderboardView: View {
         }
     }
 
-    private var leaderboardHeader: some View {
-        // .lb-title: 34 / forest / tight tracking, with a 32×3 trail underline (.u)
-        VStack(alignment: .leading, spacing: 7) {
-            Text("排行榜")
-                .font(.frogNum(34, weight: .heavy))
-                .tracking(-0.6)
-                .foregroundStyle(FrogTheme.forest)
-            Capsule()
-                .fill(FrogTheme.orange)
-                .frame(width: 32, height: 3)
+    /// Full-bleed image hero matching the other pages (home / passport / profile):
+    /// a big MountainPhoto background, forest gradient, title + my stats overlaid.
+    private func leaderboardCover(topInset: CGFloat) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0)
+
+            LinearGradient(
+                colors: [
+                    FrogTheme.forest.opacity(0.30),
+                    FrogTheme.forest.opacity(0.55),
+                    FrogTheme.forest.opacity(0.96)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center) {
+                    WildFrogWordmark(markSize: 30)
+                        .shadow(color: Color.black.opacity(0.28), radius: 8, y: 3)
+
+                    Spacer()
+
+                    HStack(spacing: 5) {
+                        Image(systemName: "trophy.fill")
+                            .font(.system(size: 11, weight: .bold))
+                        Text("RANKING")
+                            .font(.frogNum(10, weight: .bold))
+                            .tracking(0.8)
+                    }
+                    .foregroundStyle(FrogTheme.forest)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(FrogTheme.leaf, in: Capsule())
+                }
+                .padding(.top, topInset + 8)
+
+                Spacer(minLength: 24)
+
+                Text("排行榜")
+                    .font(.frogNum(34, weight: .heavy))
+                    .foregroundStyle(.white)
+
+                Text("LEADERBOARD · 一齊征服香港群山")
+                    .font(.frogCaption)
+                    .foregroundStyle(.white.opacity(0.78))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                    .padding(.top, 7)
+
+                HStack(spacing: 9) {
+                    LeaderboardCoverMetric(value: "\(myTotalCheckIns)", label: "我的打卡")
+                    LeaderboardCoverMetric(value: "\(myDistinctMountains)", label: "已到山峰")
+                    LeaderboardCoverMetric(value: "\(checkInStore.currentStreak)", label: "連續日")
+                }
+                .padding(.top, 18)
+            }
+            .padding(.horizontal, FrogSpace.screenPadding + 4)
+            .padding(.bottom, 24)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 12)
+        .frame(height: topInset + 290)
+        .clipped()
     }
 
     private var crossUserDisclaimer: some View {
@@ -256,6 +314,41 @@ private struct LeaderboardUser: Identifiable {
     let avatarMountainId: String
 
     var id: Int { rank }
+}
+
+/// Stat pill on the leaderboard hero — mirrors the passport cover's metric.
+private struct LeaderboardCoverMetric: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(value)
+                .font(.frogNum(22, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+            Text(label)
+                .font(.frogMicro.weight(.medium))
+                .foregroundStyle(.white.opacity(0.7))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.top, 4)
+
+            Capsule()
+                .fill(FrogTheme.leaf)
+                .frame(width: 26, height: 3)
+                .padding(.top, 8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(11)
+        .background(FrogTheme.forest.opacity(0.42), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
+        )
+    }
 }
 
 private struct PodiumCard: View {
