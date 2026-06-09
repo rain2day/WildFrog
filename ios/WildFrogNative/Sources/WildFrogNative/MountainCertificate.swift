@@ -49,16 +49,16 @@ struct MountainCertificateCard: View {
                     Text("WILDFROG ").foregroundStyle(FrogTheme.ink)
                     + Text("· 登頂證書").foregroundStyle(FrogTheme.gold)
                 )
-                .font(.system(size: 30, weight: .heavy))
+                .font(.system(size: 40, weight: .heavy))
                 .tracking(1.2)
                 Text("PEAK CONQUEST CERTIFICATE")
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.system(size: 24, weight: .bold))
                     .tracking(2.4)
                     .foregroundStyle(FrogTheme.muted)
             }
             Spacer(minLength: 0)
             Text(mountain.rankText)
-                .font(.system(size: 26, weight: .black))
+                .font(.system(size: 36, weight: .black))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 8)
@@ -101,10 +101,10 @@ struct MountainCertificateCard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 16) {
                 Text(mountain.nameZh)
-                    .font(.system(size: 76, weight: .black))
+                    .font(.system(size: 88, weight: .black))
                     .foregroundStyle(FrogTheme.ink)
                 Text(mountain.nameEn)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 38, weight: .bold))
                     .foregroundStyle(FrogTheme.muted)
                 Spacer(minLength: 0)
             }
@@ -115,13 +115,13 @@ struct MountainCertificateCard: View {
             // 稱號 — the honorific unlocked by conquering this peak.
             HStack(spacing: 12) {
                 Image(systemName: "rosette")
-                    .font(.system(size: 26, weight: .black))
+                    .font(.system(size: 36, weight: .black))
                     .foregroundStyle(FrogTheme.gold)
                 Text("稱號")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 32, weight: .bold))
                     .foregroundStyle(FrogTheme.muted)
                 Text(mountain.unlockTitle)
-                    .font(.system(size: 32, weight: .black))
+                    .font(.system(size: 56, weight: .black))
                     .foregroundStyle(FrogTheme.forest)
                 Spacer(minLength: 0)
             }
@@ -146,10 +146,10 @@ struct MountainCertificateCard: View {
             if let weather {
                 HStack(spacing: 12) {
                     Image(systemName: weather.symbolName)
-                        .font(.system(size: 28, weight: .semibold))
+                        .font(.system(size: 40, weight: .semibold))
                         .foregroundStyle(FrogTheme.moss)
                     Text("當時天氣 · \(weather.conditionText) · \(weather.temperatureText)")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 36, weight: .bold))
                         .foregroundStyle(FrogTheme.ink)
                     Spacer(minLength: 0)
                 }
@@ -158,9 +158,9 @@ struct MountainCertificateCard: View {
 
             // Story blurb.
             Text(mountain.blurb)
-                .font(.system(size: 26, weight: .medium))
+                .font(.system(size: 42, weight: .medium))
                 .foregroundStyle(FrogTheme.ink.opacity(0.86))
-                .lineSpacing(8)
+                .lineSpacing(13)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 28)
@@ -172,11 +172,11 @@ struct MountainCertificateCard: View {
 
             HStack {
                 Text("頒發日期 · \(dateText)")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 32, weight: .bold))
                     .foregroundStyle(FrogTheme.muted)
                 Spacer(minLength: 0)
                 Text("愛自然 · 愛運動 · 愛香港")
-                    .font(.system(size: 22, weight: .heavy))
+                    .font(.system(size: 32, weight: .heavy))
                     .foregroundStyle(FrogTheme.forest)
             }
             .padding(.top, 22)
@@ -189,13 +189,13 @@ struct MountainCertificateCard: View {
     private func fact(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
-                .font(.system(size: 21, weight: .bold))
+                .font(.system(size: 30, weight: .bold))
                 .foregroundStyle(FrogTheme.muted)
             Text(value)
-                .font(.system(size: 34, weight: .black))
+                .font(.system(size: 48, weight: .black))
                 .foregroundStyle(FrogTheme.forest)
                 .lineLimit(1)
-                .minimumScaleFactor(0.55)
+                .minimumScaleFactor(0.5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -203,8 +203,8 @@ struct MountainCertificateCard: View {
     private var factDivider: some View {
         Rectangle()
             .fill(FrogTheme.line)
-            .frame(width: 1, height: 54)
-            .padding(.horizontal, 14)
+            .frame(width: 1, height: 70)
+            .padding(.horizontal, 12)
     }
 }
 
