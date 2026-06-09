@@ -770,9 +770,7 @@ private struct TripRow: View {
     @ViewBuilder
     private var thumbnailView: some View {
         PhotoFallbackView(image: thumbnail, mountain: mountain, dimming: 0.1)
-            .scaledToFill()
             .frame(width: 60, height: 60)
-            .clipped()
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
@@ -849,14 +847,18 @@ private struct PhotoFallbackView: View {
     var dimming: Double = 0.1
 
     var body: some View {
-        Group {
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                MountainPhoto(mountain: mountain, dimming: dimming)
+        GeometryReader { proxy in
+            Group {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    MountainPhoto(mountain: mountain, dimming: dimming)
+                }
             }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
         }
     }
 }
