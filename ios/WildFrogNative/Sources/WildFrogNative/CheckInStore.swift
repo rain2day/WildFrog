@@ -30,19 +30,23 @@ struct CheckInRecord: Codable, Identifiable, Equatable {
     let date: Date
     var photoFilename: String?
     var track: TrackSummary?
+    /// Weather captured at check-in (WeatherKit); nil for older records.
+    var weather: WeatherSnapshot?
 
     init(
         id: UUID = UUID(),
         mountainId: String,
         date: Date,
         photoFilename: String? = nil,
-        track: TrackSummary? = nil
+        track: TrackSummary? = nil,
+        weather: WeatherSnapshot? = nil
     ) {
         self.id = id
         self.mountainId = mountainId
         self.date = date
         self.photoFilename = photoFilename
         self.track = track
+        self.weather = weather
     }
 }
 

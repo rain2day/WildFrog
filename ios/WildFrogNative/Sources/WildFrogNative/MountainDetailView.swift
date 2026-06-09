@@ -10,6 +10,7 @@ struct MountainDetailView: View {
 
     @State private var mapCamera: MapCameraPosition = .automatic
     @State private var routeCamera: MapCameraPosition = .automatic
+    @State private var showCertShare = false
 
     /// The signed-in user's own live check-ins for this peak (account-bound),
     /// NOT the static catalog seed `mountain.checkIns`.
@@ -80,6 +81,13 @@ struct MountainDetailView: View {
         }
         .hiddenNavigationBar()
         .background(FrogTheme.paper)
+        #if DEBUG
+        .onAppear {
+            if ProcessInfo.processInfo.arguments.contains("-qaCert") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { showCertShare = true }
+            }
+        }
+        #endif
     }
 
     private func hero(topInset: CGFloat) -> some View {
@@ -211,6 +219,36 @@ struct MountainDetailView: View {
                     MountainStampSeal(mountain: mountain, size: 86, isUnlocked: hasCheckedIn, rotation: .degrees(-4))
                 }
 
+                // 稱號 unlocked by conquering this peak.
+                HStack(spacing: 10) {
+                    Image(systemName: hasCheckedIn ? "rosette" : "lock.fill")
+                        .font(.system(size: 14, weight: .black))
+                        .foregroundStyle(hasCheckedIn ? FrogTheme.gold : FrogTheme.muted)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(hasCheckedIn ? "稱號已解鎖" : "完成打卡解鎖稱號")
+                            .font(.frogMicro.weight(.bold))
+                            .foregroundStyle(FrogTheme.muted)
+                        Text(mountain.unlockTitle)
+                            .font(.title3.weight(.black))
+                            .foregroundStyle(hasCheckedIn ? FrogTheme.forest : FrogTheme.muted.opacity(0.55))
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(
+                    hasCheckedIn ? FrogTheme.gold.opacity(0.12) : FrogTheme.surface2,
+                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                )
+
+                // The mountain's story.
+                Text(mountain.blurb)
+                    .font(.frogCaption)
+                    .foregroundStyle(FrogTheme.ink.opacity(0.82))
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("登頂次數")
@@ -240,9 +278,21 @@ struct MountainDetailView: View {
                             .stroke(FrogTheme.gold, lineWidth: 4)
                     )
 
-                Text("愛自然 / 愛運動 / 愛香港")
-                    .font(.subheadline.weight(.black))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                if hasCheckedIn {
+                    Button { showCertShare = true } label: {
+                        Label("分享證書", systemImage: "square.and.arrow.up")
+                            .font(.subheadline.weight(.black))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(FrogTheme.orange, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("愛自然 / 愛運動 / 愛香港")
+                        .font(.subheadline.weight(.black))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
             .padding(16)
             .background(FrogTheme.passport.opacity(0.88))
@@ -254,6 +304,9 @@ struct MountainDetailView: View {
         }
         .padding(14)
         .cardStyle()
+        .sheet(isPresented: $showCertShare) {
+            MountainCertificateSheet(mountain: mountain, checkInCount: myCheckIns)
+        }
     }
 
     private var checkInAction: some View {
