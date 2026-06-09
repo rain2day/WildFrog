@@ -122,8 +122,6 @@ struct HomeMapListView: View {
                 endPoint: .bottom
             )
 
-            ConquestRidgelineOverlay(progress: ratio)
-
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
                     WildFrogWordmark(markSize: 30)
@@ -163,16 +161,8 @@ struct HomeMapListView: View {
                 }
                 .padding(.top, 6)
 
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.22))
-                        Capsule()
-                            .fill(FrogTheme.leaf)
-                            .frame(width: max(8, geo.size.width * ratio))
-                    }
-                }
-                .frame(height: 5)
-                .padding(.top, 16)
+                MountainProgressBar(progress: ratio)
+                    .padding(.top, 14)
 
                 HStack {
                     Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
@@ -723,19 +713,28 @@ struct MountainDirectoryView: View {
     }
 }
 
-// MARK: - Conquest mountain range (hero silhouette overlay)
+// MARK: - Conquest mountain bar (smooth natural silhouette, clipped to the bar)
 
-/// A FILLED mountain-range silhouette: a peak/valley ridge closed down to the
-/// rect's bottom, so the straight slopes read as solid triangular mountains
-/// (not a thin zig-zag line).
-private struct MountainRange: Shape {
-    let peaks: [(CGFloat, CGFloat)]   // (x-fraction, y-fraction); lower y = taller
+/// A smooth, natural mountain-range silhouette — Catmull-Rom curves through the
+/// ridge points (NOT straight zig-zag lines), closed down to the rect's bottom.
+private struct SmoothMountainRange: Shape {
+    let ridge: [(CGFloat, CGFloat)]   // normalised (x, y); y from top, lower = taller
+
     func path(in rect: CGRect) -> Path {
         let w = rect.width, h = rect.height
+        let pts = ridge.map { CGPoint(x: $0.0 * w, y: $0.1 * h) }
+        guard pts.count > 1 else { return Path() }
         var path = Path()
         path.move(to: CGPoint(x: 0, y: h))
-        for pk in peaks {
-            path.addLine(to: CGPoint(x: pk.0 * w, y: pk.1 * h))
+        path.addLine(to: pts[0])
+        for i in 0..<(pts.count - 1) {
+            let p0 = pts[max(i - 1, 0)]
+            let p1 = pts[i]
+            let p2 = pts[i + 1]
+            let p3 = pts[min(i + 2, pts.count - 1)]
+            let c1 = CGPoint(x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6)
+            let c2 = CGPoint(x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6)
+            path.addCurve(to: p2, control1: c1, control2: c2)
         }
         path.addLine(to: CGPoint(x: w, y: h))
         path.closeSubpath()
@@ -743,54 +742,44 @@ private struct MountainRange: Shape {
     }
 }
 
-/// Conquest as a layered mountain-range silhouette across the hero: a taller,
-/// faint back range + a nearer front range, both semi-transparent with bases
-/// dissolving into the photo, and the peaks up to the conquered % filled with
-/// solid colour from the left.
-private struct ConquestRidgelineOverlay: View {
+/// Conquest progress as a smooth, natural mountain silhouette drawn ONLY inside
+/// the bar (clipped, never overflows). A faint full range, with the peaks up to
+/// the conquered % filled solid from the left.
+private struct MountainProgressBar: View {
     var progress: Double
+    var height: CGFloat = 42
 
-    // Few, deliberate triangular peaks of varied height — a range, not a saw-tooth.
-    private let backPeaks: [(CGFloat, CGFloat)] = [
-        (0.00, 0.66), (0.13, 0.36), (0.27, 0.58), (0.42, 0.24),
-        (0.58, 0.52), (0.73, 0.32), (0.88, 0.56), (1.00, 0.42)
-    ]
-    private let frontPeaks: [(CGFloat, CGFloat)] = [
-        (0.00, 0.80), (0.10, 0.60), (0.22, 0.78), (0.34, 0.50),
-        (0.47, 0.74), (0.60, 0.56), (0.74, 0.76), (0.87, 0.58), (1.00, 0.76)
+    // A natural range: tapering tails, jagged foothills, a sharp central peak,
+    // descending secondary peaks. y from top — lower = taller.
+    private let ridge: [(CGFloat, CGFloat)] = [
+        (0.00, 0.97), (0.05, 0.84), (0.10, 0.74), (0.15, 0.80), (0.20, 0.64),
+        (0.25, 0.54), (0.30, 0.46), (0.34, 0.58), (0.39, 0.42), (0.43, 0.24),
+        (0.47, 0.09), (0.51, 0.26), (0.55, 0.42), (0.59, 0.33), (0.63, 0.48),
+        (0.68, 0.40), (0.72, 0.55), (0.77, 0.47), (0.82, 0.60), (0.87, 0.52),
+        (0.91, 0.68), (0.96, 0.82), (1.00, 0.97)
     ]
 
     var body: some View {
         GeometryReader { geo in
             let fillWidth = CGFloat(max(0, min(1, progress))) * geo.size.width
-            // Bases fade into the photo so the headline + stats stay readable.
-            let baseFade = LinearGradient(
-                stops: [
-                    .init(color: .black, location: 0.0),
-                    .init(color: .black, location: 0.52),
-                    .init(color: .clear, location: 0.92)
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
             ZStack(alignment: .leading) {
-                MountainRange(peaks: backPeaks)
-                    .fill(Color.white.opacity(0.12))
-                    .mask(baseFade)
-                MountainRange(peaks: backPeaks)
-                    .fill(FrogTheme.moss.opacity(0.85))
-                    .mask(alignment: .leading) { Rectangle().frame(width: fillWidth) }
-                    .mask(baseFade)
+                Color.white.opacity(0.10)
 
-                MountainRange(peaks: frontPeaks)
-                    .fill(Color.white.opacity(0.20))
-                    .mask(baseFade)
-                MountainRange(peaks: frontPeaks)
-                    .fill(FrogTheme.leaf.opacity(0.95))
+                SmoothMountainRange(ridge: ridge)
+                    .fill(Color.white.opacity(0.30))
+
+                SmoothMountainRange(ridge: ridge)
+                    .fill(
+                        LinearGradient(
+                            colors: [FrogTheme.leaf, FrogTheme.moss],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                    )
                     .mask(alignment: .leading) { Rectangle().frame(width: fillWidth) }
-                    .mask(baseFade)
             }
         }
-        .allowsHitTesting(false)
-        .animation(.easeInOut(duration: 0.5), value: progress)
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .animation(.easeInOut(duration: 0.4), value: progress)
     }
 }
