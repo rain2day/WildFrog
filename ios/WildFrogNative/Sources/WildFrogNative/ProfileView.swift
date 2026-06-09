@@ -260,18 +260,11 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
                     HStack(spacing: 9) {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.white.opacity(0.14))
-                            .frame(width: 30, height: 30)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .stroke(Color.white.opacity(0.28), lineWidth: 1)
-                            )
-                            .overlay(
-                                WildFrogMark()
-                                    .stroke(.white, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-                                    .padding(8)
-                            )
+                        Image("WildFrogLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 38, height: 38)
+                            .shadow(color: .black.opacity(0.3), radius: 4, y: 1)
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text("WILDFROG")

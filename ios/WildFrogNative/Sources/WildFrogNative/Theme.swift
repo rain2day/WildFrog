@@ -88,7 +88,7 @@ struct WildFrogMark: Shape {
 struct WildFrogBrandMark: View {
     var size: CGFloat = 34
     var cornerRadius: CGFloat = 9
-    var fill: Color = FrogTheme.surface
+    var fill: Color = FrogTheme.forest
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -98,7 +98,7 @@ struct WildFrogBrandMark: View {
                 Image("WildFrogLogo")
                     .resizable()
                     .scaledToFit()
-                    .padding(size * 0.1)
+                    .padding(size * 0.12)
             )
             .accessibilityLabel("WildFrog")
     }
@@ -113,19 +113,11 @@ struct WildFrogWordmark: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            RoundedRectangle(cornerRadius: markSize * 0.3, style: .continuous)
-                .fill(FrogTheme.surface)
-                .frame(width: markSize, height: markSize)
-                .overlay(
-                    Image("WildFrogLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .padding(markSize * 0.1)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: markSize * 0.3, style: .continuous)
-                        .stroke(onPhoto ? Color.white.opacity(0.5) : FrogTheme.line, lineWidth: 1)
-                )
+            Image("WildFrogLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: markSize * 1.18, height: markSize * 1.18)
+                .shadow(color: .black.opacity(0.35), radius: 4, y: 1)
 
             Text("WildFrog")
                 .font(.system(size: markSize * 0.62, weight: .bold))
