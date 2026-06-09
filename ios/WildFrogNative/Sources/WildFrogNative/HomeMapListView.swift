@@ -161,16 +161,8 @@ struct HomeMapListView: View {
                 }
                 .padding(.top, 6)
 
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.22))
-                        Capsule()
-                            .fill(FrogTheme.leaf)
-                            .frame(width: max(8, geo.size.width * ratio))
-                    }
-                }
-                .frame(height: 5)
-                .padding(.top, 16)
+                MountainProgressBar(progress: ratio)
+                    .padding(.top, 16)
 
                 HStack {
                     Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
@@ -718,5 +710,70 @@ struct MountainDirectoryView: View {
         .navigationTitle("山峰列表")
         .nativeInlineTitle()
         .background(FrogTheme.warmPaper)
+    }
+}
+
+// MARK: - Mountain-range progress bar
+
+/// A jagged mountain skyline filling the bottom of its rect — the silhouette
+/// drawn across the conquest progress bar.
+private struct MountainSkyline: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width, h = rect.height
+        // (x-fraction, y-fraction-from-top); lower y = taller peak.
+        let pts: [(CGFloat, CGFloat)] = [
+            (0.00, 0.72), (0.09, 0.90), (0.17, 0.34), (0.27, 0.74),
+            (0.39, 0.14), (0.49, 0.62), (0.59, 0.36), (0.69, 0.80),
+            (0.79, 0.24), (0.89, 0.66), (1.00, 0.44)
+        ]
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: h))
+        for (fx, fy) in pts {
+            path.addLine(to: CGPoint(x: fx * w, y: fy * h))
+        }
+        path.addLine(to: CGPoint(x: w, y: h))
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// Conquest progress as a mountain range: a faint semi-transparent skyline across
+/// the whole bar, with the peaks up to `progress` filled solid as they're conquered.
+private struct MountainProgressBar: View {
+    var progress: Double
+    var height: CGFloat = 20
+
+    var body: some View {
+        GeometryReader { geo in
+            let fillWidth = max(0, min(1, progress)) * geo.size.width
+            ZStack(alignment: .leading) {
+                Color.white.opacity(0.16)
+
+                MountainSkyline()
+                    .fill(Color.white.opacity(0.32))
+
+                MountainSkyline()
+                    .fill(
+                        LinearGradient(
+                            colors: [FrogTheme.leaf, FrogTheme.moss],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .mask(alignment: .leading) {
+                        Rectangle().frame(width: fillWidth)
+                    }
+
+                // Progress front marker so the % reads even across a valley.
+                Rectangle()
+                    .fill(FrogTheme.leaf)
+                    .frame(width: 2)
+                    .offset(x: max(0, fillWidth - 1))
+                    .opacity(progress > 0.01 && progress < 0.99 ? 0.9 : 0)
+            }
+        }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .animation(.easeInOut(duration: 0.4), value: progress)
     }
 }
