@@ -29,6 +29,17 @@ struct ProfileView: View {
         _avatarData = State(initialValue: storedAvatar)
     }
 
+    @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
+    @State private var showTitlePicker = false
+
+    /// The 稱號 the user has equipped — only valid while it's still a peak they've
+    /// conquered (guards against an equipped title from data that was since reset).
+    private var equippedTitle: String? {
+        guard !equippedTitleId.isEmpty,
+              checkInStore.visitedMountainIds.contains(equippedTitleId) else { return nil }
+        return MountainCatalog.mountain(id: equippedTitleId).unlockTitle
+    }
+
     private var completionRatio: Double {
         guard MountainCatalog.catalogCount > 0 else { return 0 }
         return min(1, Double(checkInStore.distinctMountainCount) / Double(MountainCatalog.catalogCount))
@@ -121,6 +132,7 @@ struct ProfileView: View {
 
                     VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
                         peakPassportCard
+                        titleCard
                         recentCheckInCard
                         certificateCard
                         achievementsPanel
@@ -309,6 +321,21 @@ struct ProfileView: View {
                                 .foregroundStyle(.white.opacity(0.74))
                         }
 
+                        if let equippedTitle {
+                            HStack(spacing: 5) {
+                                Image(systemName: "rosette")
+                                    .font(.system(size: 11, weight: .black))
+                                Text(equippedTitle)
+                                    .font(.frogNum(12, weight: .bold))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(FrogTheme.gold.opacity(0.92), in: Capsule())
+                            .overlay(Capsule().stroke(Color.white.opacity(0.4), lineWidth: 1))
+                            .padding(.top, 3)
+                        }
+
                         HStack(spacing: 16) {
                             PassportMiniMetric(value: "\(checkInStore.totalCheckIns)", label: "打卡")
                             PassportMiniMetric(value: "\(checkInStore.distinctMountainCount)", label: "山峰")
@@ -362,6 +389,52 @@ struct ProfileView: View {
                 .shadow(color: Color.black.opacity(0.3), radius: 4, y: 1)
         }
         .accessibilityLabel("帳戶選項")
+    }
+
+    /// 稱號: the title equipped for the leaderboard, chosen from conquered peaks.
+    private var titleCard: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 12) {
+                Text("我的稱號 · TITLE")
+                    .font(.frogEyebrow)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(FrogTheme.moss)
+                    .fixedSize(horizontal: true, vertical: false)
+                Rectangle().fill(FrogTheme.line).frame(height: 1)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "rosette")
+                    .font(.system(size: 24, weight: .black))
+                    .foregroundStyle(equippedTitle == nil ? FrogTheme.muted : FrogTheme.gold)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("排行榜顯示")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.muted)
+                    Text(equippedTitle ?? "未設定稱號")
+                        .font(.title3.weight(.black))
+                        .foregroundStyle(equippedTitle == nil ? FrogTheme.muted : FrogTheme.forest)
+                }
+                Spacer(minLength: 0)
+                Button { showTitlePicker = true } label: {
+                    Text(equippedTitle == nil ? "選擇" : "更換")
+                        .font(.frogCaption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .frame(height: 38)
+                        .background(FrogTheme.orange, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            Text("已征服 \(checkInStore.distinctMountainCount) 座山 · 每征服一座解鎖一個稱號")
+                .font(.frogCaption)
+                .foregroundStyle(FrogTheme.muted)
+        }
+        .padding(FrogSpace.cardPadding)
+        .cardStyle()
+        .sheet(isPresented: $showTitlePicker) { TitlePickerSheet() }
     }
 
     private var peakPassportCard: some View {
@@ -564,6 +637,101 @@ struct ProfileView: View {
         #endif
     }
 
+}
+
+// MARK: - Title picker (稱號)
+
+/// Lets the user equip one of the 稱號 they've unlocked (one per conquered peak)
+/// for display on the leaderboard. "唔顯示稱號" clears it.
+private struct TitlePickerSheet: View {
+    @EnvironmentObject private var checkInStore: CheckInStore
+    @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
+    @Environment(\.dismiss) private var dismiss
+
+    private var conquered: [Mountain] {
+        checkInStore.visitedMountainIds
+            .map { MountainCatalog.mountain(id: $0) }
+            .sorted { ($0.topRank ?? .max, $0.id) < ($1.topRank ?? .max, $1.id) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 10) {
+                    row(id: "", title: "唔顯示稱號", subtitle: "排行榜唔顯示稱號", mountain: nil)
+
+                    if conquered.isEmpty {
+                        Text("仲未征服任何山峰，征服一座就解鎖一個稱號。")
+                            .font(.frogCaption)
+                            .foregroundStyle(FrogTheme.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 8)
+                    } else {
+                        ForEach(conquered) { m in
+                            row(id: m.id, title: m.unlockTitle, subtitle: "征服 \(m.nameZh) 解鎖", mountain: m)
+                        }
+                    }
+                }
+                .padding(FrogSpace.screenPadding)
+                .padding(.bottom, 40)
+            }
+            .appPageBackground(FrogTheme.warmPaper)
+            .navigationTitle("選擇稱號")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { dismiss() }
+                        .font(.frogCaption.weight(.bold))
+                        .foregroundStyle(FrogTheme.forest)
+                }
+            }
+        }
+    }
+
+    private func row(id: String, title: String, subtitle: String, mountain: Mountain?) -> some View {
+        let isSelected = equippedTitleId == id
+        return Button {
+            equippedTitleId = id
+            dismiss()
+        } label: {
+            HStack(spacing: 13) {
+                if let mountain {
+                    MountainStampSeal(mountain: mountain, size: 44, isUnlocked: true, rotation: .degrees(-3))
+                } else {
+                    Image(systemName: "nosign")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(FrogTheme.muted)
+                        .frame(width: 44, height: 44)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.frogRow)
+                        .foregroundStyle(FrogTheme.ink)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(FrogTheme.orange)
+                }
+            }
+            .padding(12)
+            .background(
+                isSelected ? FrogTheme.orange.opacity(0.08) : FrogTheme.surface,
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(isSelected ? FrogTheme.orange.opacity(0.5) : FrogTheme.line, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 // MARK: - Guest onboarding

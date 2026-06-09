@@ -3,6 +3,7 @@ import SwiftUI
 struct LeaderboardView: View {
     @State private var showAllLeaderboard = false
     @EnvironmentObject private var checkInStore: CheckInStore
+    @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
 
     // Demo cross-user data — rank 18 / checkIns are placeholder until Cloud Function
     private let demoUsers: [LeaderboardUser] = [
@@ -15,6 +16,13 @@ struct LeaderboardView: View {
     /// Real personal stats from CheckInStore (true data, personal only).
     private var myTotalCheckIns: Int { checkInStore.totalCheckIns }
     private var myDistinctMountains: Int { checkInStore.distinctMountainCount }
+
+    /// The equipped 稱號 (only while it's still a conquered peak); shown on my row.
+    private var equippedTitle: String? {
+        guard !equippedTitleId.isEmpty,
+              checkInStore.visitedMountainIds.contains(equippedTitleId) else { return nil }
+        return MountainCatalog.mountain(id: equippedTitleId).unlockTitle
+    }
 
     var body: some View {
         ScrollView {
@@ -88,6 +96,21 @@ struct LeaderboardView: View {
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(FrogTheme.moss)
+
+                if let equippedTitle {
+                    HStack(spacing: 5) {
+                        Image(systemName: "rosette")
+                            .font(.frogMicro.weight(.black))
+                            .foregroundStyle(FrogTheme.gold)
+                        Text(equippedTitle)
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(FrogTheme.forest)
+                    }
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(FrogTheme.gold.opacity(0.14), in: Capsule())
+                    .padding(.top, 7)
+                }
 
                 Text("\(myTotalCheckIns)")
                     .font(.frogNum(62, weight: .semibold))
