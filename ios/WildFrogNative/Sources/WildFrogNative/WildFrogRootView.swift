@@ -234,6 +234,8 @@ struct StatCard: View {
             Text(value)
                 .font(.system(size: 22, weight: isEmpty ? .semibold : .bold, design: .rounded))
                 .foregroundStyle(isEmpty ? FrogTheme.muted : FrogTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             Text(label)
                 .font(.frogMicro)
                 .foregroundStyle(FrogTheme.muted)

@@ -90,6 +90,7 @@ struct TripDetailView: View {
             Label(record.track != nil ? "軌跡回放" : "山頂位置", systemImage: record.track != nil ? "point.topleft.down.curvedto.point.bottomright.up.fill" : "mappin.and.ellipse")
                 .font(.frogMicro.weight(.black))
                 .foregroundStyle(.white)
+                .lineLimit(1)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(FrogTheme.forest.opacity(0.82), in: Capsule())
@@ -121,6 +122,8 @@ struct TripDetailView: View {
                     .minimumScaleFactor(0.72)
                 Text("\(mountain.region) · \(mountain.height)m")
                     .font(.frogCaption.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .foregroundStyle(.white)
             .padding(16)
@@ -146,8 +149,11 @@ struct TripDetailView: View {
             if let track = record.track {
                 HStack(spacing: 10) {
                     StatCard(value: TrackFormat.distance(track.distanceMeters), label: "距離", systemImage: "ruler", tint: FrogTheme.moss)
+                        .frame(maxWidth: .infinity)
                     StatCard(value: TrackFormat.duration(track.durationSeconds), label: "時間", systemImage: "clock", tint: FrogTheme.orange)
+                        .frame(maxWidth: .infinity)
                     StatCard(value: "\(Int(track.ascentMeters))m", label: "累積爬升", systemImage: "arrow.up.forward", tint: FrogTheme.gold)
+                        .frame(maxWidth: .infinity)
                 }
             } else {
                 HStack(spacing: 8) {
