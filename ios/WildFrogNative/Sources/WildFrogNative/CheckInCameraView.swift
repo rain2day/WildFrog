@@ -186,6 +186,9 @@ struct CheckInCameraView: View {
                     watermarkPreviewImage = renderCard(cardStyle, userPhoto: img)
                 }
                 showEnlargedWatermark = true
+            } else if qaArgs.contains("-qaPhoto") {
+                mode = .directCheckIn
+                capturedImage = UIImage(named: mountain.imageName)
             }
             #endif
         }
@@ -661,7 +664,7 @@ struct CheckInCameraView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("水印預覽")
+                    Text("卡款預覽")
                         .font(.frogEyebrow)
                         .tracking(1.4)
                         .textCase(.uppercase)
@@ -669,6 +672,17 @@ struct CheckInCameraView: View {
                     watermarkPreview
                 }
                 .frame(width: 116, alignment: .leading)
+            }
+
+            // Pick the share-card style BEFORE checking in — the same render is
+            // what gets saved to the library the moment 完成打卡 is tapped.
+            if capturedImage != nil {
+                Picker("打卡卡款式", selection: $cardStyle) {
+                    ForEach(ShareCardStyle.allCases) { style in
+                        Text(style.label).tag(style)
+                    }
+                }
+                .pickerStyle(.segmented)
             }
 
             // Complete check-in button — gated by signed-in AND in-range AND has photo
@@ -733,7 +747,7 @@ struct CheckInCameraView: View {
         } else if !isInRange {
             return gpsChipTitle
         }
-        return "打卡後將生成水印圖並儲存到相簿"
+        return "打卡後會將你揀嘅卡儲存到相簿"
     }
 
     // MARK: - Enlarged watermark preview
@@ -826,15 +840,6 @@ struct CheckInCameraView: View {
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 252)
                         .padding(.top, 8)
-
-                    Picker("分享卡款式", selection: $cardStyle) {
-                        ForEach(ShareCardStyle.allCases) { style in
-                            Text(style.label).tag(style)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 260)
-                    .padding(.top, 24)
 
                     // record card (.succ .card)
                     VStack(spacing: 14) {
