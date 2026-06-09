@@ -150,19 +150,22 @@ struct HomeMapListView: View {
                     .textCase(.uppercase)
                     .foregroundStyle(.white.opacity(0.6))
 
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("\(conqueredCount)")
-                        .font(.frogNum(74, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text("/ \(MountainCatalog.catalogCount)")
-                        .font(.frogNum(20, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.74))
-                        .padding(.bottom, 9)
+                ZStack(alignment: .bottomLeading) {
+                    ConquestMountainBackdrop(progress: ratio)
+                        .frame(height: 150)
+
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text("\(conqueredCount)")
+                            .font(.frogNum(74, weight: .semibold))
+                            .foregroundStyle(.white)
+                        Text("/ \(MountainCatalog.catalogCount)")
+                            .font(.frogNum(20, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.74))
+                            .padding(.bottom, 9)
+                    }
+                    .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
                 }
                 .padding(.top, 6)
-
-                MountainProgressBar(progress: ratio)
-                    .padding(.top, 14)
 
                 HStack {
                     Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
@@ -745,29 +748,27 @@ private struct SmoothMountainRange: Shape {
 /// Conquest progress as a smooth, natural mountain silhouette drawn ONLY inside
 /// the bar (clipped, never overflows). A faint full range, with the peaks up to
 /// the conquered % filled solid from the left.
-private struct MountainProgressBar: View {
+/// Conquest as a smooth, natural mountain silhouette that sits BEHIND the headline
+/// number (no background box — straight on the photo). A faint full range, with
+/// the peaks up to the conquered % filled solid from the left. Sized by its parent.
+private struct ConquestMountainBackdrop: View {
     var progress: Double
-    var height: CGFloat = 112
 
-    // A tall, complex natural range: tapering tails, layered jagged foothills, a
-    // sharp high central peak, descending secondary peaks. y from top — lower = taller.
+    // Smooth, rounded natural range (Catmull-Rom): a dominant rounded peak, gentle
+    // secondary peaks and tapering tails — like the reference silhouette, not a
+    // jagged saw-tooth. y from top — lower = taller.
     private let ridge: [(CGFloat, CGFloat)] = [
-        (0.00, 0.98), (0.03, 0.90), (0.06, 0.82), (0.09, 0.87), (0.12, 0.72),
-        (0.15, 0.79), (0.18, 0.63), (0.21, 0.71), (0.24, 0.53), (0.27, 0.61),
-        (0.30, 0.43), (0.33, 0.52), (0.36, 0.39), (0.39, 0.29), (0.42, 0.37),
-        (0.45, 0.17), (0.47, 0.05), (0.50, 0.16), (0.53, 0.29), (0.56, 0.21),
-        (0.59, 0.34), (0.62, 0.25), (0.65, 0.40), (0.68, 0.31), (0.71, 0.46),
-        (0.74, 0.37), (0.77, 0.51), (0.80, 0.43), (0.83, 0.57), (0.86, 0.49),
-        (0.89, 0.64), (0.92, 0.55), (0.95, 0.72), (0.98, 0.87), (1.00, 0.98)
+        (0.00, 0.95), (0.08, 0.72), (0.16, 0.81), (0.25, 0.55), (0.33, 0.64),
+        (0.42, 0.30), (0.50, 0.10), (0.57, 0.33), (0.64, 0.24), (0.72, 0.47),
+        (0.80, 0.38), (0.88, 0.60), (0.94, 0.73), (1.00, 0.95)
     ]
 
     var body: some View {
         GeometryReader { geo in
             let fillWidth = CGFloat(max(0, min(1, progress))) * geo.size.width
             ZStack(alignment: .leading) {
-                // No background box — the silhouette sits straight on the photo.
                 SmoothMountainRange(ridge: ridge)
-                    .fill(Color.white.opacity(0.30))
+                    .fill(Color.white.opacity(0.24))
 
                 SmoothMountainRange(ridge: ridge)
                     .fill(
@@ -778,9 +779,10 @@ private struct MountainProgressBar: View {
                     )
                     .mask(alignment: .leading) { Rectangle().frame(width: fillWidth) }
             }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
         }
-        .frame(height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .allowsHitTesting(false)
         .animation(.easeInOut(duration: 0.4), value: progress)
     }
 }
