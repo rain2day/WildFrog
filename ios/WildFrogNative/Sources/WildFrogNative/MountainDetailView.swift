@@ -8,12 +8,35 @@ struct MountainDetailView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
     @Environment(\.dismiss) private var dismiss
 
+    @State private var mapCamera: MapCameraPosition = .automatic
+
     /// The signed-in user's own live check-ins for this peak (account-bound),
     /// NOT the static catalog seed `mountain.checkIns`.
     private var myCheckIns: Int { checkInStore.count(for: mountain.id) }
 
     private var hasCheckedIn: Bool {
         myCheckIns > 0
+    }
+
+    @ViewBuilder
+    private var certPhoto: some View {
+        #if canImport(UIKit)
+        let filename = checkInStore.records
+            .filter { $0.mountainId == mountain.id }
+            .sorted { $0.date > $1.date }
+            .first?.photoFilename
+        if let name = filename,
+           let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+           let img = UIImage(contentsOfFile: dir.appendingPathComponent(name).path) {
+            Image(uiImage: img)
+                .resizable()
+                .scaledToFill()
+        } else {
+            MountainPhoto(mountain: mountain, dimming: 0.02)
+        }
+        #else
+        MountainPhoto(mountain: mountain, dimming: 0.02)
+        #endif
     }
 
     private var distanceCaption: String {
@@ -207,7 +230,7 @@ struct MountainDetailView: View {
                     }
                 }
 
-                MountainPhoto(mountain: mountain, dimming: 0.02)
+                certPhoto
                     .frame(height: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .overlay(
@@ -271,7 +294,7 @@ struct MountainDetailView: View {
             Text("檢查點地圖")
                 .font(.headline.weight(.black))
 
-            Map {
+            Map(position: $mapCamera) {
                 Marker(mountain.nameZh, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
                     .tint(FrogTheme.orange)
                 UserAnnotation()
@@ -279,6 +302,12 @@ struct MountainDetailView: View {
             .mapControlVisibility(.hidden)
             .frame(height: 180)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .onAppear {
+                mapCamera = .region(MKCoordinateRegion(
+                    center: mountain.coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                ))
+            }
 
             HStack {
                 Label("有效半徑 500m", systemImage: "scope")
