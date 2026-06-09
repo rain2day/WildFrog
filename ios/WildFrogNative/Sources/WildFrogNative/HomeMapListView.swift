@@ -152,7 +152,7 @@ struct HomeMapListView: View {
 
                 ZStack(alignment: .bottomLeading) {
                     ConquestMountainBackdrop(progress: ratio)
-                        .frame(height: 118)
+                        .frame(height: 96)
 
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text("\(conqueredCount)")
@@ -166,6 +166,10 @@ struct HomeMapListView: View {
                     .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
                 }
                 .padding(.top, 6)
+
+                // Progress bar anchored at the mountain's base.
+                ConquestProgressBar(progress: ratio)
+                    .padding(.top, 9)
 
                 HStack {
                     Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
@@ -752,6 +756,32 @@ private struct ConquestMountainBackdrop: View {
                     }
                 }
         }
+        .allowsHitTesting(false)
+        .animation(.easeInOut(duration: 0.4), value: progress)
+    }
+}
+
+/// Slim conquest progress bar that sits at the base of the mountain silhouette —
+/// the explicit "how far to 330" track, filling left-to-right with conquest %.
+private struct ConquestProgressBar: View {
+    var progress: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.22))
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [FrogTheme.leaf, FrogTheme.moss],
+                            startPoint: .leading, endPoint: .trailing
+                        )
+                    )
+                    .frame(width: max(10, geo.size.width * CGFloat(min(1, max(0, progress)))))
+            }
+        }
+        .frame(height: 7)
         .allowsHitTesting(false)
         .animation(.easeInOut(duration: 0.4), value: progress)
     }
