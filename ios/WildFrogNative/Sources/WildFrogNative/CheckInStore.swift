@@ -184,6 +184,19 @@ final class CheckInStore: ObservableObject {
         visitedMountainIds.map { MountainCatalog.mountain(id: $0).height }.max() ?? 0
     }
 
+    /// Distinct calendar days (HKT) with at least one check-in — cumulative, not
+    /// consecutive (daily streaks are unrealistic for a hiking app).
+    var totalActiveDays: Int {
+        Set(records.map { Self.hongKongCalendar.startOfDay(for: $0.date) }).count
+    }
+
+    /// How many of the four HK regions the user has reached at least one peak in.
+    var regionsVisitedCount: Int {
+        let canonical: Set<String> = ["新界", "大嶼山", "港島", "九龍"]
+        return Set(visitedMountainIds.map { MountainCatalog.mountain(id: $0).region })
+            .intersection(canonical).count
+    }
+
     func hasVisited(mountainId: String) -> Bool {
         visitedMountainIds.contains(mountainId)
     }

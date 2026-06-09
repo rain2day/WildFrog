@@ -8,9 +8,10 @@ struct AllAchievementsView: View {
     private enum AchievementMetric: Equatable {
         case peaks          // checkInStore.distinctMountainCount
         case checkIns       // checkInStore.totalCheckIns
-        case streak         // checkInStore.currentStreak
         case region(String) // checkInStore.visitedCount(inRegion:)
         case height         // checkInStore.highestVisitedPeakHeight
+        case activeDays     // checkInStore.totalActiveDays (cumulative, not streak)
+        case regions        // checkInStore.regionsVisitedCount
     }
 
     private struct Achievement: Identifiable {
@@ -57,17 +58,19 @@ struct AllAchievementsView: View {
             Achievement(id: "checkins300", title: "打卡王", description: "完成 300 次打卡", systemImage: "rosette", tint: FrogTheme.orange, metric: .checkIns, threshold: 300),
             Achievement(id: "checkins500", title: "Check-in Legend", description: "完成 500 次打卡", systemImage: "trophy.fill", tint: FrogTheme.gold, metric: .checkIns, threshold: 500),
 
-            // MARK: Streak — consecutive days
-            Achievement(id: "streak2", title: "兩天連續", description: "連續 2 天打卡", systemImage: "flame.fill", tint: FrogTheme.leaf, metric: .streak, threshold: 2),
-            Achievement(id: "streak3", title: "三天熱身", description: "連續 3 天打卡", systemImage: "flame.fill", tint: FrogTheme.moss, metric: .streak, threshold: 3),
-            Achievement(id: "streak5", title: "5-Day Streak", description: "連續 5 天打卡", systemImage: "bolt.fill", tint: FrogTheme.slate, metric: .streak, threshold: 5),
-            Achievement(id: "streak7", title: "Week Streak", description: "連續 7 天打卡", systemImage: "flame.fill", tint: FrogTheme.orange, metric: .streak, threshold: 7),
-            Achievement(id: "streak10", title: "10-Day Streak", description: "連續 10 天打卡", systemImage: "bolt.fill", tint: FrogTheme.gold, metric: .streak, threshold: 10),
-            Achievement(id: "streak14", title: "兩週不斷", description: "連續 14 天打卡", systemImage: "sunrise.fill", tint: FrogTheme.gold, metric: .streak, threshold: 14),
-            Achievement(id: "streak21", title: "21-Day Habit", description: "連續 21 天打卡", systemImage: "calendar", tint: FrogTheme.forest, metric: .streak, threshold: 21),
-            Achievement(id: "streak30", title: "Monthly Streak", description: "連續 30 天打卡", systemImage: "moon.stars.fill", tint: FrogTheme.gold, metric: .streak, threshold: 30),
-            Achievement(id: "streak50", title: "五十日不斷", description: "連續 50 天打卡", systemImage: "flame.fill", tint: FrogTheme.orange, metric: .streak, threshold: 50),
-            Achievement(id: "streak100", title: "Streak Legend", description: "連續 100 天打卡", systemImage: "trophy.fill", tint: FrogTheme.orange, metric: .streak, threshold: 100),
+            // MARK: Active days — cumulative check-in days (streaks are unrealistic for hiking)
+            Achievement(id: "days3", title: "三日行者", description: "累計打卡 3 日", systemImage: "calendar", tint: FrogTheme.leaf, metric: .activeDays, threshold: 3),
+            Achievement(id: "days7", title: "一週山客", description: "累計打卡 7 日", systemImage: "calendar", tint: FrogTheme.moss, metric: .activeDays, threshold: 7),
+            Achievement(id: "days15", title: "半月縱橫", description: "累計打卡 15 日", systemImage: "calendar", tint: FrogTheme.slate, metric: .activeDays, threshold: 15),
+            Achievement(id: "days30", title: "三十日山途", description: "累計打卡 30 日", systemImage: "calendar", tint: FrogTheme.forest, metric: .activeDays, threshold: 30),
+            Achievement(id: "days60", title: "六十日行", description: "累計打卡 60 日", systemImage: "calendar", tint: FrogTheme.gold, metric: .activeDays, threshold: 60),
+            Achievement(id: "days100", title: "百日登峰", description: "累計打卡 100 日", systemImage: "star.circle.fill", tint: FrogTheme.gold, metric: .activeDays, threshold: 100),
+            Achievement(id: "days200", title: "二百日傳奇", description: "累計打卡 200 日", systemImage: "trophy.fill", tint: FrogTheme.orange, metric: .activeDays, threshold: 200),
+
+            // MARK: Regions — distinct HK regions explored
+            Achievement(id: "regions2", title: "雙區行者", description: "走遍 2 個地區", systemImage: "map.fill", tint: FrogTheme.moss, metric: .regions, threshold: 2),
+            Achievement(id: "regions3", title: "三區縱走", description: "走遍 3 個地區", systemImage: "map.fill", tint: FrogTheme.forest, metric: .regions, threshold: 3),
+            Achievement(id: "regions4", title: "四區走遍", description: "走遍全港 4 區", systemImage: "globe.asia.australia.fill", tint: FrogTheme.orange, metric: .regions, threshold: 4),
 
             // MARK: Region — distinct peaks per region
             Achievement(id: "regionNT10", title: "新界初探", description: "新界登頂 10 座", systemImage: "tree.fill", tint: FrogTheme.leaf, metric: .region("新界"), threshold: 10),
@@ -92,9 +95,10 @@ struct AllAchievementsView: View {
         switch badge.metric {
         case .peaks: progress = checkInStore.distinctMountainCount
         case .checkIns: progress = checkInStore.totalCheckIns
-        case .streak: progress = checkInStore.currentStreak
         case .region(let region): progress = checkInStore.visitedCount(inRegion: region)
         case .height: progress = checkInStore.highestVisitedPeakHeight
+        case .activeDays: progress = checkInStore.totalActiveDays
+        case .regions: progress = checkInStore.regionsVisitedCount
         }
         return progress >= badge.threshold
     }
