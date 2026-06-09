@@ -1161,6 +1161,9 @@ private struct CheckInPassportCardView: View {
                     .font(.system(size: 22, weight: .heavy))
                     .tracking(1.5)
                     Spacer(minLength: 0)
+                    Text(dateText)
+                        .font(.system(size: 24, weight: .heavy))
+                        .foregroundStyle(FrogTheme.muted)
                 }
 
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
@@ -1195,12 +1198,11 @@ private struct CheckInPassportCardView: View {
             .padding(.bottom, 44)
             .frame(width: width, height: stubH, alignment: .topLeading)
             .background(PerforatedTopShape(radius: perfR, spacing: 38).fill(FrogTheme.passport))
-            // Stamp pressed onto the photo itself (top-right), printed white so it
-            // reads on the scenery — a full, uncropped impression.
+            // Our own designed mountain stamp (1 of 330), pressed onto the photo.
             .overlay(alignment: .topTrailing) {
-                PassportInkStamp(dateText: dateText, ink: .white)
-                    .padding(.trailing, 30)
-                    .offset(y: -400)
+                MountainStampSeal(mountain: mountain, size: 360, isUnlocked: true, rotation: .degrees(-8))
+                    .padding(.trailing, 28)
+                    .offset(y: -384)
             }
         }
         .frame(width: width, height: photoH + stubH - perfR * 2)
@@ -1258,68 +1260,6 @@ private struct PerforatedTopShape: Shape {
     }
 }
 
-/// Text laid out along a circular arc. `centerDegrees` aims the middle of the arc
-/// (-90 = top, 90 = bottom); `flipped` keeps bottom-arc text the right way up.
-private struct CircularText: View {
-    let text: String
-    let radius: CGFloat
-    let fontSize: CGFloat
-    let ink: Color
-    var arcDegrees: Double = 360
-    var centerDegrees: Double = -90
-    var flipped: Bool = false
-
-    var body: some View {
-        let chars = Array(text)
-        let count = max(chars.count, 1)
-        let per = arcDegrees / Double(count)
-        let start = centerDegrees - arcDegrees / 2 + per / 2
-        GeometryReader { geo in
-            let cx = geo.size.width / 2
-            let cy = geo.size.height / 2
-            ForEach(0..<chars.count, id: \.self) { index in
-                let deg = start + per * Double(index)
-                let rad = deg * .pi / 180
-                Text(String(chars[index]))
-                    .font(.system(size: fontSize, weight: .heavy))
-                    .foregroundStyle(ink)
-                    .position(x: cx + radius * cos(rad), y: cy + radius * sin(rad))
-                    .rotationEffect(.degrees(deg + (flipped ? -90 : 90)))
-            }
-        }
-    }
-}
-
-/// A single-colour ink impression — double ring, circular wordmark, the mountain
-/// glyph, and the date — pressed (semi-transparent, slightly rotated) onto paper.
-private struct PassportInkStamp: View {
-    let dateText: String
-    var ink: Color = FrogTheme.forest
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(ink, lineWidth: 9)
-            Circle().stroke(ink, lineWidth: 4).padding(20)
-
-            CircularText(text: "WILDFROG · PEAK PASSPORT", radius: 150, fontSize: 30, ink: ink,
-                         arcDegrees: 215, centerDegrees: -90)
-            CircularText(text: "香港 · HONG KONG", radius: 150, fontSize: 26, ink: ink,
-                         arcDegrees: 120, centerDegrees: 90, flipped: true)
-
-            VStack(spacing: 12) {
-                WildFrogMark()
-                    .stroke(ink, style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
-                    .frame(width: 104, height: 104)
-                Text(dateText)
-                    .font(.system(size: 36, weight: .heavy))
-                    .foregroundStyle(ink)
-            }
-        }
-        .frame(width: 392, height: 392)
-        .opacity(0.92)
-        .rotationEffect(.degrees(-8))
-    }
-}
 
 // MARK: - Supporting views
 
