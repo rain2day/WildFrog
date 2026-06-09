@@ -272,11 +272,11 @@ struct MountainCertificateCard: View {
                 .foregroundStyle(FrogTheme.gold)
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(value)
-                    .font(.system(size: 52, weight: .black))
+                    .font(.system(size: 72, weight: .black))
                     .foregroundStyle(FrogTheme.moss)
                 if !unit.isEmpty {
                     Text(unit)
-                        .font(.system(size: 30, weight: .bold))
+                        .font(.system(size: 40, weight: .bold))
                         .foregroundStyle(FrogTheme.moss.opacity(0.7))
                 }
             }
@@ -288,8 +288,8 @@ struct MountainCertificateCard: View {
 
     private var factDivider: some View {
         FrogTheme.gold.opacity(0.22)
-            .frame(width: 1.5, height: 78)
-            .padding(.horizontal, 14)
+            .frame(width: 1.5, height: 96)
+            .padding(.horizontal, 12)
     }
 }
 
