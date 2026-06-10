@@ -12,9 +12,11 @@ struct LeaderboardView: View {
     private enum Scope { case month, all }
 
     // Demo cross-user data — placeholder until a Cloud Function backs the real board.
-    private let leader = LbUser(rank: 1, name: "Kin", meta: "九龍 · 連續 21 日 · 最高 957m",
-                                count: 58, avatar: "tai-mo-shan", delta: .flat, deltaN: 0)
-    private let rows: [LbUser] = [
+
+    // Monthly dataset
+    private let leaderMonth = LbUser(rank: 1, name: "Kin", meta: "九龍 · 連續 21 日 · 最高 957m",
+                                     count: 58, avatar: "tai-mo-shan", delta: .flat, deltaN: 0)
+    private let rowsMonth: [LbUser] = [
         LbUser(rank: 2, name: "Mandy", meta: "新界 · 週末登山", count: 46, avatar: "lantau-peak", delta: .up, deltaN: 1),
         LbUser(rank: 3, name: "阿峯", meta: "港島 · 清晨路線", count: 41, avatar: "lion-rock", delta: .down, deltaN: 1),
         LbUser(rank: 4, name: "Wing", meta: "西貢 · 行山隊", count: 38, avatar: "lion-rock", delta: .up, deltaN: 2),
@@ -22,9 +24,29 @@ struct LeaderboardView: View {
         LbUser(rank: 6, name: "Tina", meta: "新界 · 越野跑", count: 33, avatar: "tai-mo-shan", delta: .up, deltaN: 4),
     ]
 
+    // All-time dataset
+    private let leaderAll = LbUser(rank: 1, name: "Kin", meta: "九龍 · 累計 83 座 · 最高 957m",
+                                   count: 312, avatar: "tai-mo-shan", delta: .flat, deltaN: 0)
+    private let rowsAll: [LbUser] = [
+        LbUser(rank: 2, name: "Mandy", meta: "新界 · 週末登山", count: 287, avatar: "lantau-peak", delta: .flat, deltaN: 0),
+        LbUser(rank: 3, name: "阿峯", meta: "港島 · 清晨路線", count: 264, avatar: "lion-rock", delta: .flat, deltaN: 0),
+        LbUser(rank: 4, name: "Wing", meta: "西貢 · 行山隊", count: 231, avatar: "lion-rock", delta: .flat, deltaN: 0),
+        LbUser(rank: 5, name: "阿康", meta: "大嶼山 · 日出線", count: 198, avatar: "lantau-peak", delta: .flat, deltaN: 0),
+        LbUser(rank: 6, name: "Tina", meta: "新界 · 越野跑", count: 176, avatar: "tai-mo-shan", delta: .flat, deltaN: 0),
+    ]
+
+    private var currentLeader: LbUser { scope == .month ? leaderMonth : leaderAll }
+    private var currentRows: [LbUser] { scope == .month ? rowsMonth : rowsAll }
+
     /// Real personal stats from CheckInStore (true data, personal only).
     private var myTotalCheckIns: Int { checkInStore.totalCheckIns }
     private var myDistinctMountains: Int { checkInStore.distinctMountainCount }
+
+    /// Computed rank against the current scope's demo dataset (leader + rows).
+    private var myRank: Int {
+        let allCounts = ([currentLeader] + currentRows).map { $0.count }
+        return allCounts.filter { $0 > myTotalCheckIns }.count + 1
+    }
 
     /// The equipped 稱號 (only while it's still a conquered peak); shown on my row.
     private var equippedTitle: String? {
@@ -195,7 +217,7 @@ struct LeaderboardView: View {
 
     private var leaderBand: some View {
         ZStack(alignment: .leading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: leader.avatar), dimming: 0)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: currentLeader.avatar), dimming: 0)
 
             // 105°-ish gradient: dark on the left (legible text) → photo on the right.
             LinearGradient(
@@ -212,14 +234,14 @@ struct LeaderboardView: View {
                 TrigMarkSeal(size: 52)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("本月領隊 · LEADER")
+                    Text(scope == .month ? "本月領隊 · LEADER" : "總榜領隊 · ALL-TIME LEADER")
                         .font(.frogNum(10, weight: .bold))
                         .tracking(1.8)
                         .foregroundStyle(FrogTheme.gold)
-                    Text(leader.name)
+                    Text(currentLeader.name)
                         .font(.system(size: 24, weight: .black))
                         .foregroundStyle(.white)
-                    Text(leader.meta)
+                    Text(currentLeader.meta)
                         .font(.system(size: 11.5))
                         .foregroundStyle(.white.opacity(0.72))
                         .lineLimit(1)
@@ -229,7 +251,7 @@ struct LeaderboardView: View {
                 Spacer(minLength: 0)
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(leader.count)")
+                    Text("\(currentLeader.count)")
                         .font(.frogNum(40, weight: .semibold))
                         .foregroundStyle(.white)
                     Text("次打卡")
@@ -254,7 +276,7 @@ struct LeaderboardView: View {
                 Text(" ").frame(width: 30, alignment: .leading)
                 Text("登山者")
                 Spacer(minLength: 0)
-                Text("本月")
+                Text(scope == .month ? "本月" : "總計")
             }
             .font(.frogNum(9.5, weight: .semibold))
             .tracking(1.0)
@@ -262,7 +284,7 @@ struct LeaderboardView: View {
             .padding(.bottom, 9)
             .overlay(alignment: .bottom) { FrogTheme.line.frame(height: 1) }
 
-            ForEach(rows) { u in
+            ForEach(currentRows) { u in
                 rankRow(u)
             }
         }
@@ -324,12 +346,12 @@ struct LeaderboardView: View {
 
     private var myRankBar: some View {
         HStack(spacing: 11) {
-            Text("21")
+            Text("\(myRank)")
                 .font(.frogNum(17, weight: .bold))
                 .foregroundStyle(FrogTheme.leaf)
                 .frame(width: 26, alignment: .leading)
 
-            DeltaBadge(dir: .up, n: 2)
+            DeltaBadge(dir: .flat, n: 0)
                 .frame(width: 30, alignment: .leading)
 
             HStack(spacing: 11) {

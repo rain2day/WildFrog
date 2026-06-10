@@ -44,7 +44,7 @@ struct AllAchievementsView: View {
             Achievement(id: "peaks150", title: "Half Way", description: "登頂 150 座山峰", systemImage: "rosette", tint: FrogTheme.forest, metric: .peaks, threshold: 150),
             Achievement(id: "peaks200", title: "二百峰", description: "登頂 200 座山峰", systemImage: "crown.fill", tint: FrogTheme.gold, metric: .peaks, threshold: 200),
             Achievement(id: "peaks250", title: "Peak Master", description: "登頂 250 座山峰", systemImage: "crown.fill", tint: FrogTheme.orange, metric: .peaks, threshold: 250),
-            Achievement(id: "peaks300", title: "300 Peak Champion", description: "完成全部 300 峰", systemImage: "trophy.fill", tint: FrogTheme.orange, metric: .peaks, threshold: 300),
+            Achievement(id: "peaks300", title: "300 Peak Champion", description: "登頂 300 座香港山峰", systemImage: "trophy.fill", tint: FrogTheme.orange, metric: .peaks, threshold: 300),
 
             // MARK: Check-ins — total visits
             Achievement(id: "checkins1", title: "首次打卡", description: "完成 1 次打卡", systemImage: "checkmark.seal.fill", tint: FrogTheme.leaf, metric: .checkIns, threshold: 1),
@@ -182,7 +182,7 @@ struct AllLeaderboardView: View {
         PublicLeaderboardUser(rank: 3, name: "阿峯", subtitle: "港島 · 清晨路線", checkIns: 41, climbed: 74, avatarMountainId: "lion-rock"),
         PublicLeaderboardUser(rank: 4, name: "Cheung", subtitle: "離島 · 越野跑", checkIns: 38, climbed: 68, avatarMountainId: "lantau-peak"),
         PublicLeaderboardUser(rank: 5, name: "Sarah", subtitle: "新界 · 假日行山", checkIns: 37, climbed: 55, avatarMountainId: "victoria-peak"),
-        PublicLeaderboardUser(rank: 18, name: "你", subtitle: "WildFrog Draft", checkIns: 36, climbed: 14, avatarMountainId: "victoria-peak"),
+        PublicLeaderboardUser(rank: 18, name: "你", subtitle: "你的紀錄", checkIns: 36, climbed: 14, avatarMountainId: "victoria-peak"),
         PublicLeaderboardUser(rank: 21, name: "Aud", subtitle: "大嶼山 · 日落線", checkIns: 29, climbed: 21, avatarMountainId: "lantau-peak"),
         PublicLeaderboardUser(rank: 22, name: "Kit", subtitle: "九龍 · 晨運", checkIns: 27, climbed: 18, avatarMountainId: "lion-rock"),
         PublicLeaderboardUser(rank: 23, name: "Wing", subtitle: "港島 · 後山", checkIns: 24, climbed: 16, avatarMountainId: "tai-mo-shan"),
