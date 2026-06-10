@@ -94,6 +94,11 @@ struct ProfileView: View {
                 await loadAvatar(from: item)
             }
         }
+        .onChange(of: authService.session?.uid) { _, _ in
+            // Reload avatar from UserDefaults so a newly signed-in account
+            // doesn't display the previous account's in-memory avatar.
+            avatarData = UserDefaults.standard.data(forKey: Self.avatarStorageKey) ?? Data()
+        }
         .alert("刪除帳戶？", isPresented: $showDeleteAccount) {
             Button("永久刪除", role: .destructive) {
                 Task { await authService.deleteAccount() }
@@ -467,9 +472,7 @@ struct ProfileView: View {
                 }
             }
 
-            NavigationLink {
-                FullPassportStampsView(unlockedMountainIds: checkInStore.visitedMountainIds)
-            } label: {
+            NavigationLink(value: NativeRoute.allStamps) {
                 HStack(spacing: 5) {
                     Text("全部 \(MountainCatalog.catalogCount)")
                     Image(systemName: "arrow.right")
@@ -505,27 +508,46 @@ struct ProfileView: View {
                     .frame(height: 1)
             }
 
-            NavigationLink(value: NativeRoute.mountainDetail(recentMountain.id)) {
-                ZStack(alignment: .bottomLeading) {
-                    MountainPhoto(mountain: recentMountain, dimming: 0.15)
-                        .frame(height: 150)
-                    LinearGradient(
-                        colors: [.clear, Color.black.opacity(0.72)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+            if checkInStore.totalCheckIns == 0 {
+                HStack(spacing: 14) {
+                    Image(systemName: "figure.hiking")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(FrogTheme.muted)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(recentMountain.displayName)
-                            .font(.frogTitle)
-                        Text("\(recentMountain.height)m · \(recentMountain.region) · \(checkInStore.count(for: recentMountain.id)) 次")
+                        Text("仲未有打卡紀錄")
+                            .font(.frogRow)
+                            .foregroundStyle(FrogTheme.ink)
+                        Text("完成第一次打卡後，呢度會顯示你最近征服嘅山峰。")
                             .font(.frogCaption)
+                            .foregroundStyle(FrogTheme.muted)
                     }
-                    .foregroundStyle(.white)
-                    .padding(14)
+                    Spacer(minLength: 0)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(FrogSpace.cardPadding)
+                .cardStyle()
+            } else {
+                NavigationLink(value: NativeRoute.mountainDetail(recentMountain.id)) {
+                    ZStack(alignment: .bottomLeading) {
+                        MountainPhoto(mountain: recentMountain, dimming: 0.15)
+                            .frame(height: 150)
+                        LinearGradient(
+                            colors: [.clear, Color.black.opacity(0.72)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(recentMountain.displayName)
+                                .font(.frogTitle)
+                            Text("\(recentMountain.height)m · \(recentMountain.region) · \(checkInStore.count(for: recentMountain.id)) 次")
+                                .font(.frogCaption)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(14)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 
@@ -978,7 +1000,9 @@ struct StampBadge: View {
 /// All 330 peak stamps grouped into region sections with sticky headers — the
 /// "全部 330" closure from the Peak Passport panel. Locked stamps render greyed.
 struct FullPassportStampsView: View {
-    let unlockedMountainIds: Set<String>
+    @EnvironmentObject private var checkInStore: CheckInStore
+
+    private var unlockedMountainIds: Set<String> { checkInStore.visitedMountainIds }
 
     private var unlockedCount: Int {
         MountainCatalog.mountains.filter { unlockedMountainIds.contains($0.id) }.count

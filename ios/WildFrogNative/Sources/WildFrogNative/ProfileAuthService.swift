@@ -372,12 +372,18 @@ final class ProfileAuthService {
             try Auth.auth().signOut()
             session = nil
             statusMessage = "已登出"
+            // Profile cosmetics are device-local; clear so the next account doesn't inherit them.
+            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
+            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
         } catch {
             statusMessage = Self.readableAuthError(error)
         }
         #else
         session = nil
         statusMessage = "已回到訪客模式"
+        // Profile cosmetics are device-local; clear so the next account doesn't inherit them.
+        UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
+        UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
         #endif
     }
 
@@ -408,8 +414,21 @@ final class ProfileAuthService {
             #if canImport(GoogleSignIn)
             GIDSignIn.sharedInstance.signOut()
             #endif
+
+            // Best-effort: remove summit photos stored as .jpg in the app's Documents directory.
+            let fm = FileManager.default
+            if let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first,
+               let contents = try? fm.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil) {
+                for file in contents where file.pathExtension.lowercased() == "jpg" {
+                    try? fm.removeItem(at: file)
+                }
+            }
+
             session = nil
             statusMessage = "帳戶已刪除"
+            // Profile cosmetics are device-local; clear so the next account doesn't inherit them.
+            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
+            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
         } catch {
             statusMessage = Self.readableAuthError(error)
         }

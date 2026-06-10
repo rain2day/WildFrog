@@ -7,6 +7,7 @@ enum NativeRoute: Hashable {
     case routeToCheckpoint(String)
     case allMountains
     case allTrips
+    case allStamps
 }
 
 enum AppTab: String, CaseIterable, Identifiable {
@@ -210,6 +211,8 @@ extension View {
                 MountainDirectoryView()
             case .allTrips:
                 AllTripsView()
+            case .allStamps:
+                FullPassportStampsView()
             }
         }
     }
