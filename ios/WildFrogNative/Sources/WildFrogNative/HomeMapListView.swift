@@ -15,6 +15,7 @@ struct HomeMapListView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.36, longitudeDelta: 0.54)
         )
     )
+    @State private var selectedMarkerID: String?
 
     private enum SortMode: String, CaseIterable, Identifiable {
         case rank = "300峰"
@@ -49,7 +50,11 @@ struct HomeMapListView: View {
 
         switch sortMode {
         case .rank:
-            return filtered.sorted { ($0.topRank ?? 9999, -$0.height) < ($1.topRank ?? 9999, -$1.height) }
+            return filtered.sorted {
+                let r0 = MountainCatalog.heightRank(for: $0.id) ?? Int.max
+                let r1 = MountainCatalog.heightRank(for: $1.id) ?? Int.max
+                return r0 < r1
+            }
         case .height:
             return filtered.sorted { $0.height > $1.height }
         case .checked:
@@ -221,10 +226,11 @@ struct HomeMapListView: View {
 
     private func mapOverview(scrollProxy: ScrollViewProxy) -> some View {
         ZStack(alignment: .topLeading) {
-            Map(position: $mapPosition) {
+            Map(position: $mapPosition, selection: $selectedMarkerID) {
                 ForEach(mapMarkers) { pin in
                     Marker(pin.mountain.nameZh, systemImage: pin.isVisited ? "checkmark.circle.fill" : "mappin", coordinate: pin.mountain.coordinate)
                         .tint(pin.isVisited ? FrogTheme.orange : FrogTheme.moss)
+                        .tag(pin.id)
                 }
             }
             .mapStyle(mapStyleHybrid ? .hybrid : .standard)
@@ -294,6 +300,22 @@ struct HomeMapListView: View {
                     }
                 }
                 .padding(12)
+            }
+
+            // Callout card — shown when a pin is tapped.
+            if let markerID = selectedMarkerID,
+               let mountainID = markerID.split(separator: "|").first.map(String.init),
+               let mountain = MountainCatalog.mountains.first(where: { $0.id == mountainID }) {
+                VStack {
+                    Spacer()
+                    HStack(alignment: .bottom, spacing: 0) {
+                        MapPinCalloutCard(mountain: mountain) {
+                            selectedMarkerID = nil
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 12)
+                    }
+                }
             }
         }
         .paperCardStyle()
@@ -611,6 +633,61 @@ private struct MountainDirectoryRow: View {
                 .fill(FrogTheme.lineSoft)
                 .frame(height: 1)
         }
+    }
+}
+
+// MARK: - Map pin callout card
+
+private struct MapPinCalloutCard: View {
+    let mountain: Mountain
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            MountainThumbnail(mountain: mountain, size: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(mountain.nameZh)
+                    .font(.frogRow.bold())
+                    .foregroundStyle(FrogTheme.ink)
+                    .lineLimit(1)
+                Text("\(mountain.height)m · \(mountain.region)")
+                    .font(.frogCaption)
+                    .foregroundStyle(FrogTheme.muted)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 4)
+
+            NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
+                Text("查看詳情")
+                    .font(.frogCaption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(FrogTheme.orange, in: Capsule())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                onDismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(FrogTheme.muted)
+                    .frame(width: 26, height: 26)
+                    .background(FrogTheme.ink.opacity(0.06), in: Circle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(FrogTheme.line, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 8, y: 3)
     }
 }
 

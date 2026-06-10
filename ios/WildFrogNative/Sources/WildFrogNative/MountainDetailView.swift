@@ -161,7 +161,7 @@ struct MountainDetailView: View {
                 .shadow(color: Color.black.opacity(0.22), radius: 10, y: 4)
 
                 HStack(spacing: 8) {
-                    DetailStatusPill(value: "\(mountain.totalCheckIns)", label: "全站打卡")
+                    DetailStatusPill(value: mountain.region, label: "地區")
                     DetailStatusPill(value: "\(myCheckIns)", label: "我的紀錄")
                     DetailStatusPill(value: "\(mountain.height)m", label: "海拔")
                 }
@@ -179,7 +179,7 @@ struct MountainDetailView: View {
         HStack(spacing: 10) {
             DetailStatCard(systemImage: "checkmark.shield.fill", value: "\(myCheckIns)", label: "我的打卡", tint: FrogTheme.moss)
             DetailStatCard(systemImage: "trophy.fill", value: mountain.rankText, label: "300峰排名", tint: FrogTheme.gold)
-            DetailStatCard(systemImage: "person.2.fill", value: "\(mountain.totalCheckIns)", label: "總打卡", tint: FrogTheme.moss)
+            DetailStatCard(systemImage: "rosette", value: mountain.unlockTitle, label: "解鎖稱號", tint: FrogTheme.gold)
         }
     }
 
@@ -265,7 +265,7 @@ struct MountainDetailView: View {
                         Text("山峰海拔")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(FrogTheme.muted)
-                        Text("\(mountain.height).0 m")
+                        Text("\(mountain.height) m")
                             .font(.title3.weight(.black))
                     }
                 }
@@ -337,7 +337,7 @@ struct MountainDetailView: View {
             HStack(spacing: 10) {
                 DetailFact(value: mountain.rankText, label: "300峰排名", systemImage: "trophy.fill", tint: FrogTheme.gold)
                 DetailFact(value: "\(mountain.height)m", label: "山峰海拔", systemImage: "triangle.fill", tint: FrogTheme.moss)
-                DetailFact(value: "500m", label: "有效半徑", systemImage: "scope", tint: FrogTheme.moss)
+                DetailFact(value: "\(CheckInRules.radiusMeters)m", label: "有效半徑", systemImage: "scope", tint: FrogTheme.moss)
             }
         }
         .padding(FrogSpace.cardPadding)
@@ -438,7 +438,7 @@ struct MountainDetailView: View {
             }
 
             HStack {
-                Label("有效半徑 500m", systemImage: "scope")
+                Label("有效半徑 \(CheckInRules.radiusMeters)m", systemImage: "scope")
                 Spacer()
                 Label(distanceCaption, systemImage: "location.fill")
             }

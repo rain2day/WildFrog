@@ -1,6 +1,12 @@
 import CoreLocation
 import Foundation
 
+/// Check-in gameplay rules shared between gating logic and UI copy.
+enum CheckInRules {
+    /// Valid check-in radius around a summit checkpoint, in metres.
+    static let radiusMeters = 500
+}
+
 struct Mountain: Identifiable, Equatable {
     let id: String
     let nameZh: String
@@ -1787,7 +1793,7 @@ enum MountainCatalog {
         ),
         Mountain(
             id: "peak-1134",
-            nameZh: "豆腐头",
+            nameZh: "豆腐頭",
             nameEn: "",
             region: "新界",
             height: 682,
@@ -1967,7 +1973,7 @@ enum MountainCatalog {
         ),
         Mountain(
             id: "peak-1149",
-            nameZh: "犁头尖",
+            nameZh: "犁頭尖",
             nameEn: "",
             region: "新界",
             height: 550,
@@ -2387,7 +2393,7 @@ enum MountainCatalog {
         ),
         Mountain(
             id: "peak-1184",
-            nameZh: "塘朗顶",
+            nameZh: "塘朗頂",
             nameEn: "",
             region: "大嶼山",
             height: 432,
