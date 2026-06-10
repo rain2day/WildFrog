@@ -6,3 +6,4 @@ prototype/qa/
 **/*.xcodeproj/xcuserdata/
 **/*.xcodeproj/project.xcworkspace/xcuserdata/
 **/*.xcworkspace/xcuserdata/
+ios/WildFrogNative/Sources/WildFrogNative/GoogleService-Info.plist

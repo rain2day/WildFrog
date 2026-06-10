@@ -3,32 +3,32 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyAIFzO1MyTCrgz9qoBa46xPTUzJhyTZczg</string>
+	<string>REPLACE_WITH_FIREBASE_IOS_API_KEY</string>
 	<key>GCM_SENDER_ID</key>
-	<string>932138130032</string>
+	<string>REPLACE_WITH_GCM_SENDER_ID</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.rainsday.WildFrogNative</string>
-	<key>CLIENT_ID</key>
-	<string>932138130032-721p02dn7vrsugpog1tf9thuibpnaa27.apps.googleusercontent.com</string>
 	<key>PROJECT_ID</key>
 	<string>wildfrog-hk-prod</string>
 	<key>STORAGE_BUCKET</key>
-	<string>wildfrog-hk-prod.firebasestorage.app</string>
+	<string>REPLACE_WITH_FIREBASE_STORAGE_BUCKET</string>
 	<key>IS_ADS_ENABLED</key>
-	<false></false>
+	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<false></false>
+	<false/>
 	<key>IS_APPINVITE_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>IS_GCM_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>IS_SIGNIN_ENABLED</key>
-	<true></true>
+	<true/>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:932138130032:ios:47a9cedb72ccb9a63632b5</string>
+	<string>REPLACE_WITH_FIREBASE_GOOGLE_APP_ID</string>
+	<key>CLIENT_ID</key>
+	<string>REPLACE_WITH_OAUTH_CLIENT_ID</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.932138130032-721p02dn7vrsugpog1tf9thuibpnaa27</string>
+	<string>REPLACE_WITH_REVERSED_CLIENT_ID</string>
 </dict>
 </plist>
