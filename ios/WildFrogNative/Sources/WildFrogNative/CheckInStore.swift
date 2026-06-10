@@ -145,9 +145,13 @@ final class CheckInStore: ObservableObject {
     /// (local only, like the photo/track). Never blocks the check-in.
     private func captureWeather(for recordId: UUID, mountainId: String) {
         let coordinate = MountainCatalog.mountain(id: mountainId).coordinate
+        let uid = currentUserId
         Task { [weak self] in
             guard let snapshot = await WeatherFetcher.snapshot(for: coordinate) else { return }
-            self?.attachWeather(snapshot, to: recordId)
+            // The fetch takes seconds — bail if the account switched meanwhile so
+            // the snapshot never lands in another user's cache.
+            guard let self, self.currentUserId == uid else { return }
+            self.attachWeather(snapshot, to: recordId)
         }
     }
 

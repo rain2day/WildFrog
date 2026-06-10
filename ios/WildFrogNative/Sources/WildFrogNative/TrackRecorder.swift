@@ -2,14 +2,28 @@ import CoreLocation
 import Foundation
 
 /// Records a live hike using its own `CLLocationManager` instance, accumulating
-/// haversine distance and positive-delta ascent as fixes arrive.
+/// haversine distance and positive-delta ascent as fixes arrive. Supports
+/// pause/resume — paused time never counts toward duration, and the position
+/// jump across a pause never counts toward distance — and drives the Live
+/// Activity (elapsed, distance, summit approach progress, paused state).
 @MainActor
 final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published private(set) var isRecording = false
+    @Published private(set) var isPaused = false
     @Published private(set) var elapsedSeconds: TimeInterval = 0
     @Published private(set) var distanceMeters: Double = 0
     @Published private(set) var ascentMeters: Double = 0
     @Published private(set) var points: [TrackPoint] = []
+    /// Live distance from the latest fix to the summit checkpoint (nil before a fix).
+    @Published private(set) var distanceToSummitMeters: Double?
+
+    /// The one live instance (owned by the app as a `@StateObject`); lets the
+    /// Live Activity pause/resume intent reach the recorder.
+    private(set) static weak var shared: TrackRecorder?
+
+    /// Posted by `TrackPauseResumeIntent` (which also compiles in the widget
+    /// target, so it relays by notification instead of touching app state).
+    static let togglePauseNotification = Notification.Name("wildfrog.track.togglePause")
 
     #if canImport(ActivityKit)
     private let liveActivity = TrackLiveActivityController()
@@ -20,6 +34,23 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
     private var startDate: Date?
     private var lastLocation: CLLocation?
     private var lastElevation: Double?
+
+    // Pause bookkeeping: duration = closed segments + the currently open one.
+    private var accumulatedSeconds: TimeInterval = 0
+    private var segmentStart: Date?
+    /// After resume, the first fix re-anchors position without adding distance.
+    private var resumeGapPending = false
+
+    // Summit approach (drives the Dynamic Island distance + progress).
+    private var summitCoordinate: CLLocationCoordinate2D?
+    private var initialSummitDistance: Double?
+
+    /// 0…1 approach progress toward the summit (nil before the first fix).
+    var summitProgress: Double? {
+        guard let current = distanceToSummitMeters,
+              let initial = initialSummitDistance, initial > 0 else { return nil }
+        return min(1, max(0, 1 - current / initial))
+    }
 
     /// Discards fixes that are too inaccurate or stale to trust for distance math.
     private let horizontalAccuracyThreshold: CLLocationAccuracy = 50
@@ -37,11 +68,17 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.activityType = .fitness
         manager.distanceFilter = kCLDistanceFilterNone
+        Self.shared = self
+        NotificationCenter.default.addObserver(
+            forName: Self.togglePauseNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.togglePause() }
+        }
     }
 
     // MARK: - Control
 
-    func start(mountainName: String = "") {
+    func start(mountainName: String = "", summitCoordinate: CLLocationCoordinate2D? = nil) {
         guard !isRecording else { return }
 
         if manager.authorizationStatus == .notDetermined {
@@ -62,30 +99,72 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         points = []
         lastLocation = nil
         lastElevation = nil
+        accumulatedSeconds = 0
+        segmentStart = Date()
         startDate = Date()
+        resumeGapPending = false
+        self.summitCoordinate = summitCoordinate
+        initialSummitDistance = nil
+        distanceToSummitMeters = nil
+        isPaused = false
         isRecording = true
 
         manager.startUpdatingLocation()
         startTimer()
         #if canImport(ActivityKit)
-        liveActivity.start(mountainName: mountainName, elapsedSeconds: 0, distanceMeters: 0, ascentMeters: 0)
+        liveActivity.start(mountainName: mountainName, state: activityState())
         #endif
+    }
+
+    /// Freezes the clock and the sensors; the hike can continue later with `resume()`.
+    func pause() {
+        guard isRecording, !isPaused else { return }
+        if let segmentStart {
+            accumulatedSeconds += Date().timeIntervalSince(segmentStart)
+        }
+        segmentStart = nil
+        isPaused = true
+        manager.stopUpdatingLocation()
+        pushActivityUpdate()
+    }
+
+    func resume() {
+        guard isRecording, isPaused else { return }
+        segmentStart = Date()
+        isPaused = false
+        resumeGapPending = true
+        manager.startUpdatingLocation()
+        pushActivityUpdate()
+    }
+
+    func togglePause() {
+        guard isRecording else { return }
+        isPaused ? resume() : pause()
+    }
+
+    /// Abandons the recording entirely: nothing is returned or persisted, and the
+    /// Live Activity ends. The escape hatch for "started by mistake".
+    func cancel() {
+        guard isRecording else { return }
+        finishSession()
+        points = []
+        distanceMeters = 0
+        ascentMeters = 0
+        elapsedSeconds = 0
+        reset()
     }
 
     /// Stops recording and returns the finished `Track` (nil if no points were captured).
     @discardableResult
     func stop() -> Track? {
         guard isRecording else { return nil }
-        isRecording = false
-        manager.stopUpdatingLocation()
-        #if canImport(ActivityKit)
-        liveActivity.end()
-        #endif
-        if Self.backgroundLocationDeclared {
-            manager.allowsBackgroundLocationUpdates = false
+        // Close the open segment so the duration excludes paused time.
+        if let segmentStart {
+            accumulatedSeconds += Date().timeIntervalSince(segmentStart)
         }
-        timer?.invalidate()
-        timer = nil
+        segmentStart = nil
+        elapsedSeconds = accumulatedSeconds
+        finishSession()
 
         let start = startDate ?? points.first?.timestamp ?? Date()
         let end = points.last?.timestamp ?? Date()
@@ -99,13 +178,28 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
             name: defaultName(for: start),
             points: points,
             distanceMeters: distanceMeters,
-            durationSeconds: max(elapsedSeconds, end.timeIntervalSince(start)),
+            durationSeconds: max(elapsedSeconds, 1),
             ascentMeters: ascentMeters,
             startDate: start,
             endDate: end
         )
         reset()
         return track
+    }
+
+    /// Shared teardown for stop/cancel: sensors, timer, Live Activity.
+    private func finishSession() {
+        isRecording = false
+        isPaused = false
+        manager.stopUpdatingLocation()
+        #if canImport(ActivityKit)
+        liveActivity.end()
+        #endif
+        if Self.backgroundLocationDeclared {
+            manager.allowsBackgroundLocationUpdates = false
+        }
+        timer?.invalidate()
+        timer = nil
     }
 
     // MARK: - Derived helpers
@@ -121,28 +215,49 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         startDate = nil
         lastLocation = nil
         lastElevation = nil
+        accumulatedSeconds = 0
+        segmentStart = nil
+        resumeGapPending = false
+        summitCoordinate = nil
+        initialSummitDistance = nil
+        distanceToSummitMeters = nil
     }
 
     private func startTimer() {
         timer?.invalidate()
         let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                guard let self, let startDate = self.startDate, self.isRecording else { return }
-                self.elapsedSeconds = Date().timeIntervalSince(startDate)
-                #if canImport(ActivityKit)
-                if Int(self.elapsedSeconds) % 5 == 0 {
-                    self.liveActivity.update(
-                        elapsedSeconds: Int(self.elapsedSeconds),
-                        distanceMeters: self.distanceMeters,
-                        ascentMeters: self.ascentMeters
-                    )
+                guard let self, self.isRecording else { return }
+                if !self.isPaused, let segmentStart = self.segmentStart {
+                    self.elapsedSeconds = self.accumulatedSeconds + Date().timeIntervalSince(segmentStart)
+                    if Int(self.elapsedSeconds) % 5 == 0 {
+                        self.pushActivityUpdate()
+                    }
                 }
-                #endif
             }
         }
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
     }
+
+    private func pushActivityUpdate() {
+        #if canImport(ActivityKit)
+        liveActivity.update(state: activityState())
+        #endif
+    }
+
+    #if canImport(ActivityKit)
+    private func activityState() -> WildFrogTrackAttributes.ContentState {
+        WildFrogTrackAttributes.ContentState(
+            elapsedSeconds: Int(elapsedSeconds),
+            distanceMeters: distanceMeters,
+            ascentMeters: ascentMeters,
+            isPaused: isPaused,
+            distanceToSummitMeters: distanceToSummitMeters,
+            summitProgress: summitProgress
+        )
+    }
+    #endif
 
     // MARK: - CLLocationManagerDelegate
 
@@ -164,27 +279,45 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
     }
 
     private func ingest(_ locations: [CLLocation]) {
-        guard isRecording else { return }
+        guard isRecording, !isPaused else { return }
         for location in locations {
             guard location.horizontalAccuracy >= 0,
                   location.horizontalAccuracy <= horizontalAccuracyThreshold else { continue }
 
-            if let last = lastLocation {
-                let step = location.distance(from: last)
-                // Ignore jitter while standing still.
-                if step >= 1 {
-                    distanceMeters += step
+            if resumeGapPending {
+                // Re-anchor after a pause: distance walked while paused must not count.
+                lastLocation = location
+                if location.verticalAccuracy >= 0 {
+                    lastElevation = location.altitude
                 }
-            }
-
-            if location.verticalAccuracy >= 0 {
-                if let previousElevation = lastElevation {
-                    let delta = location.altitude - previousElevation
-                    if delta > 0 {
-                        ascentMeters += delta
+                resumeGapPending = false
+            } else {
+                if let last = lastLocation {
+                    let step = location.distance(from: last)
+                    // Ignore jitter while standing still.
+                    if step >= 1 {
+                        distanceMeters += step
                     }
                 }
-                lastElevation = location.altitude
+
+                if location.verticalAccuracy >= 0 {
+                    if let previousElevation = lastElevation {
+                        let delta = location.altitude - previousElevation
+                        if delta > 0 {
+                            ascentMeters += delta
+                        }
+                    }
+                    lastElevation = location.altitude
+                }
+                lastLocation = location
+            }
+
+            if let summit = summitCoordinate {
+                let d = location.distance(from: CLLocation(latitude: summit.latitude, longitude: summit.longitude))
+                distanceToSummitMeters = d
+                if initialSummitDistance == nil {
+                    initialSummitDistance = max(d, 1)
+                }
             }
 
             points.append(
@@ -195,7 +328,6 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
                     timestamp: location.timestamp
                 )
             )
-            lastLocation = location
         }
     }
 }

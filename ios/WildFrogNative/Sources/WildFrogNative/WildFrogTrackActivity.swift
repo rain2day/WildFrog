@@ -12,11 +12,27 @@ struct WildFrogTrackAttributes: ActivityAttributes {
         public var elapsedSeconds: Int
         public var distanceMeters: Double
         public var ascentMeters: Double
+        /// True while the user has paused the recording.
+        public var isPaused: Bool
+        /// Live distance to the summit checkpoint (nil before the first GPS fix).
+        public var distanceToSummitMeters: Double?
+        /// 0…1 approach progress toward the summit (nil before the first fix).
+        public var summitProgress: Double?
 
-        public init(elapsedSeconds: Int, distanceMeters: Double, ascentMeters: Double) {
+        public init(
+            elapsedSeconds: Int,
+            distanceMeters: Double,
+            ascentMeters: Double,
+            isPaused: Bool = false,
+            distanceToSummitMeters: Double? = nil,
+            summitProgress: Double? = nil
+        ) {
             self.elapsedSeconds = elapsedSeconds
             self.distanceMeters = distanceMeters
             self.ascentMeters = ascentMeters
+            self.isPaused = isPaused
+            self.distanceToSummitMeters = distanceToSummitMeters
+            self.summitProgress = summitProgress
         }
     }
 
@@ -34,15 +50,10 @@ struct WildFrogTrackAttributes: ActivityAttributes {
 final class TrackLiveActivityController {
     private var activity: Activity<WildFrogTrackAttributes>?
 
-    func start(mountainName: String, elapsedSeconds: Int, distanceMeters: Double, ascentMeters: Double) {
+    func start(mountainName: String, state: WildFrogTrackAttributes.ContentState) {
         guard activity == nil, ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         let attributes = WildFrogTrackAttributes(
             mountainName: mountainName.isEmpty ? "行程記錄中" : mountainName
-        )
-        let state = WildFrogTrackAttributes.ContentState(
-            elapsedSeconds: elapsedSeconds,
-            distanceMeters: distanceMeters,
-            ascentMeters: ascentMeters
         )
         activity = try? Activity.request(
             attributes: attributes,
@@ -50,13 +61,8 @@ final class TrackLiveActivityController {
         )
     }
 
-    func update(elapsedSeconds: Int, distanceMeters: Double, ascentMeters: Double) {
+    func update(state: WildFrogTrackAttributes.ContentState) {
         guard let activity else { return }
-        let state = WildFrogTrackAttributes.ContentState(
-            elapsedSeconds: elapsedSeconds,
-            distanceMeters: distanceMeters,
-            ascentMeters: ascentMeters
-        )
         Task { @MainActor in
             await activity.update(ActivityContent(state: state, staleDate: nil))
         }

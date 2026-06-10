@@ -55,6 +55,7 @@ struct CheckInCameraView: View {
     @State private var showSuccess = false
     @State private var cardStyle: ShareCardStyle = .polaroid
     @State private var weatherChip: WeatherSnapshot?
+    @State private var showCancelRecording = false
 
     // MARK: - GPS gating helpers
 
@@ -63,12 +64,12 @@ struct CheckInCameraView: View {
         locationManager.distance(to: mountain.coordinate)
     }
 
-    /// True when the user is authorised AND within 500 m of the summit.
+    /// True when the user is authorised AND within CheckInRules.radiusMeters of the summit.
     private var isInRange: Bool {
         guard locationManager.authorizationStatus == .authorizedWhenInUse ||
               locationManager.authorizationStatus == .authorizedAlways,
               let d = distanceMetres else { return false }
-        return d <= 500
+        return d <= Double(CheckInRules.radiusMeters)
     }
 
     /// True when all conditions for completing a check-in are met.
@@ -82,7 +83,7 @@ struct CheckInCameraView: View {
             return "需要定位權限"
         case .authorizedWhenInUse, .authorizedAlways:
             guard let d = distanceMetres else { return "定位中…" }
-            if d <= 500 {
+            if d <= Double(CheckInRules.radiusMeters) {
                 return "\(Int(d))m"
             } else {
                 let km = d / 1000
@@ -102,7 +103,7 @@ struct CheckInCameraView: View {
             return "location.slash.fill"
         case .authorizedWhenInUse, .authorizedAlways:
             guard let d = distanceMetres else { return "location.circle" }
-            return d <= 500 ? "mappin.circle.fill" : "location.circle.fill"
+            return d <= Double(CheckInRules.radiusMeters) ? "mappin.circle.fill" : "location.circle.fill"
         @unknown default:
             return "location.circle"
         }
@@ -117,7 +118,7 @@ struct CheckInCameraView: View {
             return ("location.slash.fill", "需要定位", FrogTheme.orange)
         case .authorizedWhenInUse, .authorizedAlways:
             guard let d = distanceMetres else { return ("location.circle", "定位中…", FrogTheme.gold) }
-            return d <= 500
+            return d <= Double(CheckInRules.radiusMeters)
                 ? ("checkmark", "GPS 吻合", FrogTheme.moss)
                 : ("exclamationmark.triangle.fill", "GPS 未夠近", FrogTheme.orange)
         @unknown default:
@@ -445,17 +446,48 @@ struct CheckInCameraView: View {
                 recordingStat(value: TrackFormat.duration(recorder.elapsedSeconds), label: "時間")
                 recordingDivider
                 recordingStat(value: "\(Int(recorder.ascentMeters))m", label: "爬升")
+                if let toSummit = recorder.distanceToSummitMeters {
+                    recordingDivider
+                    recordingStat(value: TrackFormat.distance(toSummit), label: "距山頂")
+                }
             }
 
             HStack(spacing: 7) {
-                Image(systemName: "record.circle.fill")
-                    .foregroundStyle(FrogTheme.orange)
-                Text("行程記錄中 · 行到\(mountain.nameZh)山頂影相即綁埋")
+                Image(systemName: recorder.isPaused ? "pause.circle.fill" : "record.circle.fill")
+                    .foregroundStyle(recorder.isPaused ? FrogTheme.gold : FrogTheme.orange)
+                Text(recorder.isPaused ? "已暫停 · 撳 ▶ 繼續記錄" : "行程記錄中 · 行到\(mountain.nameZh)山頂影相即綁埋")
                     .font(.frogCaption.weight(.bold))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Spacer(minLength: 0)
+
+                // 取消 — discard the hike entirely (the escape hatch).
+                Button {
+                    showCancelRecording = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12, weight: .heavy))
+                        .foregroundStyle(FrogTheme.orange)
+                        .frame(width: 30, height: 30)
+                        .background(FrogTheme.orange.opacity(0.12), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("取消行程")
+
+                // 暫停／繼續
+                Button {
+                    recorder.togglePause()
+                } label: {
+                    Image(systemName: recorder.isPaused ? "play.fill" : "pause.fill")
+                        .font(.system(size: 12, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(recorder.isPaused ? FrogTheme.moss : FrogTheme.gold, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(recorder.isPaused ? "繼續記錄" : "暫停記錄")
+
                 Button {
                     stopRecordingMode()
                 } label: {
@@ -468,6 +500,15 @@ struct CheckInCameraView: View {
                 }
                 .buttonStyle(.plain)
             }
+        }
+        .alert("取消呢次行程？", isPresented: $showCancelRecording) {
+            Button("取消行程", role: .destructive) {
+                recorder.cancel()
+                mode = .directCheckIn
+            }
+            Button("繼續記錄", role: .cancel) {}
+        } message: {
+            Text("軌跡會被刪除，唔會儲存。")
         }
         .padding(14)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -500,7 +541,7 @@ struct CheckInCameraView: View {
 
     private func startRecordingMode() {
         mode = .recording
-        recorder.start(mountainName: mountain.nameZh)
+        recorder.start(mountainName: mountain.nameZh, summitCoordinate: mountain.coordinate)
     }
 
     private func stopRecordingMode() {
@@ -994,8 +1035,14 @@ struct CheckInCameraView: View {
             let newRecord = await MainActor.run { () -> CheckInRecord? in
                 let record = checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
                 isSavingWatermark = false
-                saveMessage = "打卡成功！"
-                withAnimation(.easeInOut(duration: 0.3)) { showSuccess = true }
+                if record != nil {
+                    saveMessage = "打卡成功！"
+                    withAnimation(.easeInOut(duration: 0.3)) { showSuccess = true }
+                } else {
+                    // Account wasn't ready — never fake success; let the user retry.
+                    didCompleteCheckIn = false
+                    saveMessage = "打卡未能儲存：請確認已登入後再試一次。"
+                }
                 return record
             }
 
