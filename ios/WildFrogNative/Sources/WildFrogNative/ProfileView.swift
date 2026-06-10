@@ -400,6 +400,15 @@ struct ProfileView: View {
             } label: {
                 Label("更改名稱", systemImage: "pencil")
             }
+            Link(destination: WildFrogLegalLinks.privacy) {
+                Label("私隱政策", systemImage: "hand.raised.fill")
+            }
+            Link(destination: WildFrogLegalLinks.terms) {
+                Label("使用條款", systemImage: "doc.text.fill")
+            }
+            Link(destination: WildFrogLegalLinks.support) {
+                Label("支援", systemImage: "questionmark.circle.fill")
+            }
             Button {
                 authService.signOut()
             } label: {

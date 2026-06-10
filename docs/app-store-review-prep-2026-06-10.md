@@ -72,8 +72,9 @@
 
 ## App Store Connect inputs
 
-- Privacy policy URL: required.
-- Support URL: required.
+- Privacy policy URL: `https://wildfrog.rainsday.com/privacy/`.
+- Terms URL: `https://wildfrog.rainsday.com/terms/`.
+- Support URL: `https://wildfrog.rainsday.com/support/`.
 - Marketing URL: optional unless the submitted metadata depends on it.
 - Review contact: required.
 - Demo account: required if reviewers need to see signed-in leaderboard/profile/check-in state.

@@ -73,6 +73,8 @@ struct ProviderPickerSheet: View {
                         .font(.frogMicro.weight(.semibold))
                         .foregroundStyle(FrogTheme.muted)
                         .frame(maxWidth: .infinity)
+
+                    WildFrogLegalConsentFooter()
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
                 .padding(.top, 18)
@@ -198,6 +200,7 @@ private struct EmailAuthSheet: View {
     @Environment(ProfileAuthService.self) private var authService
     @State private var email = ""
     @State private var password = ""
+    @State private var hasSubmitted = false
 
     var body: some View {
         Form {
@@ -218,11 +221,9 @@ private struct EmailAuthSheet: View {
                 }
                 .disabled(!canSubmit || authService.isBusy)
             } footer: {
-                if !authService.isSignedIn {
-                    Text(authService.statusMessage)
-                        .font(.frogMicro)
-                        .foregroundStyle(FrogTheme.muted)
-                }
+                WildFrogLegalConsentFooter(
+                    statusMessage: hasSubmitted && !authService.isSignedIn ? authService.statusMessage : nil
+                )
             }
         }
         .navigationTitle("Email 登入")
@@ -234,6 +235,8 @@ private struct EmailAuthSheet: View {
     }
 
     private func complete(_ mode: EmailAuthMode) async {
+        hasSubmitted = true
+
         switch mode {
         case .signIn:
             await authService.signInWithEmail(email: email, password: password)
@@ -279,7 +282,10 @@ private struct PhoneAuthSheet: View {
                 }
                 .disabled(!canSubmit || authService.isBusy)
             } footer: {
-                Text("使用電話登入可能會收到 SMS，費用依電訊商而定。")
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("使用電話登入可能會收到 SMS，費用依電訊商而定。")
+                    WildFrogLegalConsentFooter()
+                }
             }
         }
         .navigationTitle("電話登入")

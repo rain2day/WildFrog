@@ -49,6 +49,7 @@
 		B6001A0000000031 /* ProviderPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000030 /* ProviderPickerSheet.swift */; };
 		B6001A0000000051 /* SeedLeaderboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000050 /* SeedLeaderboard.swift */; };
 		B6001A0000000061 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B6001A0000000060 /* PrivacyInfo.xcprivacy */; };
+		B6001A0000000071 /* WildFrogLegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000070 /* WildFrogLegalLinks.swift */; };
 		CF001A0000000041 /* CheckInMapPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF001A0000000040 /* CheckInMapPickerView.swift */; };
 /* End PBXBuildFile section */
 
@@ -118,6 +119,7 @@
 		B6001A0000000030 /* ProviderPickerSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProviderPickerSheet.swift; sourceTree = "<group>"; };
 		B6001A0000000050 /* SeedLeaderboard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeedLeaderboard.swift; sourceTree = "<group>"; };
 		B6001A0000000060 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		B6001A0000000070 /* WildFrogLegalLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogLegalLinks.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,6 +204,7 @@
 				B6001A0000000000 /* NotificationsView.swift */,
 				B6001A0000000010 /* AllAchievementsView.swift */,
 				B6001A0000000030 /* ProviderPickerSheet.swift */,
+				B6001A0000000070 /* WildFrogLegalLinks.swift */,
 				B6001A0000000050 /* SeedLeaderboard.swift */,
 				CF001A0000000040 /* CheckInMapPickerView.swift */,
 				84A431EB3110467D0BCDBA30 /* Info.plist */,
@@ -383,6 +386,7 @@
 				B6001A0000000001 /* NotificationsView.swift in Sources */,
 				B6001A0000000011 /* AllAchievementsView.swift in Sources */,
 				B6001A0000000031 /* ProviderPickerSheet.swift in Sources */,
+				B6001A0000000071 /* WildFrogLegalLinks.swift in Sources */,
 				B6001A0000000051 /* SeedLeaderboard.swift in Sources */,
 				CF001A0000000041 /* CheckInMapPickerView.swift in Sources */,
 			);
