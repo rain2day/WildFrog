@@ -83,23 +83,19 @@ struct WildFrogMark: Shape {
     }
 }
 
-/// Brand chip — a solid rounded square holding the mountain mark. The simple,
-/// solid-colour logo from the design.
+/// Brand mark used where the full-colour WildFrog identity can sit on a light
+/// surface. Kept as a component so older call sites can retain their sizing.
 struct WildFrogBrandMark: View {
     var size: CGFloat = 34
     var cornerRadius: CGFloat = 9
     var fill: Color = FrogTheme.forest
 
     var body: some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(fill)
+        Image("WildFrogBrandMark")
+            .resizable()
+            .renderingMode(.original)
+            .scaledToFit()
             .frame(width: size, height: size)
-            .overlay(
-                Image("WildFrogLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .padding(size * 0.12)
-            )
             .accessibilityLabel("WildFrog")
     }
 }

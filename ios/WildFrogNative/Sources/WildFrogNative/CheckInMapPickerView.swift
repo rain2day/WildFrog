@@ -97,7 +97,7 @@ private struct CheckInMapMode: View {
             case let (.some(x), .some(y)): return x < y
             case (.some, .none): return true
             case (.none, .some): return false
-            default: return ($0.topRank ?? 9999) < ($1.topRank ?? 9999)
+            default: return MountainCatalog.heightRankSortValue(for: $0.id) < MountainCatalog.heightRankSortValue(for: $1.id)
             }
         }
         sorted.forEach(append)

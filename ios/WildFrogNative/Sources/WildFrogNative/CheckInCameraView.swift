@@ -176,9 +176,14 @@ struct CheckInCameraView: View {
         .background(FrogTheme.warmPaper)
         .onAppear {
             #if DEBUG
-            let qaRender = ProcessInfo.processInfo.arguments.contains("-qaSuccess")
-                || ProcessInfo.processInfo.arguments.contains("-qaWatermark")
-                || ProcessInfo.processInfo.arguments.contains("-qaPassport")
+            let qaArgs = ProcessInfo.processInfo.arguments
+            let qaRender = qaArgs.contains("-qaScreenshot")
+                || qaArgs.contains("-qaSuccess")
+                || qaArgs.contains("-qaWatermark")
+                || qaArgs.contains("-qaPassport")
+            if qaArgs.contains("-qaScreenshot") {
+                locationManager.mockCoordinate = mountain.coordinate
+            }
             #else
             let qaRender = false
             #endif
@@ -193,7 +198,6 @@ struct CheckInCameraView: View {
                 mode = .recording
             }
             #if DEBUG
-            let qaArgs = ProcessInfo.processInfo.arguments
             if qaArgs.contains("-qaPassport") { cardStyle = .passport }
             if qaArgs.contains("-qaSuccess") {
                 mode = .directCheckIn
@@ -263,7 +267,7 @@ struct CheckInCameraView: View {
                 .clipped()
                 .ignoresSafeArea()
         } else {
-            MountainPhoto(mountain: mountain, dimming: 0)
+            MountainPhoto(mountain: mountain, dimming: 0, showsSourceBadge: true)
                 .frame(width: size.width, height: size.height + 180)
                 .ignoresSafeArea()
         }
@@ -858,7 +862,7 @@ struct CheckInCameraView: View {
     private var checkInSuccessScreen: some View {
         ZStack(alignment: .top) {
             // Full-bleed photo + design gradient (.succ .ph / .grad).
-            MountainPhoto(mountain: mountain, dimming: 0)
+            MountainPhoto(mountain: mountain, dimming: 0, showsSourceBadge: true)
                 .ignoresSafeArea()
 
             LinearGradient(

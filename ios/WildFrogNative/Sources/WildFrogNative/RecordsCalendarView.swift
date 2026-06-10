@@ -12,6 +12,7 @@ struct RecordsCalendarView: View {
         let components = calendar.dateComponents([.year, .month], from: Date())
         return calendar.date(from: components) ?? Date()
     }()
+    @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 7), count: 7)
 
@@ -120,7 +121,7 @@ struct RecordsCalendarView: View {
 
     private func passportCover(topInset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: "sunset-peak"), dimming: 0)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true, sourceBadgeTopPadding: topInset + 48)
 
             // Single layered gradient — readable photo top, anchored forest bottom.
             LinearGradient(
@@ -863,7 +864,7 @@ private struct PhotoFallbackView: View {
                         .resizable()
                         .scaledToFill()
                 } else {
-                    MountainPhoto(mountain: mountain, dimming: dimming)
+                    MountainPhoto(mountain: mountain, dimming: dimming, showsSourceBadge: true)
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)

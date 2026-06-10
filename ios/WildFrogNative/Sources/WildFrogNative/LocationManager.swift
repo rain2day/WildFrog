@@ -6,17 +6,15 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     @Published private(set) var systemAuthorizationStatus: CLAuthorizationStatus
     @Published private(set) var currentLocation: CLLocation?
 
-    #if DEBUG
-    /// Developer-only location override (DEBUG builds only — never ships to
-    /// TestFlight/Release). When set, distance + auth gating behave as if the
-    /// user is standing at this coordinate, so check-in can be tested anywhere.
+    /// Coordinate override for developer QA and approved reviewer/tester
+    /// accounts. The UI decides who can set this; when set, distance and auth
+    /// gating behave as if the user is standing at this coordinate.
     @Published var mockCoordinate: CLLocationCoordinate2D? {
         didSet { persistMock() }
     }
-    private static let mockOnKey = "wildfrog.debug.mock.on"
-    private static let mockLatKey = "wildfrog.debug.mock.lat"
-    private static let mockLonKey = "wildfrog.debug.mock.lon"
-    #endif
+    private static let mockOnKey = "wildfrog.location.simulator.on"
+    private static let mockLatKey = "wildfrog.location.simulator.lat"
+    private static let mockLonKey = "wildfrog.location.simulator.lon"
 
     private let manager = CLLocationManager()
 
@@ -25,36 +23,32 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
-        #if DEBUG
         loadMock()
-        #endif
     }
 
-    /// Authorization seen by the rest of the app. A DEBUG mock counts as
-    /// authorized so location-gated test flows work without real GPS.
+    /// Authorization seen by the rest of the app. A reviewer/developer mock
+    /// counts as authorized so location-gated test flows work without real GPS.
     var authorizationStatus: CLAuthorizationStatus {
-        #if DEBUG
         if mockCoordinate != nil { return .authorizedWhenInUse }
-        #endif
         return systemAuthorizationStatus
     }
 
     /// Location used for all distance maths — the mock when set, else real GPS.
     var resolvedLocation: CLLocation? {
-        #if DEBUG
         if let mock = mockCoordinate {
             return CLLocation(latitude: mock.latitude, longitude: mock.longitude)
         }
-        #endif
         return currentLocation
     }
 
     func requestAuthorization() {
+        guard mockCoordinate == nil else { return }
         guard systemAuthorizationStatus == .notDetermined else { return }
         manager.requestWhenInUseAuthorization()
     }
 
     func startUpdating() {
+        guard mockCoordinate == nil else { return }
         manager.startUpdatingLocation()
     }
 
@@ -68,7 +62,6 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         return origin.distance(from: target)
     }
 
-    #if DEBUG
     private func persistMock() {
         let defaults = UserDefaults.standard
         if let mock = mockCoordinate {
@@ -88,7 +81,6 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
             longitude: defaults.double(forKey: Self.mockLonKey)
         )
     }
-    #endif
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus

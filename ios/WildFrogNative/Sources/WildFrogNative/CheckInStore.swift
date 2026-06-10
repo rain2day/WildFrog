@@ -200,6 +200,14 @@ final class CheckInStore: ObservableObject {
         Set(records.map(\.mountainId))
     }
 
+    func latestPhotoFilename(for mountainId: String) -> String? {
+        records
+            .filter { $0.mountainId == mountainId && ($0.photoFilename?.isEmpty == false) }
+            .sorted { $0.date > $1.date }
+            .first?
+            .photoFilename
+    }
+
     func visitedCount(inRegion region: String) -> Int {
         visitedMountainIds.reduce(into: 0) { acc, id in
             if MountainCatalog.mountain(id: id).region == region { acc += 1 }

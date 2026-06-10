@@ -92,7 +92,7 @@ struct MountainDetailView: View {
 
     private func hero(topInset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: mountain, dimming: 0)
+            MountainPhoto(mountain: mountain, dimming: 0, showsSourceBadge: true)
 
             // One layered gradient (css .dhero .grad) — photo top, forest anchor.
             LinearGradient(

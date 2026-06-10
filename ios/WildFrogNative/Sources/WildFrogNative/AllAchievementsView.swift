@@ -176,40 +176,79 @@ struct AllAchievementsView: View {
 // MARK: - AllLeaderboardView
 
 struct AllLeaderboardView: View {
-    private let allUsers: [PublicLeaderboardUser] = [
-        PublicLeaderboardUser(rank: 1, name: "Kin", subtitle: "九龍 · 連續 21 日", checkIns: 58, climbed: 83, avatarMountainId: "tai-mo-shan"),
-        PublicLeaderboardUser(rank: 2, name: "Mandy", subtitle: "新界 · 週末登山", checkIns: 46, climbed: 79, avatarMountainId: "sunset-peak"),
-        PublicLeaderboardUser(rank: 3, name: "阿峯", subtitle: "港島 · 清晨路線", checkIns: 41, climbed: 74, avatarMountainId: "lion-rock"),
-        PublicLeaderboardUser(rank: 4, name: "Cheung", subtitle: "離島 · 越野跑", checkIns: 38, climbed: 68, avatarMountainId: "lantau-peak"),
-        PublicLeaderboardUser(rank: 5, name: "Sarah", subtitle: "新界 · 假日行山", checkIns: 37, climbed: 55, avatarMountainId: "victoria-peak"),
-        PublicLeaderboardUser(rank: 18, name: "你", subtitle: "你的紀錄", checkIns: 36, climbed: 14, avatarMountainId: "victoria-peak"),
-        PublicLeaderboardUser(rank: 21, name: "Aud", subtitle: "大嶼山 · 日落線", checkIns: 29, climbed: 21, avatarMountainId: "lantau-peak"),
-        PublicLeaderboardUser(rank: 22, name: "Kit", subtitle: "九龍 · 晨運", checkIns: 27, climbed: 18, avatarMountainId: "lion-rock"),
-        PublicLeaderboardUser(rank: 23, name: "Wing", subtitle: "港島 · 後山", checkIns: 24, climbed: 16, avatarMountainId: "tai-mo-shan"),
-        PublicLeaderboardUser(rank: 24, name: "Ping", subtitle: "新界 · 北行", checkIns: 22, climbed: 14, avatarMountainId: "sunset-peak"),
-    ]
+    let scope: SeedLeaderboardScope
+
+    @State private var selectedUser: LeaderboardUserSelection?
+    @Environment(ProfileAuthService.self) private var authService
+    @EnvironmentObject private var checkInStore: CheckInStore
+    @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
+
+    private var now: Date { Date() }
+    private var allUsers: [SeedLeaderboardEntry] { SeedLeaderboard.entries(scope: scope, asOf: now) }
+    private var titleText: String { scope == .month ? "本月好友全榜" : "總榜好友全榜" }
+    private var scoreLabel: String { scope == .month ? "本月" : "總計" }
+
+    private var myScore: Int {
+        switch scope {
+        case .month:
+            let calendar = Calendar.current
+            let components = calendar.dateComponents([.year, .month], from: now)
+            return checkInStore.records.filter {
+                let recordComponents = calendar.dateComponents([.year, .month], from: $0.date)
+                return recordComponents.year == components.year && recordComponents.month == components.month
+            }.count
+        case .all:
+            return checkInStore.totalCheckIns
+        }
+    }
+
+    private var myRank: Int {
+        SeedLeaderboard.rank(for: myScore, scope: scope, asOf: now)
+    }
+
+    private var equippedTitle: String? {
+        guard !equippedTitleId.isEmpty,
+              checkInStore.visitedMountainIds.contains(equippedTitleId) else { return nil }
+        return MountainCatalog.mountain(id: equippedTitleId).unlockTitle
+    }
+
+    private var myAvatarId: String {
+        checkInStore.records.sorted { $0.date > $1.date }.first?.mountainId ?? "lantau-peak"
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    Text("本月好友全榜")
+                    Text(titleText)
                         .font(.system(size: 26, weight: .black, design: .rounded))
                         .foregroundStyle(FrogTheme.forest)
                     Spacer()
                 }
                 .padding(.top, 4)
 
-                Text("示範資料 · 真實排名將由 Cloud Function 提供")
-                    .font(.frogMicro)
-                    .foregroundStyle(FrogTheme.muted)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-
                 VStack(spacing: 0) {
+                    Button {
+                        selectedUser = .current
+                    } label: {
+                        AllCurrentUserLeaderboardRow(
+                            rank: myRank,
+                            score: myScore,
+                            scoreLabel: scoreLabel,
+                            displayName: authService.profileLine,
+                            subtitle: equippedTitle ?? "你的紀錄",
+                            avatarMountainId: myAvatarId
+                        )
+                    }
+                    .buttonStyle(.plain)
+
                     ForEach(allUsers) { user in
-                        AllLeaderboardRow(user: user, isCurrentUser: user.name == "你")
+                        Button {
+                            selectedUser = .seed(user)
+                        } label: {
+                            AllLeaderboardRow(user: user, scope: scope, scoreLabel: scoreLabel)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .cardStyle()
@@ -220,43 +259,50 @@ struct AllLeaderboardView: View {
         .navigationTitle("全榜")
         .nativeInlineTitle()
         .background(FrogTheme.warmPaper.ignoresSafeArea())
+        .sheet(item: $selectedUser) { selection in
+            NavigationStack {
+                LeaderboardUserDetailView(
+                    selection: selection,
+                    scope: scope,
+                    asOf: now,
+                    currentDisplayName: authService.profileLine,
+                    currentTitle: equippedTitle
+                )
+                .withNativeRoutes()
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("完成") { selectedUser = nil }
+                            .font(.frogCaption.weight(.bold))
+                            .foregroundStyle(FrogTheme.orange)
+                    }
+                }
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
     }
 }
 
-struct PublicLeaderboardUser: Identifiable {
-    let rank: Int
-    let name: String
-    let subtitle: String
-    let checkIns: Int
-    let climbed: Int
-    let avatarMountainId: String
-
-    var id: Int { rank }
-}
-
 private struct AllLeaderboardRow: View {
-    let user: PublicLeaderboardUser
-    let isCurrentUser: Bool
+    let user: SeedLeaderboardEntry
+    let scope: SeedLeaderboardScope
+    let scoreLabel: String
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(isCurrentUser ? "—" : "\(user.rank)")
+            Text("\(user.rank)")
                 .font(.headline.weight(.black))
                 .foregroundStyle(rankColor)
                 .frame(width: 34, alignment: .leading)
 
-            MountainPhoto(mountain: MountainCatalog.mountain(id: user.avatarMountainId), dimming: 0.02)
-                .frame(width: 38, height: 38)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white, lineWidth: 3))
-                .shadow(color: Color.black.opacity(0.12), radius: 5, y: 2)
+            SeedHikerAvatar(profile: user.profile, size: 38)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(user.name)
+                Text(user.profile.name)
                     .font(.headline.weight(.black))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
-                Text(user.subtitle)
+                Text(user.subtitle(scope: scope))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(FrogTheme.muted)
                     .lineLimit(1)
@@ -265,16 +311,16 @@ private struct AllLeaderboardRow: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text("\(user.checkIns)")
+                Text("\(user.score)")
                     .font(.headline.weight(.black))
-                    .foregroundStyle(isCurrentUser ? FrogTheme.orange : FrogTheme.ink)
-                Text("次")
+                    .foregroundStyle(FrogTheme.ink)
+                Text(scoreLabel)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(FrogTheme.muted)
             }
         }
         .padding(12)
-        .background(isCurrentUser ? FrogTheme.orangeSoft.opacity(0.55) : FrogTheme.surface)
+        .background(FrogTheme.surface)
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(FrogTheme.line)
@@ -288,6 +334,60 @@ private struct AllLeaderboardRow: View {
         case 1: FrogTheme.gold
         case 2, 3: FrogTheme.moss
         default: FrogTheme.forest
+        }
+    }
+}
+
+private struct AllCurrentUserLeaderboardRow: View {
+    let rank: Int
+    let score: Int
+    let scoreLabel: String
+    let displayName: String
+    let subtitle: String
+    let avatarMountainId: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text("\(rank)")
+                .font(.headline.weight(.black))
+                .foregroundStyle(FrogTheme.orange)
+                .frame(width: 34, alignment: .leading)
+
+            MountainPhoto(mountain: MountainCatalog.mountain(id: avatarMountainId), dimming: 0.02)
+                .frame(width: 38, height: 38)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(FrogTheme.leaf, lineWidth: 3))
+                .shadow(color: Color.black.opacity(0.12), radius: 5, y: 2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(displayName)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(FrogTheme.ink)
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(FrogTheme.muted)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text("\(score)")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(FrogTheme.orange)
+                Text(scoreLabel)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(FrogTheme.muted)
+            }
+        }
+        .padding(12)
+        .background(FrogTheme.orangeSoft.opacity(0.55))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(FrogTheme.line)
+                .frame(height: 1)
+                .padding(.leading, 84)
         }
     }
 }

@@ -31,6 +31,7 @@ let package = Package(
             resources: [
                 .process("Assets.xcassets"),
                 .copy("GoogleService-Info.plist"),
+                .copy("PrivacyInfo.xcprivacy"),
             ]
         ),
     ]

@@ -14,14 +14,14 @@ struct ProfileView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
     @EnvironmentObject private var locationManager: LocationManager
     @State private var selectedAvatar: PhotosPickerItem?
-    #if DEBUG
     @State private var showMockPicker = false
-    #endif
     @State private var avatarData: Data
     @State private var showProviderPicker = false
     @State private var showCertificateShare = false
     @State private var showAllAchievements = false
     @State private var showDeleteAccount = false
+    @State private var showNameEditor = false
+    @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
 
     init() {
         let storedAvatar = UserDefaults.standard.data(forKey: Self.avatarStorageKey) ?? Data()
@@ -71,6 +71,14 @@ struct ProfileView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showNameEditor) {
+            DisplayNameEditorSheet(
+                initialName: authService.session?.displayName ?? "",
+                fallbackName: authService.profileLine
+            )
+            .presentationDetents([.height(310), .medium])
+            .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showAllAchievements) {
             NavigationStack {
                 AllAchievementsView()
@@ -107,14 +115,14 @@ struct ProfileView: View {
         } message: {
             Text("此動作無法復原。你的帳戶同雲端打卡紀錄會被永久刪除。")
         }
-        #if DEBUG
         .overlay(alignment: .bottomTrailing) {
-            mockFloatingButton
+            if shouldShowMockControls {
+                mockFloatingButton
+            }
         }
         .sheet(isPresented: $showMockPicker) {
             MockLocationPickerSheet()
         }
-        #endif
     }
 
     // MARK: - Signed-in passport
@@ -144,15 +152,23 @@ struct ProfileView: View {
         .appPageBackground(FrogTheme.warmPaper)
     }
 
-    #if DEBUG
-    // MARK: - Developer location override (DEBUG builds only)
+    // MARK: - Reviewer / developer location override
+
+    private var shouldShowMockControls: Bool {
+        guard !ProcessInfo.processInfo.arguments.contains("-qaScreenshot") else { return false }
+        #if DEBUG
+        return true
+        #else
+        return authService.canUseReviewerTools
+        #endif
+    }
 
     private var mockFloatingButton: some View {
         Button {
             showMockPicker = true
         } label: {
             HStack(spacing: 7) {
-                Image(systemName: locationManager.mockCoordinate == nil ? "hammer.fill" : "location.fill.viewfinder")
+                Image(systemName: locationManager.mockCoordinate == nil ? "location.fill" : "location.fill.viewfinder")
                     .font(.system(size: 13, weight: .black))
                 Text(mockButtonLabel)
                     .font(.frogCaption.weight(.black))
@@ -170,11 +186,11 @@ struct ProfileView: View {
         .buttonStyle(.plain)
         .padding(.trailing, FrogSpace.screenPadding)
         .padding(.bottom, 124) // clear the floating tab bar
-        .accessibilityLabel("開發者模擬位置")
+        .accessibilityLabel("測試定位")
     }
 
     private var mockButtonLabel: String {
-        guard let mock = locationManager.mockCoordinate else { return "模擬位置" }
+        guard let mock = locationManager.mockCoordinate else { return "測試定位" }
         return "模擬中 · \(mockLabel(for: mock))"
     }
 
@@ -229,7 +245,7 @@ struct ProfileView: View {
                 }
                 .listStyle(.plain)
                 .searchable(text: $search, prompt: "搜尋山峰名稱")
-                .navigationTitle("傳送到山峰")
+                .navigationTitle("測試定位")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -247,13 +263,12 @@ struct ProfileView: View {
             }
         }
     }
-    #endif
 
     private func profileHero(topInset: CGFloat) -> some View {
         let currentAvatarData = avatarData
 
         return ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: "ma-on-shan"), dimming: 0)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true, sourceBadgeTopPadding: topInset + 48)
 
             LinearGradient(
                 colors: [
@@ -306,11 +321,22 @@ struct ProfileView: View {
 
                     // .info
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(authService.profileLine)
-                            .font(.system(size: 22, weight: .heavy))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                        HStack(spacing: 6) {
+                            Text(authService.profileLine)
+                                .font(.system(size: 22, weight: .heavy))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+
+                            Button { showNameEditor = true } label: {
+                                Image(systemName: "pencil.circle.fill")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.92))
+                                    .shadow(color: Color.black.opacity(0.22), radius: 3, y: 1)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("更改名稱")
+                        }
 
                         if let providerLabel = authService.session?.providerLabel {
                             Text("以 \(providerLabel) 登入")
@@ -369,6 +395,11 @@ struct ProfileView: View {
 
     private var accountMenu: some View {
         Menu {
+            Button {
+                showNameEditor = true
+            } label: {
+                Label("更改名稱", systemImage: "pencil")
+            }
             Button {
                 authService.signOut()
             } label: {
@@ -671,6 +702,103 @@ struct ProfileView: View {
 
 }
 
+// MARK: - Display name editor
+
+private struct DisplayNameEditorSheet: View {
+    @Environment(ProfileAuthService.self) private var authService
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var isFocused: Bool
+    @State private var name: String
+
+    let fallbackName: String
+
+    init(initialName: String, fallbackName: String) {
+        _name = State(initialValue: initialName)
+        self.fallbackName = fallbackName
+    }
+
+    private var trimmedName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canSave: Bool {
+        !trimmedName.isEmpty && trimmedName.count <= 24 && !authService.isBusy
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("排行榜名稱")
+                        .font(.frogEyebrow)
+                        .tracking(1.1)
+                        .textCase(.uppercase)
+                        .foregroundStyle(FrogTheme.moss)
+                    Text("現在顯示：\(fallbackName)")
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
+                }
+
+                TextField("輸入你的登山名", text: $name)
+                    .font(.system(size: 20, weight: .bold))
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
+                    .focused($isFocused)
+                    .padding(14)
+                    .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(trimmedName.count > 24 ? FrogTheme.orange : FrogTheme.line, lineWidth: 1)
+                    )
+
+                HStack {
+                    Text("\(trimmedName.count) / 24")
+                        .font(.frogMicro)
+                        .foregroundStyle(trimmedName.count > 24 ? FrogTheme.orange : FrogTheme.muted)
+                    Spacer()
+                    if authService.isBusy {
+                        ProgressView()
+                            .tint(FrogTheme.moss)
+                    }
+                }
+
+                if !authService.statusMessage.isEmpty {
+                    Text(authService.statusMessage)
+                        .font(.frogCaption)
+                        .foregroundStyle(FrogTheme.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(FrogSpace.screenPadding)
+            .appPageBackground(FrogTheme.warmPaper)
+            .navigationTitle("更改名稱")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                        .font(.frogCaption.weight(.semibold))
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("儲存") {
+                        Task {
+                            await authService.updateDisplayName(trimmedName)
+                            if authService.session?.displayName == trimmedName {
+                                dismiss()
+                            }
+                        }
+                    }
+                    .font(.frogCaption.weight(.bold))
+                    .foregroundStyle(canSave ? FrogTheme.orange : FrogTheme.muted)
+                    .disabled(!canSave)
+                }
+            }
+            .onAppear { isFocused = true }
+        }
+    }
+}
+
 // MARK: - Title picker (稱號)
 
 /// Lets the user equip one of the 稱號 they've unlocked (one per conquered peak)
@@ -683,7 +811,7 @@ private struct TitlePickerSheet: View {
     private var conquered: [Mountain] {
         checkInStore.visitedMountainIds
             .map { MountainCatalog.mountain(id: $0) }
-            .sorted { ($0.topRank ?? .max, $0.id) < ($1.topRank ?? .max, $1.id) }
+            .sorted { (MountainCatalog.heightRankSortValue(for: $0.id), $0.id) < (MountainCatalog.heightRankSortValue(for: $1.id), $1.id) }
     }
 
     var body: some View {
@@ -770,6 +898,7 @@ private struct TitlePickerSheet: View {
 
 private struct GuestOnboardingView: View {
     let onStart: () -> Void
+    @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
 
     var body: some View {
         GeometryReader { proxy in
@@ -777,7 +906,7 @@ private struct GuestOnboardingView: View {
 
             ScrollView {
                 ZStack(alignment: .topLeading) {
-                    MountainPhoto(mountain: MountainCatalog.mountain(id: "sunset-peak"), dimming: 0)
+                    MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true)
                         .frame(height: proxy.size.height * 0.62 + topInset)
 
                     LinearGradient(
@@ -1010,7 +1139,9 @@ struct FullPassportStampsView: View {
 
     private var grouped: [(region: String, peaks: [Mountain])] {
         Dictionary(grouping: MountainCatalog.mountains, by: { $0.region })
-            .map { (region: $0.key, peaks: $0.value.sorted { ($0.topRank ?? 9999) < ($1.topRank ?? 9999) }) }
+            .map { (region: $0.key, peaks: $0.value.sorted {
+                MountainCatalog.heightRankSortValue(for: $0.id) < MountainCatalog.heightRankSortValue(for: $1.id)
+            }) }
             .sorted { $0.peaks.count > $1.peaks.count }
     }
 

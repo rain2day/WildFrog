@@ -9,6 +9,7 @@ struct HomeMapListView: View {
     @State private var sortMode = SortMode.rank
     @State private var showNotifications = false
     @State private var mapStyleHybrid = false
+    @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
     @State private var mapPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 22.34, longitude: 114.16),
@@ -35,7 +36,7 @@ struct HomeMapListView: View {
     }
 
     private var recommendedMountain: Mountain {
-        MountainCatalog.featured.first { !checkInStore.hasVisited(mountainId: $0.id) } ?? MountainCatalog.featured.first ?? MountainCatalog.mountain(id: "tai-mo-shan")
+        MountainCatalog.featured.first { !checkInStore.hasVisited(mountainId: $0.id) } ?? MountainCatalog.featured.first ?? MountainCatalog.mountain(id: heroMountainId)
     }
 
     private var filteredMountains: [Mountain] {
@@ -60,7 +61,9 @@ struct HomeMapListView: View {
         case .checked:
             return filtered.filter { checkInStore.count(for: $0.id) > 0 }.sorted { checkInStore.count(for: $0.id) > checkInStore.count(for: $1.id) }
         case .open:
-            return filtered.filter { !checkInStore.hasVisited(mountainId: $0.id) }.sorted { ($0.topRank ?? 9999) < ($1.topRank ?? 9999) }
+            return filtered.filter { !checkInStore.hasVisited(mountainId: $0.id) }.sorted {
+                MountainCatalog.heightRankSortValue(for: $0.id) < MountainCatalog.heightRankSortValue(for: $1.id)
+            }
         }
     }
 
@@ -113,7 +116,7 @@ struct HomeMapListView: View {
     private func heroBanner(topInset: CGFloat) -> some View {
         let ratio = min(1, Double(conqueredCount) / Double(max(1, MountainCatalog.catalogCount)))
         return ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: "tai-mo-shan"), dimming: 0)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true)
 
             // One layered gradient — keep the photo readable top, anchor it bottom.
             LinearGradient(
@@ -581,8 +584,7 @@ private struct MountainDirectoryRow: View {
     @EnvironmentObject private var checkInStore: CheckInStore
 
     private var rankLabel: String {
-        if let rank = mountain.topRank { return "\(rank)" }
-        return "–"
+        MountainCatalog.heightRank(for: mountain.id).map(String.init) ?? "–"
     }
 
     private var myCheckIns: Int { checkInStore.count(for: mountain.id) }
@@ -726,7 +728,9 @@ struct MountainDirectoryView: View {
 
     private var grouped: [(region: String, peaks: [Mountain])] {
         Dictionary(grouping: filtered, by: { $0.region })
-            .map { (region: $0.key, peaks: $0.value.sorted { ($0.topRank ?? 9999) < ($1.topRank ?? 9999) }) }
+            .map { (region: $0.key, peaks: $0.value.sorted {
+                MountainCatalog.heightRankSortValue(for: $0.id) < MountainCatalog.heightRankSortValue(for: $1.id)
+            }) }
             .sorted { $0.peaks.count > $1.peaks.count }
     }
 

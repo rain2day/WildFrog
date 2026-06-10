@@ -110,6 +110,10 @@ struct ProfileAuthSession: Equatable {
     let displayName: String?
     let providerLabel: String
 
+    var isReviewerAccount: Bool {
+        WildFrogReviewerAccess.isReviewerEmail(email)
+    }
+
     var profileLine: String {
         if let displayName, !displayName.isEmpty {
             return displayName
@@ -135,6 +139,15 @@ enum ProfileExternalAuthProvider {
     case google
     case apple
     case phone
+}
+
+enum WildFrogReviewerAccess {
+    static let accountEmail = "rainsdayjp+wildfrog-asc-20260610@gmail.com"
+
+    static func isReviewerEmail(_ email: String?) -> Bool {
+        guard let email else { return false }
+        return email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == accountEmail
+    }
 }
 
 @MainActor
@@ -173,6 +186,10 @@ final class ProfileAuthService {
 
     var profileLine: String {
         session?.profileLine ?? "用頭像同登入同步你的登山紀錄"
+    }
+
+    var canUseReviewerTools: Bool {
+        session?.isReviewerAccount == true
     }
 
     func signInWithEmail(email: String, password: String) async {
@@ -438,6 +455,50 @@ final class ProfileAuthService {
         #endif
     }
 
+    func updateDisplayName(_ rawName: String) async {
+        let trimmedName = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            statusMessage = "名稱不可留空。"
+            return
+        }
+        guard trimmedName.count <= 24 else {
+            statusMessage = "名稱最多 24 個字。"
+            return
+        }
+
+        #if canImport(FirebaseAuth)
+        guard let user = Auth.auth().currentUser else {
+            replaceSessionDisplayName(trimmedName)
+            statusMessage = "名稱已更新。"
+            return
+        }
+
+        isBusy = true
+        defer { isBusy = false }
+
+        do {
+            let request = user.createProfileChangeRequest()
+            request.displayName = trimmedName
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                request.commitChanges { error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
+            replaceSessionDisplayName(trimmedName)
+            statusMessage = "名稱已更新。"
+        } catch {
+            statusMessage = Self.readableAuthError(error)
+        }
+        #else
+        replaceSessionDisplayName(trimmedName)
+        statusMessage = "名稱已更新。"
+        #endif
+    }
+
     func noteAvatarUpdated() {
         statusMessage = "頭像已更新"
     }
@@ -566,6 +627,17 @@ final class ProfileAuthService {
 
     private func markFirebaseAuthMissing() {
         statusMessage = "Firebase Auth SDK 未連入此 build，Email 登入未能執行。"
+    }
+
+    private func replaceSessionDisplayName(_ displayName: String) {
+        guard let current = session else { return }
+        session = ProfileAuthSession(
+            uid: current.uid,
+            email: current.email,
+            phoneNumber: current.phoneNumber,
+            displayName: displayName,
+            providerLabel: current.providerLabel
+        )
     }
 
     private static func readableAuthError(_ error: Error) -> String {

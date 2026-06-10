@@ -102,16 +102,22 @@ struct ProviderPickerSheet: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                WildFrogBrandMark(size: 38, cornerRadius: 10)
-                VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 14) {
+                WildFrogBrandMark(size: 92)
+                    .shadow(color: FrogTheme.warmShadow.opacity(0.12), radius: 12, y: 5)
+
+                VStack(alignment: .leading, spacing: 4) {
                     Text("登入 WildFrog")
                         .font(.frogDisplay)
                         .foregroundStyle(FrogTheme.forest)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+
                     Text("揀一個方式開始記錄你的山旅")
                         .font(.frogCaption.weight(.semibold))
                         .foregroundStyle(FrogTheme.muted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }

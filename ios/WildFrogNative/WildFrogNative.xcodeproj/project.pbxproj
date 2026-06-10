@@ -47,6 +47,8 @@
 		B6001A0000000001 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000000 /* NotificationsView.swift */; };
 		B6001A0000000011 /* AllAchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000010 /* AllAchievementsView.swift */; };
 		B6001A0000000031 /* ProviderPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000030 /* ProviderPickerSheet.swift */; };
+		B6001A0000000051 /* SeedLeaderboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000050 /* SeedLeaderboard.swift */; };
+		B6001A0000000061 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B6001A0000000060 /* PrivacyInfo.xcprivacy */; };
 		CF001A0000000041 /* CheckInMapPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF001A0000000040 /* CheckInMapPickerView.swift */; };
 /* End PBXBuildFile section */
 
@@ -114,6 +116,8 @@
 		B6001A0000000000 /* NotificationsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		B6001A0000000010 /* AllAchievementsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AllAchievementsView.swift; sourceTree = "<group>"; };
 		B6001A0000000030 /* ProviderPickerSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProviderPickerSheet.swift; sourceTree = "<group>"; };
+		B6001A0000000050 /* SeedLeaderboard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeedLeaderboard.swift; sourceTree = "<group>"; };
+		B6001A0000000060 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -198,8 +202,10 @@
 				B6001A0000000000 /* NotificationsView.swift */,
 				B6001A0000000010 /* AllAchievementsView.swift */,
 				B6001A0000000030 /* ProviderPickerSheet.swift */,
+				B6001A0000000050 /* SeedLeaderboard.swift */,
 				CF001A0000000040 /* CheckInMapPickerView.swift */,
 				84A431EB3110467D0BCDBA30 /* Info.plist */,
+				B6001A0000000060 /* PrivacyInfo.xcprivacy */,
 				FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */,
 				1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */,
 			);
@@ -330,6 +336,7 @@
 			files = (
 				49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */,
 				A18AAA85EBE65F04DE3A8860 /* GoogleService-Info.plist in Resources */,
+				B6001A0000000061 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +383,7 @@
 				B6001A0000000001 /* NotificationsView.swift in Sources */,
 				B6001A0000000011 /* AllAchievementsView.swift in Sources */,
 				B6001A0000000031 /* ProviderPickerSheet.swift in Sources */,
+				B6001A0000000051 /* SeedLeaderboard.swift in Sources */,
 				CF001A0000000041 /* CheckInMapPickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -417,7 +425,7 @@
 				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = "$(inherited) -ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -561,7 +569,7 @@
 				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = "$(inherited) -ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -592,7 +600,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -624,7 +632,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
