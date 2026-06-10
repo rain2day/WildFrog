@@ -149,12 +149,6 @@ struct HomeMapListView: View {
 
                 Spacer(minLength: 18)
 
-                Text("已征服 · CONQUERED")
-                    .font(.frogEyebrow)
-                    .tracking(1.8)
-                    .textCase(.uppercase)
-                    .foregroundStyle(.white.opacity(0.6))
-
                 ZStack(alignment: .bottomLeading) {
                     // Height near the art's natural aspect (≈ width / 2.25) so the
                     // massif keeps its real shape instead of stretching into a flat
@@ -162,14 +156,24 @@ struct HomeMapListView: View {
                     ConquestMountainBackdrop(progress: ratio)
                         .frame(height: 158)
 
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text("\(conqueredCount)")
-                            .font(.frogNum(74, weight: .semibold))
-                            .foregroundStyle(.white)
-                        Text("/ \(MountainCatalog.catalogCount)")
-                            .font(.frogNum(20, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.74))
-                            .padding(.bottom, 9)
+                    // Eyebrow rides right above the number so it reads as a kicker
+                    // on the stat instead of floating at the top of the massif.
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("已征服 · CONQUERED")
+                            .font(.frogEyebrow)
+                            .tracking(1.8)
+                            .textCase(.uppercase)
+                            .foregroundStyle(.white.opacity(0.72))
+
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text("\(conqueredCount)")
+                                .font(.frogNum(74, weight: .semibold))
+                                .foregroundStyle(.white)
+                            Text("/ \(MountainCatalog.catalogCount)")
+                                .font(.frogNum(20, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.74))
+                                .padding(.bottom, 9)
+                        }
                     }
                     .shadow(color: .black.opacity(0.35), radius: 8, y: 2)
                 }
@@ -831,22 +835,13 @@ private struct ConquestMountainBackdrop: View {
             let silhouette = ridge(w, h)
 
             ZStack(alignment: .bottomLeading) {
-                // 1 — Parallax range: a fainter copy nudged up + right, cooler
-                // green, so the main massif reads as the near range with depth
-                // behind it rather than a flat cut-out.
-                silhouette
-                    .scaleEffect(x: 1.08, y: 0.86, anchor: .bottom)
-                    .offset(x: w * 0.06, y: -h * 0.09)
-                    .foregroundStyle(FrogTheme.leaf.opacity(0.20))
-                    .blur(radius: 1.5)
-
-                // 2a — Lit crest: a brighter silhouette nudged up a hair so a
+                // 1 — Lit crest: a brighter silhouette nudged up a hair so a
                 // thin bright ridgeline peeks above the body drawn over it.
                 silhouette
                     .foregroundStyle(.white.opacity(0.5))
                     .offset(y: -1.6)
 
-                // 2b — The full massif as an unsurveyed blueprint: a soft body
+                // 2 — The full massif as an unsurveyed blueprint: a soft body
                 // (lighter toward the crest) plus a contour-line texture. Reads
                 // as charted terrain at ANY progress; the conquered swath
                 // (layer 3) just lights it up in green.
