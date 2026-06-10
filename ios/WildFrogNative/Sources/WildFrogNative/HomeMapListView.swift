@@ -802,55 +802,152 @@ struct MountainDirectoryView: View {
 
 // MARK: - Conquest mountain silhouette (real reference art, filled by progress)
 
-/// Conquest as a smooth, natural mountain silhouette that sits BEHIND the headline
-/// number (no background box — straight on the photo). Uses the real reference
-/// silhouette art (`ConquestRidge`, a soft organic range): a faint full range,
-/// with the peaks up to the conquered % filled left-to-right with the leaf→moss
-/// gradient. Sized + bottom-anchored by its parent.
+/// Conquest as a *surveyed massif* sitting behind the headline number (no box —
+/// straight on the photo). Built in layers for crafted depth, all from the same
+/// reference ridge art (`ConquestRidge`):
+///   • a faint parallax ridge offset behind for atmosphere,
+///   • the full unconquered range as a hairline-crested ghost,
+///   • the conquered region revealed left→right with a leaf→moss fill, charted
+///     with topographic contour lines, a summit glow on its crest, and a soft
+///     mist where the slope meets the survey baseline.
+/// Sized + bottom-anchored by its parent. The art's flat base keeps the massif
+/// flush on the progress bar; the peak stays fully inside the band.
 private struct ConquestMountainBackdrop: View {
     var progress: Double
+
+    private var clamped: CGFloat { CGFloat(max(0, min(1, progress))) }
+
+    private func ridge(_ w: CGFloat, _ h: CGFloat) -> some View {
+        Image("ConquestRidge")
+            .renderingMode(.template)
+            .resizable()
+            .frame(width: w, height: h)
+    }
 
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
-            let fillWidth = CGFloat(max(0, min(1, progress))) * w
-            // Stretched to fill the band exactly (full width, parent-controlled
-            // height) so the peak hugs the number instead of being pinned to the
-            // art's natural aspect — a slightly flatter ridge still reads natural.
-            let silhouette = Image("ConquestRidge")
-                .renderingMode(.template)
-                .resizable()
-                .frame(width: w, height: h)
+            let fillWidth = clamped * w
+            let silhouette = ridge(w, h)
 
-            silhouette
-                .foregroundStyle(.white.opacity(0.22))          // faint full range
-                .overlay(alignment: .leading) {
+            ZStack(alignment: .bottomLeading) {
+                // 1 — Parallax range: a fainter copy nudged up + right, cooler
+                // green, so the main massif reads as the near range with depth
+                // behind it rather than a flat cut-out.
+                silhouette
+                    .scaleEffect(x: 1.08, y: 0.86, anchor: .bottom)
+                    .offset(x: w * 0.06, y: -h * 0.09)
+                    .foregroundStyle(FrogTheme.leaf.opacity(0.20))
+                    .blur(radius: 1.5)
+
+                // 2a — Lit crest: a brighter silhouette nudged up a hair so a
+                // thin bright ridgeline peeks above the body drawn over it.
+                silhouette
+                    .foregroundStyle(.white.opacity(0.5))
+                    .offset(y: -1.6)
+
+                // 2b — The full massif as an unsurveyed blueprint: a soft body
+                // (lighter toward the crest) plus a contour-line texture. Reads
+                // as charted terrain at ANY progress; the conquered swath
+                // (layer 3) just lights it up in green.
+                ZStack(alignment: .bottomLeading) {
                     LinearGradient(
-                        colors: [FrogTheme.leaf, FrogTheme.moss],
+                        colors: [.white.opacity(0.22), .white.opacity(0.11)],
                         startPoint: .top, endPoint: .bottom
                     )
                     .frame(width: w, height: h)
-                    .mask { silhouette }                        // shaped to the ridge
-                    .mask(alignment: .leading) {                // revealed by progress
-                        Rectangle().frame(width: fillWidth)
-                    }
+                    FrogContourLines(color: .white.opacity(0.13), lineWidth: 0.8)
+                        .frame(width: w, height: h)
                 }
+                .frame(width: w, height: h, alignment: .bottomLeading)
+                .mask { silhouette }
+
+                // 3 — Conquered region, revealed left→right by progress.
+                ZStack(alignment: .bottomLeading) {
+                    // Saturated leaf→moss→forest body.
+                    LinearGradient(
+                        colors: [FrogTheme.leaf, FrogTheme.moss, FrogTheme.forest],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(width: w, height: h)
+
+                    // Brighter contour texture on the charted side.
+                    FrogContourLines(color: .white.opacity(0.20), lineWidth: 1)
+                        .frame(width: w, height: h)
+
+                    // Summit light grazing the upper slopes toward the crest.
+                    LinearGradient(
+                        colors: [.white.opacity(0.40), .clear],
+                        startPoint: .top, endPoint: .center
+                    )
+                    .frame(width: w, height: h)
+
+                    // Mist where the slope settles onto the survey baseline.
+                    LinearGradient(
+                        colors: [.clear, FrogTheme.warmPaper.opacity(0.14)],
+                        startPoint: .center, endPoint: .bottom
+                    )
+                    .frame(width: w, height: h)
+                }
+                .frame(width: w, height: h, alignment: .bottomLeading)
+                .mask { silhouette }                            // shaped to the ridge
+                .mask(alignment: .leading) {                    // revealed by progress
+                    Rectangle().frame(width: max(fillWidth, 1))
+                }
+
+                // 4 — Survey frontier: a gold tick marking exactly how far the
+                // charted terrain reaches up the slope.
+                if clamped > 0.015 && clamped < 0.99 {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.clear, FrogTheme.gold.opacity(0.6), .clear],
+                                startPoint: .top, endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 1.5, height: h * 0.8)
+                        .offset(x: fillWidth - 0.75)
+                        .blendMode(.screen)
+                }
+            }
         }
         .allowsHitTesting(false)
-        .animation(.easeInOut(duration: 0.4), value: progress)
+        .animation(.easeInOut(duration: 0.45), value: progress)
     }
 }
 
-/// Slim conquest progress bar that sits at the base of the mountain silhouette —
-/// the explicit "how far to 330" track, filling left-to-right with conquest %.
+/// Survey-baseline progress track at the foot of the massif — the explicit
+/// "how far to 330". A slim recessed channel with chainage ticks at the thirds
+/// (110 / 220 / 330), a leaf→moss fill, and a small gold trig-point seal riding
+/// the fill's leading edge like a surveyor's marker planted at the frontier.
 private struct ConquestProgressBar: View {
     var progress: Double
 
+    private var clamped: CGFloat { CGFloat(max(0, min(1, progress))) }
+    private let barHeight: CGFloat = 7
+
     var body: some View {
         GeometryReader { geo in
+            let w = geo.size.width
+            let fill = max(barHeight, w * clamped)
+
             ZStack(alignment: .leading) {
+                // Recessed channel.
                 Capsule()
-                    .fill(Color.white.opacity(0.22))
+                    .fill(Color.black.opacity(0.22))
+                    .overlay(
+                        Capsule().stroke(Color.white.opacity(0.14), lineWidth: 0.5)
+                    )
+
+                // Chainage ticks at the thirds — survey baseline marks.
+                ForEach([1, 2], id: \.self) { i in
+                    Capsule()
+                        .fill(Color.white.opacity(0.28))
+                        .frame(width: 1.5, height: barHeight - 2)
+                        .offset(x: w * CGFloat(i) / 3 - 0.75)
+                }
+
+                // Charted fill.
                 Capsule()
                     .fill(
                         LinearGradient(
@@ -858,11 +955,39 @@ private struct ConquestProgressBar: View {
                             startPoint: .leading, endPoint: .trailing
                         )
                     )
-                    .frame(width: max(10, geo.size.width * CGFloat(min(1, max(0, progress)))))
+                    .frame(width: fill)
+                    .overlay(alignment: .top) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(height: 1.5)
+                            .padding(.horizontal, 2)
+                    }
+
+                // Trig-point seal planted at the frontier of progress. Sits ON
+                // the bar (below the numeral) so it never collides with "16".
+                TrigPointSeal()
+                    .frame(width: 13, height: 13)
+                    .offset(x: min(fill, w) - 6.5)
             }
         }
-        .frame(height: 7)
+        .frame(height: barHeight)
         .allowsHitTesting(false)
-        .animation(.easeInOut(duration: 0.4), value: progress)
+        .animation(.easeInOut(duration: 0.45), value: progress)
+    }
+}
+
+/// A surveyor's trig-point marker: a gold-rimmed disc with an inner triangle —
+/// the seal motif used across the app, miniaturised to ride the progress edge.
+private struct TrigPointSeal: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(FrogTheme.warmPaper)
+                .overlay(Circle().stroke(FrogTheme.gold, lineWidth: 1.4))
+            WildFrogMark()
+                .fill(FrogTheme.forest)
+                .padding(2.8)
+        }
+        .shadow(color: .black.opacity(0.35), radius: 2.5, y: 1)
     }
 }
