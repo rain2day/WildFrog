@@ -189,7 +189,7 @@ private struct CheckInMapMode: View {
         ZStack(alignment: .bottom) {
             Map(position: $mapPosition, selection: $selectedMountainId) {
                 if let radiusMountain {
-                    CheckInRadiusMapOverlay.circleWithLabel(center: radiusMountain.coordinate)
+                    CheckInRadiusMapOverlay.circle(center: radiusMountain.coordinate)
                 }
 
                 UserAnnotation()

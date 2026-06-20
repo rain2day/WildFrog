@@ -432,7 +432,7 @@ struct MountainDetailView: View {
                 .font(.headline.weight(.black))
 
             Map(position: $mapCamera) {
-                CheckInRadiusMapOverlay.circleWithLabel(center: mountain.coordinate)
+                CheckInRadiusMapOverlay.circle(center: mountain.coordinate)
                 Marker(mountain.localizedName, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
                     .tint(FrogTheme.orange)
                 UserAnnotation()

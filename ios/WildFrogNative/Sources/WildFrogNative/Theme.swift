@@ -44,49 +44,22 @@ enum CheckInRadiusMapOverlay {
         CLLocationDistance(CheckInRules.radiusMeters)
     }
 
+    private static let radiusHaloColor = Color(red: 0.376, green: 0.745, blue: 0.949)
+    private static let radiusEdgeColor = Color(red: 0.094, green: 0.569, blue: 0.886)
+
+    /// Geo-anchored radius halo. Stays pure `MapContent` on purpose: driving the
+    /// circle size from `MapProxy.convert` inside the map content creates an
+    /// AttributeGraph feedback loop (projection → annotation size → re-layout → …)
+    /// that pegs the main thread and freezes the app. Do not reintroduce a proxy.
     @MapContentBuilder
     static func circle(center: CLLocationCoordinate2D) -> some MapContent {
+        // Translucent blue check-in zone, à la Apple Maps' location-accuracy ring.
+        // IMPORTANT: fill + stroke must live on ONE MapCircle. A stroke-only
+        // MapCircle defaults to an opaque (near-black) fill — that was the
+        // "solid black circle" bug. Always pair an explicit .foregroundStyle.
         MapCircle(center: center, radius: radius)
-            .foregroundStyle(Color(red: 109 / 255, green: 162 / 255, blue: 196 / 255).opacity(0.24))
-        MapCircle(center: center, radius: radius)
-            .stroke(Color.black.opacity(0.72), lineWidth: 1.4)
-    }
-
-    @MapContentBuilder
-    static func circleWithLabel(center: CLLocationCoordinate2D) -> some MapContent {
-        circle(center: center)
-        Annotation("\(CheckInRules.radiusMeters)m", coordinate: labelCoordinate(from: center), anchor: .center) {
-            Text("\(CheckInRules.radiusMeters)m")
-                .font(.frogNum(26, weight: .heavy))
-                .foregroundStyle(.black)
-                .lineLimit(1)
-                .padding(.horizontal, 13)
-                .padding(.vertical, 6)
-                .background(Color.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .shadow(color: Color.black.opacity(0.12), radius: 5, y: 2)
-                .accessibilityLabel(AppText.value(zh: "打卡範圍 \(CheckInRules.radiusMeters) 米", en: "\(CheckInRules.radiusMeters)-metre check-in radius"))
-        }
-    }
-
-    private static func labelCoordinate(from center: CLLocationCoordinate2D) -> CLLocationCoordinate2D {
-        let bearing = 315.0 * .pi / 180.0
-        let angularDistance = (radius * 0.48) / 6_371_000.0
-        let latitude = center.latitude * .pi / 180.0
-        let longitude = center.longitude * .pi / 180.0
-
-        let labelLatitude = asin(
-            sin(latitude) * cos(angularDistance) +
-            cos(latitude) * sin(angularDistance) * cos(bearing)
-        )
-        let labelLongitude = longitude + atan2(
-            sin(bearing) * sin(angularDistance) * cos(latitude),
-            cos(angularDistance) - sin(latitude) * sin(labelLatitude)
-        )
-
-        return CLLocationCoordinate2D(
-            latitude: labelLatitude * 180.0 / .pi,
-            longitude: labelLongitude * 180.0 / .pi
-        )
+            .foregroundStyle(radiusHaloColor.opacity(0.22))
+            .stroke(radiusEdgeColor.opacity(0.85), lineWidth: 2.5)
     }
 }
 
