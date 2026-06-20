@@ -29,10 +29,10 @@ struct TripDetailView: View {
             if let record, let mountain {
                 content(for: record, mountain: mountain)
             } else {
-                ContentUnavailableView("找不到行程", systemImage: "mountain.2")
+                ContentUnavailableView(AppText.value(zh: "找不到行程", en: "Trip Not Found"), systemImage: "mountain.2")
             }
         }
-        .navigationTitle(mountain?.nameZh ?? "行程")
+        .localizedNavigationTitle { mountain?.localizedName ?? AppText.value(zh: "行程", en: "Trip") }
         .nativeInlineTitle()
         .background(FrogTheme.paper)
     }
@@ -73,15 +73,15 @@ struct TripDetailView: View {
                 MapPolyline(coordinates: coordinates)
                     .stroke(FrogTheme.orange, lineWidth: 5)
                 if let start = coordinates.first {
-                    Marker("起點", systemImage: "flag.fill", coordinate: start)
+                    Marker(AppText.value(zh: "起點", en: "Start"), systemImage: "flag.fill", coordinate: start)
                         .tint(FrogTheme.moss)
                 }
                 if let end = coordinates.last {
-                    Marker("山頂打卡", systemImage: "flag.checkered", coordinate: end)
+                    Marker(AppText.value(zh: "山頂打卡", en: "Summit Check-in"), systemImage: "flag.checkered", coordinate: end)
                         .tint(FrogTheme.orange)
                 }
             } else {
-                Marker(mountain.nameZh, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
+                Marker(mountain.localizedName, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
                     .tint(FrogTheme.orange)
             }
         }
@@ -89,7 +89,7 @@ struct TripDetailView: View {
         .frame(height: 280)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(alignment: .topLeading) {
-            Label(record.track != nil ? "軌跡回放" : "山頂位置", systemImage: record.track != nil ? "point.topleft.down.curvedto.point.bottomright.up.fill" : "mappin.and.ellipse")
+            Label(record.track != nil ? AppText.value(zh: "軌跡回放", en: "Track Replay") : AppText.value(zh: "山頂位置", en: "Summit Location"), systemImage: record.track != nil ? "point.topleft.down.curvedto.point.bottomright.up.fill" : "mappin.and.ellipse")
                 .font(.frogMicro.weight(.black))
                 .foregroundStyle(.white)
                 .lineLimit(1)
@@ -128,11 +128,11 @@ struct TripDetailView: View {
             }
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(mountain.displayName)
+                    Text(mountain.localizedName)
                         .font(.frogTitle)
                         .lineLimit(2)
                         .minimumScaleFactor(0.72)
-                    Text("\(mountain.region) · \(mountain.height)m")
+                    Text("\(mountain.localizedRegion) · \(mountain.height)m")
                         .font(.frogCaption.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -152,17 +152,17 @@ struct TripDetailView: View {
 
     private func statsPanel(for record: CheckInRecord, mountain: Mountain) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("行程數據")
+            Text(AppText.value(zh: "行程數據", en: "Trip Stats"))
                 .font(.headline.weight(.black))
                 .foregroundStyle(FrogTheme.ink)
 
             if let track = record.track {
                 HStack(spacing: 10) {
-                    StatCard(value: TrackFormat.distance(track.distanceMeters), label: "距離", systemImage: "ruler", tint: FrogTheme.moss)
+                    StatCard(value: TrackFormat.distance(track.distanceMeters), label: AppText.value(zh: "距離", en: "Distance"), systemImage: "ruler", tint: FrogTheme.moss)
                         .frame(maxWidth: .infinity)
-                    StatCard(value: TrackFormat.duration(track.durationSeconds), label: "時間", systemImage: "clock", tint: FrogTheme.orange)
+                    StatCard(value: TrackFormat.duration(track.durationSeconds), label: AppText.value(zh: "時間", en: "Time"), systemImage: "clock", tint: FrogTheme.orange)
                         .frame(maxWidth: .infinity)
-                    StatCard(value: "\(Int(track.ascentMeters))m", label: "累積爬升", systemImage: "arrow.up.forward", tint: FrogTheme.gold)
+                    StatCard(value: "\(Int(track.ascentMeters))m", label: AppText.value(zh: "累積爬升", en: "Ascent"), systemImage: "arrow.up.forward", tint: FrogTheme.gold)
                         .frame(maxWidth: .infinity)
                 }
             } else {
@@ -170,7 +170,7 @@ struct TripDetailView: View {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(FrogTheme.orange)
-                    Text("直接打卡 · 未記錄軌跡")
+                    Text(AppText.value(zh: "直接打卡 · 未記錄軌跡", en: "Direct check-in · no track recorded"))
                         .font(.frogCaption.weight(.semibold))
                         .foregroundStyle(FrogTheme.muted)
                 }
@@ -193,7 +193,7 @@ struct TripDetailView: View {
         Button {
             showCertificate = true
         } label: {
-            Label("查看登頂證書", systemImage: "rosette")
+            Label(AppText.value(zh: "查看登頂證書", en: "View Summit Certificate"), systemImage: "rosette")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)

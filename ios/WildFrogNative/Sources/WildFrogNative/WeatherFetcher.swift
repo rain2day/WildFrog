@@ -60,18 +60,18 @@ enum WeatherFetcher {
     @available(iOS 16.0, *)
     private static func localizedCondition(_ condition: WeatherCondition) -> String {
         switch condition {
-        case .clear, .mostlyClear, .hot: return "晴"
-        case .partlyCloudy: return "部分多雲"
-        case .cloudy, .mostlyCloudy: return "多雲"
-        case .foggy: return "有霧"
-        case .haze: return "煙霞"
-        case .windy, .breezy: return "有風"
-        case .drizzle: return "毛毛雨"
-        case .rain: return "有雨"
-        case .heavyRain: return "大雨"
-        case .thunderstorms, .isolatedThunderstorms, .scatteredThunderstorms: return "雷暴"
-        case .snow, .flurries, .heavySnow, .sleet: return "有雪"
-        default: return "多雲"
+        case .clear, .mostlyClear, .hot: return AppText.value(zh: "晴", en: "Clear")
+        case .partlyCloudy: return AppText.value(zh: "部分多雲", en: "Partly Cloudy")
+        case .cloudy, .mostlyCloudy: return AppText.value(zh: "多雲", en: "Cloudy")
+        case .foggy: return AppText.value(zh: "有霧", en: "Foggy")
+        case .haze: return AppText.value(zh: "煙霞", en: "Hazy")
+        case .windy, .breezy: return AppText.value(zh: "有風", en: "Windy")
+        case .drizzle: return AppText.value(zh: "毛毛雨", en: "Drizzle")
+        case .rain: return AppText.value(zh: "有雨", en: "Rain")
+        case .heavyRain: return AppText.value(zh: "大雨", en: "Heavy Rain")
+        case .thunderstorms, .isolatedThunderstorms, .scatteredThunderstorms: return AppText.value(zh: "雷暴", en: "Thunderstorms")
+        case .snow, .flurries, .heavySnow, .sleet: return AppText.value(zh: "有雪", en: "Snow")
+        default: return AppText.value(zh: "多雲", en: "Cloudy")
         }
     }
     #endif

@@ -57,7 +57,7 @@ struct MountainPhoto: View {
     @ViewBuilder
     private func imageSourceBadge(hasUserPhoto: Bool) -> some View {
         if mountain.usesIllustrativeImage {
-            Text(hasUserPhoto ? "你的實拍" : "示意圖 · 打卡相會取代")
+            Text(hasUserPhoto ? AppText.value(zh: "你的實拍", en: "Your Photo") : AppText.value(zh: "示意圖 · 打卡相會取代", en: "Sample · replaced after check-in"))
                 .font(.caption2.weight(.black))
                 .foregroundStyle(.white)
                 .lineLimit(1)

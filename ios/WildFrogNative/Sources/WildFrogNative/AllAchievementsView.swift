@@ -22,6 +22,79 @@ struct AllAchievementsView: View {
         let tint: Color
         let metric: AchievementMetric
         let threshold: Int
+
+        var localizedTitle: String {
+            AppText.value(zh: title, en: englishTitle)
+        }
+
+        var localizedDescription: String {
+            AppText.value(zh: description, en: englishDescription)
+        }
+
+        private var englishTitle: String {
+            switch id {
+            case "peaks1": return "First Peak"
+            case "peaks3": return "First Steps"
+            case "peaks5": return "Five Peaks"
+            case "peaks10": return "Ten Peaks"
+            case "peaks15": return "Trail Regular"
+            case "peaks20": return "Trailblazer"
+            case "peaks25": return "Twenty-five Peaks"
+            case "peaks30": return "Explorer"
+            case "peaks40": return "Forty Peaks"
+            case "peaks50": return "Peak Explorer"
+            case "peaks60": return "Sixty Peaks"
+            case "peaks75": return "Summit Seeker"
+            case "peaks100": return "Century Hiker"
+            case "peaks125": return "125 Peaks"
+            case "peaks150": return "Half Way"
+            case "peaks200": return "Two Hundred Peaks"
+            case "peaks250": return "Peak Master"
+            case "peaks300": return "300 Peak Champion"
+            case "checkins1": return "First Check-in"
+            case "checkins25": return "Dedicated Logger"
+            case "checkins75": return "Check-in Regular"
+            case "checkins150": return "Check-in Expert"
+            case "checkins300": return "Check-in Champion"
+            case "days3": return "Three Active Days"
+            case "days7": return "Seven Active Days"
+            case "days15": return "Fifteen Active Days"
+            case "days30": return "Thirty Active Days"
+            case "days60": return "Sixty Active Days"
+            case "days100": return "Hundred Active Days"
+            case "days200": return "Two Hundred Active Days"
+            case "regions2": return "Two-region Walker"
+            case "regions3": return "Three-region Trekker"
+            case "regions4": return "All-region Explorer"
+            case "regionNT10": return "New Territories Starter"
+            case "regionNT30": return "New Territories Trekker"
+            case "regionNT60": return "New Territories Master"
+            case "regionLantau10": return "Lantau Starter"
+            case "regionLantau30": return "Lantau Trekker"
+            case "regionHKI10": return "Hong Kong Island Starter"
+            case "regionHKI25": return "Hong Kong Island Master"
+            case "regionKLN15": return "Kowloon Peaks"
+            case "height957": return "Highest Point"
+            default: return title
+            }
+        }
+
+        private var englishDescription: String {
+            switch metric {
+            case .peaks:
+                return threshold == 1 ? "Summit 1 peak" : "Summit \(threshold) peaks"
+            case .checkIns:
+                return threshold == 1 ? "Complete 1 check-in" : "Complete \(threshold) check-ins"
+            case .region(let region):
+                return "Summit \(threshold) peaks in \(AppText.region(region))"
+            case .height:
+                return "Reach a peak above \(threshold)m"
+            case .activeDays:
+                return threshold == 1 ? "Check in on 1 active day" : "Check in on \(threshold) active days"
+            case .regions:
+                return "Explore \(threshold) Hong Kong regions"
+            }
+        }
     }
 
     private var achievements: [Achievement] {
@@ -112,10 +185,10 @@ struct AllAchievementsView: View {
             VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("成就徽章")
+                        Text(AppText.value(zh: "成就徽章", en: "Achievement Badges"))
                             .font(.system(size: 26, weight: .black, design: .rounded))
                             .foregroundStyle(FrogTheme.forest)
-                        Text("已解鎖 \(unlockedCount) / \(achievements.count)")
+                        Text(AppText.value(zh: "已解鎖 \(unlockedCount) / \(achievements.count)", en: "Unlocked \(unlockedCount) / \(achievements.count)"))
                             .font(.frogCaption.weight(.semibold))
                             .foregroundStyle(FrogTheme.muted)
                     }
@@ -138,12 +211,12 @@ struct AllAchievementsView: View {
                             )
 
                             VStack(spacing: 3) {
-                                Text(badge.title)
+                                Text(badge.localizedTitle)
                                     .font(.frogRow.weight(.black))
                                     .foregroundStyle(unlocked ? FrogTheme.ink : FrogTheme.muted)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
-                                Text(badge.description)
+                                Text(badge.localizedDescription)
                                     .font(.frogMicro)
                                     .foregroundStyle(FrogTheme.muted)
                                     .multilineTextAlignment(.center)
@@ -167,7 +240,7 @@ struct AllAchievementsView: View {
             .padding(FrogSpace.screenPadding)
             .padding(.bottom, 40)
         }
-        .navigationTitle("成就")
+        .localizedNavigationTitle { AppText.value(zh: "成就", en: "Achievements") }
         .nativeInlineTitle()
         .background(FrogTheme.warmPaper.ignoresSafeArea())
     }
@@ -177,6 +250,7 @@ struct AllAchievementsView: View {
 
 struct AllLeaderboardView: View {
     let scope: SeedLeaderboardScope
+    let profiles: [SeedHikerProfile]
 
     @State private var selectedUser: LeaderboardUserSelection?
     @Environment(ProfileAuthService.self) private var authService
@@ -184,9 +258,13 @@ struct AllLeaderboardView: View {
     @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
 
     private var now: Date { Date() }
-    private var allUsers: [SeedLeaderboardEntry] { SeedLeaderboard.entries(scope: scope, asOf: now) }
-    private var titleText: String { scope == .month ? "本月好友全榜" : "總榜好友全榜" }
-    private var scoreLabel: String { scope == .month ? "本月" : "總計" }
+    private var allUsers: [SeedLeaderboardEntry] { SeedLeaderboard.entries(profiles: profiles, scope: scope, asOf: now) }
+    private var titleText: String {
+        scope == .month
+            ? AppText.value(zh: "本月公開全榜", en: "Monthly Public Ranking")
+            : AppText.value(zh: "總榜公開全榜", en: "All-time Public Ranking")
+    }
+    private var scoreLabel: String { scope == .month ? AppText.value(zh: "本月", en: "Month") : AppText.value(zh: "總計", en: "Total") }
 
     private var myScore: Int {
         switch scope {
@@ -202,14 +280,15 @@ struct AllLeaderboardView: View {
         }
     }
 
-    private var myRank: Int {
-        SeedLeaderboard.rank(for: myScore, scope: scope, asOf: now)
+    private var myRank: Int? {
+        guard !profiles.isEmpty else { return nil }
+        return SeedLeaderboard.rank(for: myScore, among: profiles, scope: scope, asOf: now)
     }
 
     private var equippedTitle: String? {
         guard !equippedTitleId.isEmpty,
               checkInStore.visitedMountainIds.contains(equippedTitleId) else { return nil }
-        return MountainCatalog.mountain(id: equippedTitleId).unlockTitle
+        return MountainCatalog.mountain(id: equippedTitleId).localizedUnlockTitle
     }
 
     private var myAvatarId: String {
@@ -236,19 +315,27 @@ struct AllLeaderboardView: View {
                             score: myScore,
                             scoreLabel: scoreLabel,
                             displayName: authService.profileLine,
-                            subtitle: equippedTitle ?? "你的紀錄",
+                            subtitle: equippedTitle ?? AppText.value(zh: "你的紀錄", en: "Your record"),
                             avatarMountainId: myAvatarId
                         )
                     }
                     .buttonStyle(.plain)
 
-                    ForEach(allUsers) { user in
-                        Button {
-                            selectedUser = .seed(user)
-                        } label: {
-                            AllLeaderboardRow(user: user, scope: scope, scoreLabel: scoreLabel)
+                    if allUsers.isEmpty {
+                        Text(AppText.value(zh: "暫時未有公開排行", en: "No public ranking yet"))
+                            .font(.frogCaption)
+                            .foregroundStyle(FrogTheme.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(14)
+                    } else {
+                        ForEach(allUsers) { user in
+                            Button {
+                                selectedUser = .seed(user)
+                            } label: {
+                                AllLeaderboardRow(user: user, scope: scope, scoreLabel: scoreLabel)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .cardStyle()
@@ -256,7 +343,7 @@ struct AllLeaderboardView: View {
             .padding(FrogSpace.screenPadding)
             .padding(.bottom, 40)
         }
-        .navigationTitle("全榜")
+        .localizedNavigationTitle { AppText.value(zh: "全榜", en: "Full Ranking") }
         .nativeInlineTitle()
         .background(FrogTheme.warmPaper.ignoresSafeArea())
         .sheet(item: $selectedUser) { selection in
@@ -271,7 +358,7 @@ struct AllLeaderboardView: View {
                 .withNativeRoutes()
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("完成") { selectedUser = nil }
+                        Button(AppText.value(zh: "完成", en: "Done")) { selectedUser = nil }
                             .font(.frogCaption.weight(.bold))
                             .foregroundStyle(FrogTheme.orange)
                     }
@@ -339,7 +426,7 @@ private struct AllLeaderboardRow: View {
 }
 
 private struct AllCurrentUserLeaderboardRow: View {
-    let rank: Int
+    let rank: Int?
     let score: Int
     let scoreLabel: String
     let displayName: String
@@ -348,7 +435,7 @@ private struct AllCurrentUserLeaderboardRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text("\(rank)")
+            Text(rank.map(String.init) ?? "—")
                 .font(.headline.weight(.black))
                 .foregroundStyle(FrogTheme.orange)
                 .frame(width: 34, alignment: .leading)

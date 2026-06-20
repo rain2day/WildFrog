@@ -32,22 +32,29 @@ struct WildFrogTrackLiveActivity: Widget {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                        .padding(.leading, 10)
+                        .padding(.top, 6)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(timeString(context.state.elapsedSeconds))
                         .font(.system(.title3, design: .rounded).weight(.bold))
                         .monospacedDigit()
                         .foregroundStyle(context.state.isPaused ? .orange : .white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+                        .padding(.trailing, 10)
+                        .padding(.top, 4)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(spacing: 9) {
-                        HStack(spacing: 16) {
-                            islandStat("距離", distanceString(context.state.distanceMeters))
-                            islandStat("上升", "\(Int(context.state.ascentMeters))m")
+                        HStack(spacing: 12) {
+                            islandStat("Distance", distanceString(context.state.distanceMeters))
+                            islandStat("Ascent", "\(Int(context.state.ascentMeters))m")
                             if let toSummit = context.state.distanceToSummitMeters {
-                                islandStat("距山頂", distanceString(toSummit))
+                                islandStat("To Summit", distanceString(toSummit))
                             }
-                            Spacer()
+                            Spacer(minLength: 0)
 
                             Button(intent: TrackPauseResumeIntent()) {
                                 Image(systemName: context.state.isPaused ? "play.fill" : "pause.fill")
@@ -65,6 +72,8 @@ struct WildFrogTrackLiveActivity: Widget {
                         )
                     }
                     .padding(.top, 2)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
                 }
             } compactLeading: {
                 SummitProgressRing(
@@ -89,8 +98,17 @@ struct WildFrogTrackLiveActivity: Widget {
 
     private func islandStat(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(label).font(.caption2).foregroundStyle(.white.opacity(0.7))
-            Text(value).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(.white)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.7))
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+            Text(value)
+                .font(.caption.weight(.bold))
+                .monospacedDigit()
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
         }
     }
 }
@@ -98,7 +116,7 @@ struct WildFrogTrackLiveActivity: Widget {
 /// Collapsed-island status: paused flag, else live distance to the summit,
 /// else elapsed time before the first GPS fix.
 private func compactStatusText(_ state: WildFrogTrackAttributes.ContentState) -> String {
-    if state.isPaused { return "暫停" }
+    if state.isPaused { return "Paused" }
     if let toSummit = state.distanceToSummitMeters { return distanceString(toSummit) }
     return timeString(state.elapsedSeconds)
 }
@@ -149,7 +167,7 @@ struct SummitProgressBar: View {
                 .frame(height: 5)
             }
             HStack {
-                Text(isPaused ? "已暫停" : "前往打卡點")
+                Text(isPaused ? "Paused" : "To check-in point")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(tint)
                 Spacer()
@@ -199,7 +217,7 @@ struct LockScreenTrackView: View {
                         .font(.system(.title2, design: .rounded).weight(.heavy))
                         .monospacedDigit()
                         .foregroundStyle(.white)
-                    Text(isPaused ? "已暫停" : "記錄中")
+                    Text(isPaused ? "Paused" : "Recording")
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(.orange)
                 }

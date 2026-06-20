@@ -7,7 +7,6 @@ struct HomeMapListView: View {
     @State private var searchText = ""
     @State private var selectedRegion = "全部"
     @State private var sortMode = SortMode.rank
-    @State private var showNotifications = false
     @State private var mapStyleHybrid = false
     @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
     @State private var mapPosition: MapCameraPosition = .region(
@@ -25,6 +24,19 @@ struct HomeMapListView: View {
         case open = "未打卡"
 
         var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .rank:
+                AppText.value(zh: "300峰", en: "300 Peaks")
+            case .height:
+                AppText.value(zh: "高度", en: "Height")
+            case .checked:
+                AppText.value(zh: "已打卡", en: "Checked In")
+            case .open:
+                AppText.value(zh: "未打卡", en: "Open")
+            }
+        }
     }
 
     private var regions: [String] {
@@ -108,15 +120,12 @@ struct HomeMapListView: View {
         }
         .hiddenNavigationBar()
         .appPageBackground(FrogTheme.warmPaper)
-        .sheet(isPresented: $showNotifications) {
-            NotificationsView()
-        }
     }
 
     private func heroBanner(topInset: CGFloat) -> some View {
         let ratio = min(1, Double(conqueredCount) / Double(max(1, MountainCatalog.catalogCount)))
         return ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0)
 
             // One layered gradient — keep the photo readable top, anchor it bottom.
             LinearGradient(
@@ -136,17 +145,6 @@ struct HomeMapListView: View {
                         .shadow(color: Color.black.opacity(0.28), radius: 8, y: 3)
 
                     Spacer()
-
-                    Button { showNotifications = true } label: {
-                        Image(systemName: "bell")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 40, height: 40)
-                            .background(Color.white.opacity(0.13), in: Circle())
-                            .overlay(Circle().stroke(Color.white.opacity(0.24), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("通知")
                 }
                 .padding(.top, topInset + 8)
 
@@ -162,7 +160,7 @@ struct HomeMapListView: View {
                     // Eyebrow rides right above the number so it reads as a kicker
                     // on the stat instead of floating at the top of the massif.
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("已征服 · CONQUERED")
+                        Text(AppText.value(zh: "已征服 · CONQUERED", en: "CONQUERED"))
                             .font(.frogEyebrow)
                             .tracking(1.8)
                             .textCase(.uppercase)
@@ -187,7 +185,10 @@ struct HomeMapListView: View {
                     .padding(.top, 1)
 
                 HStack {
-                    Text("仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服")
+                    Text(AppText.value(
+                        zh: "仲有 \(max(0, MountainCatalog.catalogCount - conqueredCount)) 座未征服",
+                        en: "\(max(0, MountainCatalog.catalogCount - conqueredCount)) peaks left"
+                    ))
                         .font(.frogCaption)
                         .foregroundStyle(.white.opacity(0.8))
                     Spacer()
@@ -203,11 +204,11 @@ struct HomeMapListView: View {
                     .padding(.top, 18)
 
                 HStack(spacing: 0) {
-                    statBandItem(value: totalAscent.formatted(), unit: "m", label: "累計海拔")
+                    statBandItem(value: totalAscent.formatted(), unit: "m", label: AppText.value(zh: "累計海拔", en: "Elevation"))
                     statBandDivider
-                    statBandItem(value: "\(totalCheckIns)", unit: "次", label: "打卡")
+                    statBandItem(value: "\(totalCheckIns)", unit: AppText.value(zh: "次", en: ""), label: AppText.value(zh: "打卡", en: "Check-ins"))
                     statBandDivider
-                    statBandItem(value: "\(checkInStore.currentStreak)", unit: "日", label: "連續")
+                    statBandItem(value: "\(checkInStore.currentStreak)", unit: AppText.value(zh: "日", en: "d"), label: AppText.value(zh: "連續", en: "Streak"))
                 }
                 .padding(.top, 16)
             }
@@ -235,7 +236,7 @@ struct HomeMapListView: View {
         ZStack(alignment: .topLeading) {
             Map(position: $mapPosition, selection: $selectedMarkerID) {
                 ForEach(mapMarkers) { pin in
-                    Marker(pin.mountain.nameZh, systemImage: pin.isVisited ? "checkmark.circle.fill" : "mappin", coordinate: pin.mountain.coordinate)
+                    Marker(pin.mountain.localizedName, systemImage: pin.isVisited ? "checkmark.circle.fill" : "mappin", coordinate: pin.mountain.coordinate)
                         .tint(pin.isVisited ? FrogTheme.orange : FrogTheme.moss)
                         .tag(pin.id)
                 }
@@ -246,7 +247,7 @@ struct HomeMapListView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             HStack {
-                Label("山峰地圖", systemImage: "map.fill")
+                Label(AppText.value(zh: "山峰地圖", en: "Peak Map"), systemImage: "map.fill")
                     .font(.frogCaption.weight(.bold))
                     .foregroundStyle(FrogTheme.forest)
                     .padding(.horizontal, 12)
@@ -270,7 +271,7 @@ struct HomeMapListView: View {
                             scrollProxy.scrollTo("directoryAnchor", anchor: .top)
                         }
                     } label: {
-                        Text("睇晒全部山峰")
+                        Text(AppText.value(zh: "睇晒全部山峰", en: "All Peaks"))
                             .font(.frogCaption.weight(.bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 14)
@@ -295,7 +296,7 @@ struct HomeMapListView: View {
                             MapFloatingButton(systemImage: "location.north.fill")
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("重置地圖")
+                        .accessibilityLabel(AppText.value(zh: "重置地圖", en: "Reset Map"))
 
                         Button {
                             mapStyleHybrid.toggle()
@@ -303,7 +304,7 @@ struct HomeMapListView: View {
                             MapFloatingButton(systemImage: mapStyleHybrid ? "map.fill" : "square.3.layers.3d")
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(mapStyleHybrid ? "標準地圖" : "衛星地圖")
+                        .accessibilityLabel(mapStyleHybrid ? AppText.value(zh: "標準地圖", en: "Standard Map") : AppText.value(zh: "衛星地圖", en: "Satellite Map"))
                     }
                 }
                 .padding(12)
@@ -372,15 +373,15 @@ struct HomeMapListView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("推薦下一座")
+                    Text(AppText.value(zh: "推薦下一座", en: "Next Recommendation"))
                         .font(.frogEyebrow)
                         .tracking(0.5)
                         .foregroundStyle(FrogTheme.orange)
-                    Text(recommendedMountain.displayName)
+                    Text(recommendedMountain.localizedName)
                         .font(.frogRow)
                         .foregroundStyle(FrogTheme.ink)
                         .lineLimit(1)
-                    Text("\(recommendedMountain.region) · \(recommendedMountain.height)m · \(recommendedMountain.rankText)")
+                    Text("\(recommendedMountain.localizedRegion) · \(recommendedMountain.height)m · \(recommendedMountain.localizedRankText)")
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                         .lineLimit(1)
@@ -403,7 +404,7 @@ struct HomeMapListView: View {
     private func featuredRail(scrollProxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Text("精選推介")
+                Text(AppText.value(zh: "精選推介", en: "Featured Peaks"))
                     .font(.frogTitle)
                     .foregroundStyle(FrogTheme.ink)
                 Spacer()
@@ -412,7 +413,7 @@ struct HomeMapListView: View {
                         scrollProxy.scrollTo("directoryAnchor", anchor: .top)
                     }
                 } label: {
-                    Text("全部")
+                    Text(AppText.value(zh: "全部", en: "All"))
                         .font(.frogCaption.weight(.bold))
                         .foregroundStyle(FrogTheme.moss)
                 }
@@ -437,7 +438,7 @@ struct HomeMapListView: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(FrogTheme.faint)
-                TextField("搜尋山峰", text: $searchText)
+                TextField(AppText.value(zh: "搜尋山峰", en: "Search peaks"), text: $searchText)
                     .autocorrectionDisabled()
             }
             .padding(.horizontal, 14)
@@ -452,7 +453,7 @@ struct HomeMapListView: View {
                 HStack(spacing: 8) {
                     ForEach(regions, id: \.self) { region in
                         Button { selectedRegion = region } label: {
-                            Text(region).chipStyle(isSelected: selectedRegion == region)
+                            Text(AppText.region(region)).chipStyle(isSelected: selectedRegion == region)
                         }
                         .buttonStyle(.plain)
                     }
@@ -470,7 +471,10 @@ struct HomeMapListView: View {
                         .font(.frogEyebrow)
                         .tracking(1.4)
                         .foregroundStyle(FrogTheme.moss)
-                    Text("山峰列表 \(filteredMountains.count) / \(MountainCatalog.catalogCount)")
+                    Text(AppText.value(
+                        zh: "山峰列表 \(filteredMountains.count) / \(MountainCatalog.catalogCount)",
+                        en: "Peak Directory \(filteredMountains.count) / \(MountainCatalog.catalogCount)"
+                    ))
                         .font(.frogTitle)
                 }
 
@@ -480,7 +484,7 @@ struct HomeMapListView: View {
                     HStack(spacing: 6) {
                         ForEach(SortMode.allCases) { mode in
                             Button { sortMode = mode } label: {
-                                Text(mode.rawValue).chipStyle(isSelected: sortMode == mode)
+                                Text(mode.title).chipStyle(isSelected: sortMode == mode)
                             }
                             .buttonStyle(.plain)
                         }
@@ -500,7 +504,7 @@ struct HomeMapListView: View {
 
             NavigationLink(value: NativeRoute.allMountains) {
                 HStack(spacing: 6) {
-                    Text("睇晒全部 \(MountainCatalog.catalogCount) 座")
+                    Text(AppText.value(zh: "睇晒全部 \(MountainCatalog.catalogCount) 座", en: "View all \(MountainCatalog.catalogCount) peaks"))
                         .font(.frogCaption.weight(.bold))
                         .foregroundStyle(FrogTheme.forest)
                     Image(systemName: "arrow.right")
@@ -558,10 +562,10 @@ private struct FeaturedMountainCard: View {
                 .padding(9)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(mountain.nameZh)
+                Text(mountain.localizedName)
                     .font(.system(size: 14, weight: .bold))
                     .lineLimit(1)
-                Text("\(mountain.height)m · \(mountain.region)")
+                Text("\(mountain.height)m · \(mountain.localizedRegion)")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white.opacity(0.72))
                     .lineLimit(1)
@@ -599,11 +603,11 @@ private struct MountainDirectoryRow: View {
             MountainThumbnail(mountain: mountain, size: 46)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(mountain.displayName)
+                Text(mountain.localizedName)
                     .font(.frogRow)
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
-                Text("\(mountain.region) · \(mountain.height)m")
+                Text("\(mountain.localizedRegion) · \(mountain.height)m")
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
                     .lineLimit(1)
@@ -612,14 +616,14 @@ private struct MountainDirectoryRow: View {
             Spacer()
 
             if myCheckIns > 0 {
-                Text("\(myCheckIns) 次")
+                Text(AppText.checkIns(myCheckIns))
                     .font(.frogMicro)
                     .foregroundStyle(FrogTheme.moss)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 4)
                     .background(FrogTheme.mossSoft, in: Capsule())
             } else {
-                Text("未打卡")
+                Text(AppText.value(zh: "未打卡", en: "Open"))
                     .font(.frogMicro)
                     .foregroundStyle(FrogTheme.faint)
                     .padding(.horizontal, 9)
@@ -654,11 +658,11 @@ private struct MapPinCalloutCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(mountain.nameZh)
+                Text(mountain.localizedName)
                     .font(.frogRow.bold())
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
-                Text("\(mountain.height)m · \(mountain.region)")
+                Text("\(mountain.height)m · \(mountain.localizedRegion)")
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
                     .lineLimit(1)
@@ -667,7 +671,7 @@ private struct MapPinCalloutCard: View {
             Spacer(minLength: 4)
 
             NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
-                Text("查看詳情")
+                Text(AppText.value(zh: "查看詳情", en: "Details"))
                     .font(.frogCaption.weight(.bold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
@@ -708,6 +712,17 @@ struct MountainDirectoryView: View {
     private enum StatusFilter: String, CaseIterable, Identifiable {
         case all = "全部", done = "已打卡", open = "未打卡"
         var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .all:
+                AppText.value(zh: "全部", en: "All")
+            case .done:
+                AppText.value(zh: "已打卡", en: "Done")
+            case .open:
+                AppText.value(zh: "未打卡", en: "Open")
+            }
+        }
     }
 
     private var filtered: [Mountain] {
@@ -747,7 +762,7 @@ struct MountainDirectoryView: View {
                         }
                     } header: {
                         HStack {
-                            Text(group.region)
+                            Text(AppText.region(group.region))
                                 .font(.frogEyebrow)
                                 .tracking(1.2)
                                 .textCase(.uppercase)
@@ -764,7 +779,7 @@ struct MountainDirectoryView: View {
                 }
 
                 if filtered.isEmpty {
-                    Text("搵唔到符合嘅山峰")
+                    Text(AppText.value(zh: "搵唔到符合嘅山峰", en: "No matching peaks"))
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                         .frame(maxWidth: .infinity)
@@ -779,7 +794,7 @@ struct MountainDirectoryView: View {
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(FrogTheme.faint)
-                    TextField("搜尋 \(MountainCatalog.catalogCount) 座山峰", text: $searchText)
+                    TextField(AppText.value(zh: "搜尋 \(MountainCatalog.catalogCount) 座山峰", en: "Search \(MountainCatalog.catalogCount) peaks"), text: $searchText)
                         .autocorrectionDisabled()
                 }
                 .padding(.horizontal, 14)
@@ -790,7 +805,7 @@ struct MountainDirectoryView: View {
                 HStack(spacing: 8) {
                     ForEach(StatusFilter.allCases) { option in
                         Button { status = option } label: {
-                            Text(option.rawValue).chipStyle(isSelected: status == option)
+                            Text(option.title).chipStyle(isSelected: status == option)
                         }
                         .buttonStyle(.plain)
                     }
@@ -802,7 +817,7 @@ struct MountainDirectoryView: View {
             .padding(.bottom, 10)
             .background(FrogTheme.warmPaper)
         }
-        .navigationTitle("山峰列表")
+        .localizedNavigationTitle { AppText.value(zh: "山峰列表", en: "Peak Directory") }
         .nativeInlineTitle()
         .background(FrogTheme.warmPaper)
     }

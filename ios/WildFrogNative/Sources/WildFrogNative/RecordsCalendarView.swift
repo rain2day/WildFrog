@@ -25,7 +25,7 @@ struct RecordsCalendarView: View {
     }
 
     private var displayedMonthLabel: String {
-        "\(displayedYear)年\(displayedMonthNumber)月"
+        AppText.monthLabel(year: displayedYear, month: displayedMonthNumber)
     }
 
     /// Days in the displayed month that have at least one check-in.
@@ -121,7 +121,7 @@ struct RecordsCalendarView: View {
 
     private func passportCover(topInset: CGFloat) -> some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true, sourceBadgeTopPadding: topInset + 48)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0)
 
             // Single layered gradient — readable photo top, anchored forest bottom.
             LinearGradient(
@@ -158,16 +158,16 @@ struct RecordsCalendarView: View {
                     .font(.frogNum(30, weight: .heavy))
                     .foregroundStyle(.white)
 
-                Text("每一次有效打卡，都變成一本香港山峰護照。")
+                Text(AppText.value(zh: "每一次有效打卡，都變成一本香港山峰護照。", en: "Every valid check-in becomes part of your Hong Kong peak passport."))
                     .font(.frogCaption)
                     .foregroundStyle(.white.opacity(0.76))
                     .lineLimit(2)
                     .padding(.top, 7)
 
                 HStack(spacing: 9) {
-                    PassportCoverMetric(value: "\(activeDays.count)", label: "月內打卡日")
-                    PassportCoverMetric(value: "\(checkInStore.distinctMountainCount)", label: "已到山峰")
-                    PassportCoverMetric(value: "\(checkInStore.currentStreak)", label: "連續日")
+                    PassportCoverMetric(value: "\(activeDays.count)", label: AppText.value(zh: "月內打卡日", en: "Active Days"))
+                    PassportCoverMetric(value: "\(checkInStore.distinctMountainCount)", label: AppText.value(zh: "已到山峰", en: "Peaks"))
+                    PassportCoverMetric(value: "\(checkInStore.currentStreak)", label: AppText.value(zh: "連續日", en: "Streak"))
                 }
                 .padding(.top, 18)
             }
@@ -182,7 +182,7 @@ struct RecordsCalendarView: View {
 
     private var passportStrip: some View {
         VStack(alignment: .leading, spacing: 12) {
-            RecordSectionHeader(title: "山峰印章圖鑑 · STAMPS") {
+            RecordSectionHeader(title: AppText.value(zh: "山峰印章圖鑑 · STAMPS", en: "PEAK STAMP COLLECTION")) {
                 Text("\(checkInStore.distinctMountainCount) / \(MountainCatalog.catalogCount)")
                     .font(.frogNum(12, weight: .semibold))
                     .foregroundStyle(FrogTheme.moss)
@@ -209,7 +209,7 @@ struct RecordsCalendarView: View {
                     Text(displayedMonthLabel)
                         .font(.frogNum(22, weight: .heavy))
                         .foregroundStyle(FrogTheme.forest)
-                    Text("打卡相簿")
+                    Text(AppText.value(zh: "打卡相簿", en: "Check-in Album"))
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                 }
@@ -233,7 +233,7 @@ struct RecordsCalendarView: View {
             }
 
             HStack(spacing: 7) {
-                ForEach(["日", "一", "二", "三", "四", "五", "六"], id: \.self) { day in
+                ForEach(AppText.shortWeekdays, id: \.self) { day in
                     Text(day)
                         .font(.frogMicro.weight(.bold))
                         .foregroundStyle(FrogTheme.faint)
@@ -274,7 +274,7 @@ struct RecordsCalendarView: View {
                     Text("\(selectedDay)")
                         .font(.frogNum(42, weight: .heavy))
                         .foregroundStyle(FrogTheme.forest)
-                    Text("\(displayedMonthNumber)月")
+                    Text(AppText.monthOnly(displayedMonthNumber))
                         .font(.frogMicro.weight(.bold))
                         .foregroundStyle(FrogTheme.ink)
                 }
@@ -285,10 +285,10 @@ struct RecordsCalendarView: View {
                         .frame(width: 1, height: 52)
 
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("這天未有打卡紀錄")
+                        Text(AppText.value(zh: "這天未有打卡紀錄", en: "No check-ins on this day"))
                             .font(.frogRow)
                             .foregroundStyle(FrogTheme.ink)
-                        Text("完成有效打卡後，當天會出現在 passport 日曆。")
+                        Text(AppText.value(zh: "完成有效打卡後，當天會出現在 passport 日曆。", en: "Valid check-ins will appear on your passport calendar."))
                             .font(.frogCaption)
                             .foregroundStyle(FrogTheme.muted)
                             .lineLimit(2)
@@ -296,7 +296,7 @@ struct RecordsCalendarView: View {
                 } else {
                     Spacer(minLength: 0)
 
-                    Text("\(selectedRecords.count) 次打卡")
+                    Text(AppText.checkIns(selectedRecords.count))
                         .font(.frogCaption.weight(.semibold))
                         .foregroundStyle(FrogTheme.moss)
                         .padding(.horizontal, 12)
@@ -319,9 +319,9 @@ struct RecordsCalendarView: View {
                         )
                         HStack(alignment: .bottom, spacing: 10) {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(mountain.displayName)
+                                Text(mountain.localizedName)
                                     .font(.frogTitle)
-                                Text("第 \(checkInStore.count(for: mountain.id)) 次登頂 · \(mountain.height)m")
+                                Text(AppText.value(zh: "第 \(checkInStore.count(for: mountain.id)) 次登頂 · \(mountain.height)m", en: "\(AppText.times(checkInStore.count(for: mountain.id))) · \(mountain.height)m"))
                                     .font(.frogNum(13, weight: .medium))
                                     .foregroundStyle(.white.opacity(0.82))
                             }
@@ -553,11 +553,11 @@ private struct MountainStampSlotView: View {
         Group {
             if let mountain = slot.mountain {
                 NavigationLink(value: NativeRoute.mountainDetail(mountain.id)) {
-                    content(label: mountain.nameZh)
+                    content(label: mountain.localizedName)
                 }
                 .buttonStyle(.plain)
             } else {
-                content(label: "待加入")
+                content(label: AppText.value(zh: "待加入", en: "Coming"))
             }
         }
         .accessibilityElement(children: .ignore)
@@ -615,9 +615,11 @@ private struct MountainStampSlotView: View {
 
     private var accessibilityLabel: String {
         if let mountain = slot.mountain {
-            return isUnlocked ? "\(mountain.nameZh) 印章已解鎖" : "\(mountain.nameZh) 印章未解鎖"
+            return isUnlocked
+                ? AppText.value(zh: "\(mountain.nameZh) 印章已解鎖", en: "\(mountain.localizedName) stamp unlocked")
+                : AppText.value(zh: "\(mountain.nameZh) 印章未解鎖", en: "\(mountain.localizedName) stamp locked")
         }
-        return "未加入山峰資料的印章槽位"
+        return AppText.value(zh: "未加入山峰資料的印章槽位", en: "Stamp slot without peak data")
     }
 }
 
@@ -641,7 +643,7 @@ private struct TripsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            RecordSectionHeader(title: "我嘅行程 · TRIPS") {
+            RecordSectionHeader(title: AppText.value(zh: "我嘅行程 · TRIPS", en: "MY TRIPS")) {
                 Text("\(trips.count)")
                     .font(.frogNum(12, weight: .semibold))
                     .foregroundStyle(FrogTheme.moss)
@@ -662,7 +664,7 @@ private struct TripsSection: View {
                 if trips.count > previewLimit {
                     NavigationLink(value: NativeRoute.allTrips) {
                         HStack(spacing: 6) {
-                            Text("全部行程")
+                            Text(AppText.value(zh: "全部行程", en: "All Trips"))
                             Image(systemName: "arrow.right")
                                 .font(.system(size: 12, weight: .bold))
                         }
@@ -686,10 +688,10 @@ private struct TripsSection: View {
             Image(systemName: "figure.hiking")
                 .font(.system(size: 30, weight: .regular))
                 .foregroundStyle(FrogTheme.muted)
-            Text("仲未有打卡，去打返座山！")
+            Text(AppText.value(zh: "仲未有打卡，去打返座山！", en: "No check-ins yet. Pick a peak and go!"))
                 .font(.frogRow)
                 .foregroundStyle(FrogTheme.ink)
-            Text("完成打卡後，每次行程都會收錄喺呢度，有記軌跡仲會顯示路線同距離。")
+            Text(AppText.value(zh: "完成打卡後，每次行程都會收錄喺呢度，有記軌跡仲會顯示路線同距離。", en: "Each completed check-in will appear here. Trips with recordings also show route, distance and time."))
                 .font(.frogCaption)
                 .foregroundStyle(FrogTheme.muted)
         }
@@ -713,7 +715,7 @@ struct AllTripsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                RecordSectionHeader(title: "全部行程 · ALL TRIPS") {
+                RecordSectionHeader(title: AppText.value(zh: "全部行程 · ALL TRIPS", en: "ALL TRIPS")) {
                     Text("\(trips.count)")
                         .font(.frogNum(12, weight: .semibold))
                         .foregroundStyle(FrogTheme.moss)
@@ -731,7 +733,7 @@ struct AllTripsView: View {
             .padding(FrogSpace.screenPadding)
             .padding(.bottom, 110)
         }
-        .navigationTitle("我嘅行程")
+        .localizedNavigationTitle { AppText.value(zh: "我嘅行程", en: "My Trips") }
         .nativeInlineTitle()
         .appPageBackground(FrogTheme.passport)
     }
@@ -751,7 +753,7 @@ private struct TripRow: View {
             thumbnailView
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(mountain.nameZh)
+                Text(mountain.localizedName)
                     .font(.frogRow)
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
@@ -794,7 +796,7 @@ private struct TripRow: View {
             .font(.frogNum(11, weight: .semibold))
             .foregroundStyle(FrogTheme.moss)
         } else {
-            Text("打卡")
+            Text(AppText.value(zh: "打卡", en: "Check-in"))
                 .font(.frogMicro.weight(.bold))
                 .foregroundStyle(FrogTheme.orange)
                 .padding(.horizontal, 9)

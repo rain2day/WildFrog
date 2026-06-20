@@ -21,11 +21,11 @@ enum AppTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "探索"
-        case .records: "紀錄"
-        case .checkIn: "打卡"
-        case .leaderboard: "排行"
-        case .profile: "我的"
+        case .home: AppText.value(zh: "探索", en: "Explore")
+        case .records: AppText.value(zh: "紀錄", en: "Records")
+        case .checkIn: AppText.value(zh: "打卡", en: "Check In")
+        case .leaderboard: AppText.value(zh: "排行", en: "Rankings")
+        case .profile: AppText.value(zh: "我的", en: "Profile")
         }
     }
 
@@ -44,6 +44,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 struct WildFrogRootView: View {
     @State private var selectedTab: AppTab = .home
+    @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
     // One navigation path per tab so the root can tell when a detail is pushed.
     @State private var homePath = NavigationPath()
     @State private var recordsPath = NavigationPath()
@@ -51,6 +52,7 @@ struct WildFrogRootView: View {
     @State private var leaderboardPath = NavigationPath()
     @State private var profilePath = NavigationPath()
     @EnvironmentObject private var locationManager: LocationManager
+    @EnvironmentObject private var recorder: TrackRecorder
 
     init() {
         #if DEBUG
@@ -73,6 +75,12 @@ struct WildFrogRootView: View {
             path.append(NativeRoute.allMountains)
             _homePath = State(initialValue: path)
             _selectedTab = State(initialValue: .home)
+        }
+        if arguments.contains("-qaStamps") {
+            var path = NavigationPath()
+            path.append(NativeRoute.allStamps)
+            _profilePath = State(initialValue: path)
+            _selectedTab = State(initialValue: .profile)
         }
         if let cIndex = arguments.firstIndex(of: "-qaCheckIn"),
            arguments.indices.contains(arguments.index(after: cIndex)) {
@@ -97,6 +105,16 @@ struct WildFrogRootView: View {
         }
     }
 
+    private var activeRecordingMountain: Mountain? {
+        guard recorder.isRecording,
+              let id = recorder.activeMountainId else { return nil }
+        return MountainCatalog.mountains.first { $0.id == id }
+    }
+
+    private var shouldShowGlobalRecordingIsland: Bool {
+        recorder.isRecording && isAtTabRoot && selectedTab != .checkIn
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
@@ -113,6 +131,7 @@ struct WildFrogRootView: View {
                     NavigationStack(path: $profilePath) { ProfileView() }
                 }
             }
+            .id(languageModeRaw)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if isAtTabRoot {
@@ -120,14 +139,97 @@ struct WildFrogRootView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .overlay(alignment: .top) {
+            if shouldShowGlobalRecordingIsland, let activeRecordingMountain {
+                GlobalRecordingIsland(
+                    mountain: activeRecordingMountain,
+                    elapsedSeconds: recorder.elapsedSeconds,
+                    distanceMeters: recorder.distanceMeters,
+                    isPaused: recorder.isPaused
+                ) {
+                    openActiveRecording(activeRecordingMountain.id)
+                }
+                .padding(.horizontal, FrogSpace.screenPadding)
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .animation(.easeInOut(duration: 0.22), value: isAtTabRoot)
+        .animation(.spring(response: 0.28, dampingFraction: 0.82), value: recorder.isRecording)
         .preferredColorScheme(.light)
         .background(FrogTheme.paper.ignoresSafeArea())
+    }
+
+    private func openActiveRecording(_ mountainId: String) {
+        selectedTab = .checkIn
+        checkInPath = NavigationPath()
+        checkInPath.append(NativeRoute.checkIn(mountainId))
+    }
+}
+
+private struct GlobalRecordingIsland: View {
+    let mountain: Mountain
+    let elapsedSeconds: TimeInterval
+    let distanceMeters: Double
+    let isPaused: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 10) {
+                Image(systemName: isPaused ? "pause.fill" : "record.circle.fill")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(isPaused ? FrogTheme.gold : FrogTheme.orange, in: Circle())
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(isPaused ? AppText.value(zh: "行程已暫停", en: "Trip Paused") : AppText.value(zh: "行程記錄中", en: "Recording Trip"))
+                        .font(.frogMicro.weight(.black))
+                        .foregroundStyle(.white.opacity(0.72))
+                        .lineLimit(1)
+                    Text(mountain.localizedName)
+                        .font(.frogCaption.weight(.black))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+
+                Spacer(minLength: 0)
+
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(TrackFormat.distance(distanceMeters))
+                        .font(.frogNum(15, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text(TrackFormat.duration(elapsedSeconds))
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.66))
+                        .lineLimit(1)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.76))
+            }
+            .padding(.leading, 9)
+            .padding(.trailing, 12)
+            .padding(.vertical, 8)
+            .background(Color.black.opacity(0.82), in: Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.2), radius: 16, y: 6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppText.value(zh: "返回進行中的 \(mountain.localizedName) 行程記錄", en: "Return to active \(mountain.localizedName) trip recording"))
     }
 }
 
 private struct FrogTabBar: View {
     @Binding var selectedTab: AppTab
+    @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
@@ -149,6 +251,7 @@ private struct FrogTabBar: View {
         .padding(.horizontal, 8)
         .padding(.top, 8)
         .padding(.bottom, 4)
+        .id(languageModeRaw)
         .background {
             LinearGradient(
                 colors: [Color.white.opacity(0.96), FrogTheme.warmPaper.opacity(0.92)],

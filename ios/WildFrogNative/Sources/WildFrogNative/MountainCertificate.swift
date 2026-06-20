@@ -20,8 +20,8 @@ struct MountainCertificateCard: View {
 
     private var dateText: String {
         let f = DateFormatter()
-        f.dateFormat = "yyyy 年 MM 月 dd 日"
-        f.locale = Locale(identifier: "zh_Hant_HK")
+        f.dateFormat = AppText.value(zh: "yyyy 年 MM 月 dd 日", en: "MMM d, yyyy")
+        f.locale = Locale(identifier: AppText.value(zh: "zh_Hant_HK", en: "en_US"))
         return f.string(from: date)
     }
 
@@ -64,11 +64,11 @@ struct MountainCertificateCard: View {
     private var header: some View {
         VStack(spacing: 22) {
             HStack(spacing: 20) {
-                WildFrogBrandMark(size: 66, cornerRadius: 17)
+                WildFrogBrandMark(size: 104, cornerRadius: 26)
                 VStack(alignment: .leading, spacing: 5) {
                     (
                         Text("WILDFROG").foregroundStyle(FrogTheme.forest)
-                        + Text(" 登頂證書").foregroundStyle(FrogTheme.gold)
+                        + Text(AppText.value(zh: " 登頂證書", en: " CERTIFICATE")).foregroundStyle(FrogTheme.gold)
                     )
                     .font(.system(size: 44, weight: .heavy))
                     .tracking(0.5)
@@ -94,11 +94,11 @@ struct MountainCertificateCard: View {
     /// reads hot against the calm paper.
     private var rankMedal: some View {
         VStack(spacing: 1) {
-            Text("全港排名")
+            Text(AppText.value(zh: "全港排名", en: "HK RANK"))
                 .font(.system(size: 17, weight: .heavy))
                 .tracking(2.0)
                 .foregroundStyle(.white.opacity(0.85))
-            Text(mountain.rankText)
+            Text(mountain.localizedRankText)
                 .font(.system(size: 40, weight: .black))
                 .foregroundStyle(.white)
         }
@@ -146,7 +146,7 @@ struct MountainCertificateCard: View {
     private var details: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Eyebrow — small gold label that frames the name as the certified subject.
-            Text("此證頒予征服")
+            Text(AppText.value(zh: "此證頒予征服", en: "CERTIFIED SUMMIT OF"))
                 .font(.system(size: 25, weight: .bold))
                 .tracking(3.0)
                 .foregroundStyle(FrogTheme.gold)
@@ -154,12 +154,12 @@ struct MountainCertificateCard: View {
 
             // Monumental peak name — the single deepest-ink voice on the card.
             HStack(alignment: .lastTextBaseline, spacing: 18) {
-                Text(mountain.nameZh)
+                Text(mountain.localizedPrimaryName)
                     .font(.system(size: 96, weight: .black))
                     .tracking(-1)
                     .foregroundStyle(FrogTheme.forest)
-                if !mountain.nameEn.isEmpty {
-                    Text(mountain.nameEn)
+                if !mountain.localizedSecondaryName.isEmpty {
+                    Text(mountain.localizedSecondaryName)
                         .font(.system(size: 36, weight: .semibold))
                         .foregroundStyle(FrogTheme.muted)
                         .padding(.bottom, 8)
@@ -178,13 +178,13 @@ struct MountainCertificateCard: View {
             // Facts ledger — ruled like an official record. Labels in gold (document
             // voice), values in moss (the live data the climber earned).
             HStack(spacing: 0) {
-                fact("海拔", "\(mountain.height)", unit: "m")
+                fact(AppText.value(zh: "海拔", en: "ELEVATION"), "\(mountain.height)", unit: "m")
                 factDivider
-                fact("全港排名", mountain.rankText, unit: "")
+                fact(AppText.value(zh: "全港排名", en: "HK RANK"), mountain.localizedRankText, unit: "")
                 factDivider
-                fact("地區", mountain.region, unit: "")
+                fact(AppText.value(zh: "地區", en: "REGION"), mountain.localizedRegion, unit: "")
                 factDivider
-                fact("登頂", "\(max(checkInCount, 1))", unit: "次")
+                fact(AppText.value(zh: "登頂", en: "SUMMITS"), "\(max(checkInCount, 1))", unit: AppText.value(zh: "次", en: ""))
             }
             .padding(.vertical, 30)
             .overlay(alignment: .top) { FrogTheme.gold.opacity(0.30).frame(height: 2) }
@@ -192,21 +192,27 @@ struct MountainCertificateCard: View {
             .padding(.top, 38)
 
             if let weather {
-                HStack(spacing: 14) {
-                    Image(systemName: weather.symbolName)
-                        .font(.system(size: 40, weight: .semibold))
-                        .foregroundStyle(FrogTheme.moss)
-                        .symbolRenderingMode(.hierarchical)
-                    Text("登頂當時 · \(weather.conditionText) · \(weather.temperatureText)")
-                        .font(.system(size: 35, weight: .semibold))
-                        .foregroundStyle(FrogTheme.muted)
-                    Spacer(minLength: 0)
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack(spacing: 14) {
+                        Image(systemName: weather.symbolName)
+                            .font(.system(size: 40, weight: .semibold))
+                            .foregroundStyle(FrogTheme.moss)
+                            .symbolRenderingMode(.hierarchical)
+                        Text(AppText.value(zh: "登頂當時 · \(weather.conditionText) · \(weather.temperatureText)", en: "At summit · \(weather.conditionText) · \(weather.temperatureText)"))
+                            .font(.system(size: 35, weight: .semibold))
+                            .foregroundStyle(FrogTheme.muted)
+                        Spacer(minLength: 0)
+                    }
+
+                    Text(" Weather · Data Sources")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(FrogTheme.gold)
                 }
                 .padding(.top, 30)
             }
 
             // Story blurb — warm ink body, the narrative voice.
-            Text(mountain.blurb)
+            Text(mountain.localizedBlurb)
                 .font(.system(size: 44, weight: .regular))
                 .foregroundStyle(FrogTheme.ink.opacity(0.84))
                 .lineSpacing(15)
@@ -217,7 +223,7 @@ struct MountainCertificateCard: View {
             // Official footer — date (muted) and motto (forest) on a hairline.
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("頒發日期")
+                    Text(AppText.value(zh: "頒發日期", en: "ISSUED"))
                         .font(.system(size: 22, weight: .heavy))
                         .tracking(2.0)
                         .foregroundStyle(FrogTheme.gold)
@@ -226,7 +232,7 @@ struct MountainCertificateCard: View {
                         .foregroundStyle(FrogTheme.ink)
                 }
                 Spacer(minLength: 0)
-                Text("愛自然 · 愛運動 · 愛香港")
+                Text(AppText.value(zh: "愛自然 · 愛運動 · 愛香港", en: "LOVE NATURE · LOVE MOVEMENT · LOVE HK"))
                     .font(.system(size: 31, weight: .heavy))
                     .foregroundStyle(FrogTheme.forest)
             }
@@ -248,11 +254,11 @@ struct MountainCertificateCard: View {
                 .font(.system(size: 40, weight: .black))
                 .foregroundStyle(FrogTheme.gold)
             VStack(alignment: .leading, spacing: 2) {
-                Text("稱號")
+                Text(AppText.value(zh: "稱號", en: "TITLE"))
                     .font(.system(size: 24, weight: .heavy))
                     .tracking(3.0)
                     .foregroundStyle(FrogTheme.gold)
-                Text(mountain.unlockTitle)
+                Text(mountain.localizedUnlockTitle)
                     .font(.system(size: 60, weight: .black))
                     .foregroundStyle(FrogTheme.moss)
                     .lineLimit(1)
@@ -328,17 +334,21 @@ struct MountainCertificateSheet: View {
                         .padding(.horizontal, FrogSpace.screenPadding)
                         .padding(.top, 10)
 
+                    AppleWeatherAttributionLink()
+                        .padding(.horizontal, FrogSpace.screenPadding)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
                     shareButton
                         .padding(.horizontal, FrogSpace.screenPadding)
                 }
                 .padding(.bottom, 32)
             }
             .background(FrogTheme.warmPaper.ignoresSafeArea())
-            .navigationTitle("登頂證書")
+            .localizedNavigationTitle { AppText.value(zh: "登頂證書", en: "Summit Certificate") }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("完成") { dismiss() }
+                    Button(AppText.value(zh: "完成", en: "Done")) { dismiss() }
                         .font(.frogCaption.weight(.bold))
                         .foregroundStyle(FrogTheme.forest)
                 }
@@ -368,9 +378,9 @@ struct MountainCertificateSheet: View {
         if let rendered {
             ShareLink(
                 item: Image(uiImage: rendered),
-                preview: SharePreview("WildFrog · \(mountain.nameZh) 登頂證書", image: Image(uiImage: rendered))
+                preview: SharePreview(AppText.value(zh: "WildFrog · \(mountain.nameZh) 登頂證書", en: "WildFrog · \(mountain.localizedName) Summit Certificate"), image: Image(uiImage: rendered))
             ) {
-                Label("分享證書", systemImage: "square.and.arrow.up")
+                Label(AppText.value(zh: "分享證書", en: "Share Certificate"), systemImage: "square.and.arrow.up")
                     .font(.headline.weight(.black))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -381,7 +391,7 @@ struct MountainCertificateSheet: View {
         } else {
             HStack(spacing: 8) {
                 ProgressView().tint(.white)
-                Text("生成中…").font(.headline.weight(.black))
+                Text(AppText.value(zh: "生成中…", en: "Generating...")).font(.headline.weight(.black))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
