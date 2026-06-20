@@ -11,6 +11,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /leaderboardProfiles/{profileId} {
+      allow read: if resource.data.isVisible == true;
+      allow write: if false;
+    }
+
     match /checkIns/{checkInId} {
       allow create: if request.auth != null
         && request.resource.data.userId == request.auth.uid;

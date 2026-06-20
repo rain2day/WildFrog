@@ -22,7 +22,9 @@ private enum ShareCardStyle: String, CaseIterable, Identifiable {
     case polaroid
     case passport
     var id: String { rawValue }
-    var label: String { self == .polaroid ? "拍立得" : "護照" }
+    var label: String {
+        self == .polaroid ? AppText.value(zh: "拍立得", en: "Polaroid") : AppText.value(zh: "護照", en: "Passport")
+    }
 }
 
 struct CheckInCameraView: View {
@@ -53,9 +55,11 @@ struct CheckInCameraView: View {
     @State private var watermarkPreviewImage: UIImage?
     @State private var showEnlargedWatermark = false
     @State private var showSuccess = false
-    @State private var cardStyle: ShareCardStyle = .polaroid
+    @State private var cardStyle: ShareCardStyle = .passport
     @State private var weatherChip: WeatherSnapshot?
     @State private var showCancelRecording = false
+    @State private var showLeaderboardConsentAlert = false
+    @AppStorage("wildfrog.privacy.leaderboardUploadConsentAccepted") private var leaderboardUploadConsentAccepted = false
 
     // MARK: - GPS gating helpers
 
@@ -80,9 +84,9 @@ struct CheckInCameraView: View {
     private var gpsChipTitle: String {
         switch locationManager.authorizationStatus {
         case .notDetermined, .restricted, .denied:
-            return "需要定位權限"
+            return AppText.value(zh: "需要定位權限", en: "Location needed")
         case .authorizedWhenInUse, .authorizedAlways:
-            guard let d = distanceMetres else { return "定位中…" }
+            guard let d = distanceMetres else { return AppText.value(zh: "定位中…", en: "Locating...") }
             if d <= Double(CheckInRules.radiusMeters) {
                 return "\(Int(d))m"
             } else {
@@ -93,7 +97,7 @@ struct CheckInCameraView: View {
                 return String(format: "%.1fkm", km)
             }
         @unknown default:
-            return "定位中…"
+            return AppText.value(zh: "定位中…", en: "Locating...")
         }
     }
 
@@ -115,15 +119,19 @@ struct CheckInCameraView: View {
     private var gpsConfidence: (icon: String, text: String, tint: Color) {
         switch locationManager.authorizationStatus {
         case .notDetermined, .restricted, .denied:
-            return ("location.slash.fill", "需要定位", FrogTheme.orange)
+            return ("location.slash.fill", AppText.value(zh: "需要定位", en: "Need Location"), FrogTheme.orange)
         case .authorizedWhenInUse, .authorizedAlways:
-            guard let d = distanceMetres else { return ("location.circle", "定位中…", FrogTheme.gold) }
+            guard let d = distanceMetres else { return ("location.circle", AppText.value(zh: "定位中…", en: "Locating..."), FrogTheme.gold) }
             return d <= Double(CheckInRules.radiusMeters)
-                ? ("checkmark", "GPS 吻合", FrogTheme.moss)
-                : ("exclamationmark.triangle.fill", "GPS 未夠近", FrogTheme.orange)
+                ? ("checkmark", AppText.value(zh: "GPS 吻合", en: "GPS Match"), FrogTheme.moss)
+                : ("exclamationmark.triangle.fill", AppText.value(zh: "GPS 未夠近", en: "Too Far"), FrogTheme.orange)
         @unknown default:
-            return ("location.circle", "定位中…", FrogTheme.gold)
+            return ("location.circle", AppText.value(zh: "定位中…", en: "Locating..."), FrogTheme.gold)
         }
+    }
+
+    private var isRecordingThisMountain: Bool {
+        recorder.isRecording && recorder.activeMountainId == mountain.id
     }
 
     var body: some View {
@@ -194,8 +202,10 @@ struct CheckInCameraView: View {
                 locationManager.requestAuthorization()
                 locationManager.startUpdating()
             }
-            if recorder.isRecording {
+            if isRecordingThisMountain {
                 mode = .recording
+            } else if recorder.isRecording {
+                mode = .directCheckIn
             }
             #if DEBUG
             if qaArgs.contains("-qaPassport") { cardStyle = .passport }
@@ -288,13 +298,13 @@ struct CheckInCameraView: View {
                     .overlay(Circle().stroke(Color.white.opacity(0.26), lineWidth: 1))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("關閉")
+            .accessibilityLabel(AppText.value(zh: "關閉", en: "Close"))
 
             Spacer()
 
             WildFrogWordmark(markSize: 34)
                 .padding(.top, 1)
-                .accessibilityLabel("WildFrog 山系足跡")
+                .accessibilityLabel(AppText.value(zh: "WildFrog 山系足跡", en: "WildFrog peak passport"))
 
             Spacer()
 
@@ -306,14 +316,23 @@ struct CheckInCameraView: View {
     // MARK: - Status strip
 
     private var statusStrip: some View {
-        HStack(spacing: 9) {
-            CheckInStatusChip(systemImage: gpsChipImage, title: gpsChipTitle, subtitle: nil, tint: gpsConfidence.tint)
-            CheckInStatusChip(systemImage: "mountain.2", title: "\(mountain.height)m", subtitle: "summit")
-            CheckInStatusChip(
-                systemImage: weatherChip?.symbolName ?? "cloud.sun",
-                title: weatherChip?.temperatureText ?? "—",
-                subtitle: weatherChip?.conditionText ?? "天氣"
-            )
+        VStack(alignment: .trailing, spacing: 6) {
+            HStack(spacing: 9) {
+                CheckInStatusChip(systemImage: gpsChipImage, title: gpsChipTitle, subtitle: nil, tint: gpsConfidence.tint)
+                CheckInStatusChip(systemImage: "mountain.2", title: "\(mountain.height)m", subtitle: "summit")
+                CheckInStatusChip(
+                    systemImage: weatherChip?.symbolName ?? "cloud.sun",
+                    title: weatherChip?.temperatureText ?? "—",
+                    subtitle: weatherChip?.conditionText ?? AppText.value(zh: "天氣", en: "Weather")
+                )
+            }
+
+            AppleWeatherAttributionLink(foreground: .white, font: .frogMicro.weight(.black))
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(.ultraThinMaterial, in: Capsule())
+                .background(Color.black.opacity(0.16), in: Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.26), lineWidth: 1))
         }
         .task {
             if weatherChip == nil {
@@ -340,12 +359,12 @@ struct CheckInCameraView: View {
                             .frame(maxWidth: .infinity)
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(mountain.nameZh)
+                            Text(mountain.localizedName)
                                 .font(.system(size: 24, weight: .black))
                                 .foregroundStyle(FrogTheme.ink)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.72)
-                            Text("點樣打卡呢座山？")
+                            Text(AppText.value(zh: "點樣打卡呢座山？", en: "How would you like to check in?"))
                                 .font(.frogCaption.weight(.medium))
                                 .foregroundStyle(FrogTheme.muted)
                         }
@@ -355,8 +374,8 @@ struct CheckInCameraView: View {
                         } label: {
                             modeOptionLabel(
                                 systemImage: "figure.hiking",
-                                title: "開始行程（記軌跡）",
-                                subtitle: "沿途記錄路線、距離、時間、爬升，到山頂打卡綁埋",
+                                title: AppText.value(zh: "開始行程（記軌跡）", en: "Start Trip Recording"),
+                                subtitle: AppText.value(zh: "沿途記錄路線、距離、時間、爬升，到山頂打卡綁埋", en: "Record route, distance, time and ascent, then bind the summit check-in."),
                                 background: FrogTheme.orange,
                                 foreground: .white
                             )
@@ -368,8 +387,8 @@ struct CheckInCameraView: View {
                         } label: {
                             modeOptionLabel(
                                 systemImage: "bolt.fill",
-                                title: "直接打卡",
-                                subtitle: "已喺山頂／唔記全程，直接影相打卡",
+                                title: AppText.value(zh: "直接打卡", en: "Check In Now"),
+                                subtitle: AppText.value(zh: "已喺山頂／唔記全程，直接影相打卡", en: "Already at the summit or skipping trip recording."),
                                 background: FrogTheme.surface,
                                 foreground: FrogTheme.ink
                             )
@@ -432,8 +451,9 @@ struct CheckInCameraView: View {
     private var recordingBanner: some View {
         VStack(spacing: 12) {
             Map(position: $trackCameraPosition) {
+                CheckInRadiusMapOverlay.circle(center: mountain.coordinate)
                 UserAnnotation()
-                Marker(mountain.nameZh, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
+                Marker(mountain.localizedName, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
                     .tint(FrogTheme.orange)
                 if recorder.points.count > 1 {
                     MapPolyline(coordinates: recorder.points.map(\.coordinate))
@@ -445,21 +465,21 @@ struct CheckInCameraView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             HStack(spacing: 0) {
-                recordingStat(value: TrackFormat.distance(recorder.distanceMeters), label: "距離")
+                recordingStat(value: TrackFormat.distance(recorder.distanceMeters), label: AppText.value(zh: "距離", en: "Distance"))
                 recordingDivider
-                recordingStat(value: TrackFormat.duration(recorder.elapsedSeconds), label: "時間")
+                recordingStat(value: TrackFormat.duration(recorder.elapsedSeconds), label: AppText.value(zh: "時間", en: "Time"))
                 recordingDivider
-                recordingStat(value: "\(Int(recorder.ascentMeters))m", label: "爬升")
+                recordingStat(value: "\(Int(recorder.ascentMeters))m", label: AppText.value(zh: "爬升", en: "Ascent"))
                 if let toSummit = recorder.distanceToSummitMeters {
                     recordingDivider
-                    recordingStat(value: TrackFormat.distance(toSummit), label: "距山頂")
+                    recordingStat(value: TrackFormat.distance(toSummit), label: AppText.value(zh: "距山頂", en: "To Summit"))
                 }
             }
 
             HStack(spacing: 7) {
                 Image(systemName: recorder.isPaused ? "pause.circle.fill" : "record.circle.fill")
                     .foregroundStyle(recorder.isPaused ? FrogTheme.gold : FrogTheme.orange)
-                Text(recorder.isPaused ? "已暫停 · 撳 ▶ 繼續記錄" : "行程記錄中 · 行到\(mountain.nameZh)山頂影相即綁埋")
+                Text(recorder.isPaused ? AppText.value(zh: "已暫停 · 撳 ▶ 繼續記錄", en: "Paused · Tap ▶ to resume") : AppText.value(zh: "行程記錄中 · 行到\(mountain.nameZh)山頂影相即綁埋", en: "Recording · Check in at \(mountain.localizedName)'s summit"))
                     .font(.frogCaption.weight(.bold))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
@@ -477,7 +497,7 @@ struct CheckInCameraView: View {
                         .background(FrogTheme.orange.opacity(0.12), in: Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("取消行程")
+                .accessibilityLabel(AppText.value(zh: "取消行程", en: "Cancel Trip"))
 
                 // 暫停／繼續
                 Button {
@@ -490,7 +510,7 @@ struct CheckInCameraView: View {
                         .background(recorder.isPaused ? FrogTheme.moss : FrogTheme.gold, in: Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(recorder.isPaused ? "繼續記錄" : "暫停記錄")
+                .accessibilityLabel(recorder.isPaused ? AppText.value(zh: "繼續記錄", en: "Resume Recording") : AppText.value(zh: "暫停記錄", en: "Pause Recording"))
 
                 Button {
                     stopRecordingMode()
@@ -505,14 +525,14 @@ struct CheckInCameraView: View {
                 .buttonStyle(.plain)
             }
         }
-        .alert("取消呢次行程？", isPresented: $showCancelRecording) {
-            Button("取消行程", role: .destructive) {
+        .alert(AppText.value(zh: "取消呢次行程？", en: "Cancel this trip?"), isPresented: $showCancelRecording) {
+            Button(AppText.value(zh: "取消行程", en: "Cancel Trip"), role: .destructive) {
                 recorder.cancel()
                 mode = .directCheckIn
             }
-            Button("繼續記錄", role: .cancel) {}
+            Button(AppText.value(zh: "繼續記錄", en: "Keep Recording"), role: .cancel) {}
         } message: {
-            Text("軌跡會被刪除，唔會儲存。")
+            Text(AppText.value(zh: "軌跡會被刪除，唔會儲存。", en: "The track will be deleted and not saved."))
         }
         .padding(14)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -544,12 +564,28 @@ struct CheckInCameraView: View {
     }
 
     private func startRecordingMode() {
+        guard !recorder.isRecording || isRecordingThisMountain else {
+            saveMessage = AppText.value(
+                zh: "已有行程記錄中，請先返回進行中的山峰。",
+                en: "A trip is already recording. Return to the active peak first."
+            )
+            mode = .directCheckIn
+            return
+        }
         mode = .recording
-        recorder.start(mountainName: mountain.nameZh, summitCoordinate: mountain.coordinate)
+        if !recorder.isRecording {
+            recorder.start(
+                mountainId: mountain.id,
+                mountainName: mountain.localizedName,
+                summitCoordinate: mountain.coordinate
+            )
+        }
     }
 
     private func stopRecordingMode() {
-        _ = recorder.stop()
+        if isRecordingThisMountain {
+            _ = recorder.stop()
+        }
         mode = .directCheckIn
     }
 
@@ -568,7 +604,7 @@ struct CheckInCameraView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "camera.fill")
                         .font(.system(size: 16, weight: .semibold))
-                    Text("即場拍照")
+                    Text(AppText.value(zh: "即場拍照", en: "Camera"))
                         .font(.system(size: 14, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
@@ -590,10 +626,10 @@ struct CheckInCameraView: View {
                 {
                     #if canImport(UIKit)
                     UIImagePickerController.isSourceTypeAvailable(.camera)
-                        ? "開啟相機拍攝打卡相"
-                        : "相機喺實機先用到"
+                        ? AppText.value(zh: "開啟相機拍攝打卡相", en: "Open camera for check-in photo")
+                        : AppText.value(zh: "相機喺實機先用到", en: "Camera is available on a real device")
                     #else
-                    "相機喺實機先用到"
+                    AppText.value(zh: "相機喺實機先用到", en: "Camera is available on a real device")
                     #endif
                 }()
             )
@@ -607,7 +643,7 @@ struct CheckInCameraView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "photo.fill")
                         .font(.system(size: 16, weight: .semibold))
-                    Text("上載相片")
+                    Text(AppText.value(zh: "上載相片", en: "Upload Photo"))
                         .font(.system(size: 14, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
@@ -648,7 +684,7 @@ struct CheckInCameraView: View {
                 } else {
                     MountainPhoto(mountain: mountain, dimming: 0.34)
                         .overlay(
-                            Text("先影相或揀相")
+                            Text(AppText.value(zh: "先影相或揀相", en: "Take or choose a photo"))
                                 .font(.system(size: 9, weight: .semibold))
                                 .foregroundStyle(.white.opacity(0.82))
                                 .padding(6)
@@ -686,7 +722,7 @@ struct CheckInCameraView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("WILDFROG")
                     .font(.frogNum(7.5, weight: .bold))
-                Text("\(mountain.nameZh) · \(mountain.height)m")
+                Text("\(mountain.localizedName) · \(mountain.height)m")
                     .font(.frogNum(7.5, weight: .bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.62)
@@ -707,14 +743,14 @@ struct CheckInCameraView: View {
 
             HStack(alignment: .top, spacing: 14) {
                 VStack(alignment: .leading, spacing: 7) {
-                    Text(mountain.nameZh)
+                    Text(mountain.localizedName)
                         .font(.system(size: 27, weight: .black))
                         .foregroundStyle(FrogTheme.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.62)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text(mountain.nameEn)
+                    Text(mountain.localizedSecondaryName)
                         .font(.frogNum(18, weight: .semibold))
                         .foregroundStyle(FrogTheme.moss)
                         .lineLimit(1)
@@ -727,7 +763,7 @@ struct CheckInCameraView: View {
                         CheckInConfidencePill(systemImage: gpsConfidence.icon, text: gpsConfidence.text, tint: gpsConfidence.tint)
                     }
 
-                    Text("根據 GPS、海拔及方向核對")
+                    Text(AppText.value(zh: "根據 GPS、海拔及方向核對", en: "Verified by GPS, elevation and heading"))
                         .font(.frogCaption.weight(.medium))
                         .foregroundStyle(FrogTheme.muted)
                         .lineLimit(1)
@@ -736,7 +772,7 @@ struct CheckInCameraView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("卡款預覽")
+                    Text(AppText.value(zh: "卡款預覽", en: "CARD PREVIEW"))
                         .font(.frogEyebrow)
                         .tracking(1.4)
                         .textCase(.uppercase)
@@ -749,7 +785,7 @@ struct CheckInCameraView: View {
             // Pick the share-card style BEFORE checking in — the same render is
             // what gets saved to the library the moment 完成打卡 is tapped.
             if capturedImage != nil {
-                Picker("打卡卡款式", selection: $cardStyle) {
+                Picker(AppText.value(zh: "打卡卡款式", en: "Check-in card style"), selection: $cardStyle) {
                     ForEach(ShareCardStyle.allCases) { style in
                         Text(style.label).tag(style)
                     }
@@ -761,8 +797,10 @@ struct CheckInCameraView: View {
             Button {
                 if !authService.isSignedIn {
                     showSignInAlert = true
+                } else if leaderboardUploadConsentAccepted {
+                    performCheckIn(syncToCloud: true)
                 } else {
-                    performCheckIn()
+                    showLeaderboardConsentAlert = true
                 }
             } label: {
                 HStack(spacing: 14) {
@@ -770,7 +808,7 @@ struct CheckInCameraView: View {
                         .font(.system(size: 22, weight: .heavy))
                         .frame(width: 42, height: 42)
                         .overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 2.5))
-                    Text(isSavingWatermark ? "正在儲存..." : "完成打卡")
+                    Text(isSavingWatermark ? AppText.value(zh: "正在儲存...", en: "Saving...") : AppText.value(zh: "完成打卡", en: "Complete Check-in"))
                         .font(.system(size: 22, weight: .bold))
                 }
                 .frame(maxWidth: .infinity)
@@ -780,10 +818,24 @@ struct CheckInCameraView: View {
             }
             .buttonStyle(.plain)
             .disabled(isSavingWatermark || didCompleteCheckIn || (!canCheckIn && authService.isSignedIn))
-            .alert("請先登入", isPresented: $showSignInAlert) {
-                Button("好", role: .cancel) {}
+            .alert(AppText.value(zh: "請先登入", en: "Sign in required"), isPresented: $showSignInAlert) {
+                Button(AppText.value(zh: "好", en: "OK"), role: .cancel) {}
             } message: {
-                Text("打卡前請先登入（我的）")
+                Text(AppText.value(zh: "打卡前請先登入（我的）", en: "Please sign in from Profile before checking in."))
+            }
+            .alert(AppText.value(zh: "同意上傳排行榜資料？", en: "Upload leaderboard data?"), isPresented: $showLeaderboardConsentAlert) {
+                Button(AppText.value(zh: "同意並上傳", en: "Agree and Upload")) {
+                    leaderboardUploadConsentAccepted = true
+                    performCheckIn(syncToCloud: true)
+                }
+                Button(AppText.value(zh: "只儲存在裝置", en: "Device Only"), role: .cancel) {
+                    performCheckIn(syncToCloud: false)
+                }
+            } message: {
+                Text(AppText.value(
+                    zh: "WildFrog 會將你的帳戶 ID、打卡山峰、打卡日期、同步紀錄 ID 同伺服器時間同步到伺服器，用於雲端同步及公開排行榜。你亦可以選擇只儲存在此裝置。",
+                    en: "WildFrog will upload your account ID, checked-in mountain, check-in date, sync record ID, and server timestamp to its server for cloud sync and the public leaderboard. You can also choose to save only on this device."
+                ))
             }
 
             // Status hint
@@ -813,13 +865,16 @@ struct CheckInCameraView: View {
 
     private var hintText: String {
         if !authService.isSignedIn {
-            return "打卡前請先登入（我的）"
+            return AppText.value(zh: "打卡前請先登入（我的）", en: "Please sign in from Profile before checking in.")
         } else if capturedImage == nil {
-            return "請先影相或揀相"
+            return AppText.value(zh: "請先影相或揀相", en: "Take or choose a photo first")
         } else if !isInRange {
             return gpsChipTitle
         }
-        return "打卡後會將你揀嘅卡儲存到相簿"
+        if leaderboardUploadConsentAccepted {
+            return AppText.value(zh: "打卡會同步到雲端排行榜，並將卡儲存到相簿", en: "Check-in will sync to the cloud leaderboard and save the card to Photos")
+        }
+        return AppText.value(zh: "打卡卡會儲存到相簿；上傳排行榜前會先問你同意", en: "Your card will be saved to Photos; leaderboard upload asks for consent first")
     }
 
     // MARK: - Enlarged watermark preview
@@ -848,7 +903,7 @@ struct CheckInCameraView: View {
                     .buttonStyle(.plain)
                 }
                 Spacer()
-                Text("打卡時會儲存呢張水印相到你的相簿")
+                Text(AppText.value(zh: "打卡時會儲存呢張水印相到你的相簿", en: "This watermarked photo will be saved to Photos when you check in"))
                     .font(.frogCaption)
                     .foregroundStyle(.white.opacity(0.7))
             }
@@ -894,19 +949,19 @@ struct CheckInCameraView: View {
                     }
                     .padding(.top, 18)
 
-                    Text("VALID CHECK-IN · 有效打卡")
+                    Text(AppText.value(zh: "VALID CHECK-IN · 有效打卡", en: "VALID CHECK-IN"))
                         .font(.frogEyebrow)
                         .tracking(1.8)
                         .textCase(.uppercase)
                         .foregroundStyle(.white.opacity(0.6))
                         .padding(.top, 26)
 
-                    Text("\(mountain.nameZh) 已打卡")
+                    Text(AppText.value(zh: "\(mountain.nameZh) 已打卡", en: "\(mountain.localizedName) checked in"))
                         .font(.system(size: 30, weight: .black))
                         .foregroundStyle(.white)
                         .padding(.top, 12)
 
-                    Text("已記錄到你的 300 峰護照，打卡相已儲存到相簿。")
+                    Text(AppText.value(zh: "已記錄到你的 300 峰護照，打卡相已儲存到相簿。", en: "Saved to your 300 Peaks Passport. Your check-in photo has been saved to Photos."))
                         .font(.frogCaption)
                         .foregroundStyle(.white.opacity(0.78))
                         .multilineTextAlignment(.center)
@@ -925,11 +980,11 @@ struct CheckInCameraView: View {
                         }
 
                         HStack(spacing: 0) {
-                            successStat(value: "\(checkInStore.count(for: mountain.id))", label: "此山打卡")
+                            successStat(value: "\(checkInStore.count(for: mountain.id))", label: AppText.value(zh: "此山打卡", en: "This Peak"))
                             successStatDivider
-                            successStat(value: mountain.rankText, label: "300峰排名", tint: FrogTheme.orange)
+                            successStat(value: mountain.localizedRankText, label: AppText.value(zh: "300峰排名", en: "Rank"), tint: FrogTheme.orange)
                             successStatDivider
-                            successStat(value: "\(checkInStore.distinctMountainCount)", label: "已征服山峰")
+                            successStat(value: "\(checkInStore.distinctMountainCount)", label: AppText.value(zh: "已征服山峰", en: "Conquered"))
                         }
                     }
                     .padding(16)
@@ -941,9 +996,9 @@ struct CheckInCameraView: View {
                         if let wm = watermarkPreviewImage {
                             ShareLink(
                                 item: Image(uiImage: wm),
-                                preview: SharePreview("WildFrog · \(mountain.nameZh)", image: Image(uiImage: wm))
+                                preview: SharePreview("WildFrog · \(mountain.localizedName)", image: Image(uiImage: wm))
                             ) {
-                                Label("分享打卡相", systemImage: "square.and.arrow.up")
+                                Label(AppText.value(zh: "分享打卡相", en: "Share Check-in Photo"), systemImage: "square.and.arrow.up")
                                     .font(.headline.weight(.black))
                                     .foregroundStyle(.white)
                                     .frame(maxWidth: .infinity)
@@ -956,7 +1011,7 @@ struct CheckInCameraView: View {
                             showSuccess = false
                             dismiss()
                         } label: {
-                            Text("返回山峰")
+                            Text(AppText.value(zh: "返回山峰", en: "Back to Peak"))
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
@@ -1004,18 +1059,18 @@ struct CheckInCameraView: View {
     // MARK: - Perform check-in (write store + Firestore + save watermark)
 
     @MainActor
-    private func performCheckIn() {
+    private func performCheckIn(syncToCloud: Bool) {
         #if canImport(UIKit)
         guard let capturedImage else {
-            saveMessage = "請先影相或揀相。"
+            saveMessage = AppText.value(zh: "請先影相或揀相。", en: "Take or choose a photo first.")
             return
         }
         guard let uid = authService.session?.uid else {
-            saveMessage = "請先登入再打卡。"
+            saveMessage = AppText.value(zh: "請先登入再打卡。", en: "Please sign in before checking in.")
             return
         }
         guard let watermarkImage = renderCard(cardStyle, userPhoto: capturedImage) else {
-            saveMessage = "未能生成打卡相，請再試一次。"
+            saveMessage = AppText.value(zh: "未能生成打卡相，請再試一次。", en: "Could not generate the check-in image. Please try again.")
             return
         }
 
@@ -1027,7 +1082,7 @@ struct CheckInCameraView: View {
 
         // Finalise the recorded hike (if any) before persisting so the track
         // is bound to this check-in. Captured on the main actor up-front.
-        let trackSummary: TrackSummary? = recorder.isRecording
+        let trackSummary: TrackSummary? = isRecordingThisMountain
             ? recorder.stop().map(TrackSummary.init(track:))
             : nil
 
@@ -1040,12 +1095,14 @@ struct CheckInCameraView: View {
                 let record = checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
                 isSavingWatermark = false
                 if record != nil {
-                    saveMessage = "打卡成功！"
+                    saveMessage = syncToCloud
+                        ? AppText.value(zh: "打卡成功！", en: "Check-in saved!")
+                        : AppText.value(zh: "已儲存在此裝置。", en: "Saved on this device.")
                     withAnimation(.easeInOut(duration: 0.3)) { showSuccess = true }
                 } else {
                     // Account wasn't ready — never fake success; let the user retry.
                     didCompleteCheckIn = false
-                    saveMessage = "打卡未能儲存：請確認已登入後再試一次。"
+                    saveMessage = AppText.value(zh: "打卡未能儲存：請確認已登入後再試一次。", en: "Check-in could not be saved. Please confirm you are signed in and try again.")
                 }
                 return record
             }
@@ -1053,7 +1110,7 @@ struct CheckInCameraView: View {
             // 3. Best-effort Firestore write — failure does not block local success.
             // Pass the record's stable id + date so the cloud echo reconciles back
             // onto the local record (which holds the photo + track) on the next sync.
-            if let newRecord {
+            if syncToCloud, let newRecord {
                 Task {
                     try? await FirestoreService().recordCheckIn(
                         id: newRecord.id,
@@ -1073,7 +1130,7 @@ struct CheckInCameraView: View {
             try? await saveToPhotoLibrary(watermarkImage)
         }
         #else
-        saveMessage = "此平台暫不支援儲存到相簿。"
+        saveMessage = AppText.value(zh: "此平台暫不支援儲存到相簿。", en: "Saving to Photos is not supported on this platform.")
         #endif
     }
 
@@ -1191,20 +1248,20 @@ private struct CheckInWatermarkExportView: View {
             // Caption band
             VStack(alignment: .leading, spacing: 24) {
                 HStack(spacing: 14) {
-                    captionChip(mountain.nameZh, size: 50, weight: .black)
+                    captionChip(mountain.localizedName, size: 50, weight: .black)
                     captionChip(dateText, size: 44, weight: .heavy)
                     Spacer(minLength: 0)
                 }
 
                 HStack(alignment: .center, spacing: 0) {
                     WildFrogBrandMark(size: 44, cornerRadius: 12)
-                    Text("  WildFrog · 海拔 \(mountain.height)m")
+                    Text(AppText.value(zh: "  WildFrog · 海拔 \(mountain.height)m", en: "  WildFrog · \(mountain.height)m elevation"))
                         .font(.system(size: 29, weight: .bold))
                         .foregroundStyle(FrogTheme.muted)
 
                     Spacer()
 
-                    Text("\(mountain.rankText) · 300峰")
+                    Text(AppText.value(zh: "\(mountain.rankText) · 300峰", en: "\(mountain.localizedRankText) · 300 Peaks"))
                         .font(.system(size: 27, weight: .heavy))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 20)
@@ -1281,10 +1338,10 @@ private struct CheckInPassportCardView: View {
                 }
 
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
-                    Text(mountain.nameZh)
+                    Text(mountain.localizedPrimaryName)
                         .font(.system(size: 78, weight: .black))
                         .foregroundStyle(FrogTheme.ink)
-                    Text(mountain.nameEn)
+                    Text(mountain.localizedSecondaryName)
                         .font(.system(size: 30, weight: .bold))
                         .foregroundStyle(FrogTheme.muted)
                     Spacer(minLength: 0)
@@ -1299,17 +1356,17 @@ private struct CheckInPassportCardView: View {
                     .padding(.top, 26)
 
                 HStack(spacing: 0) {
-                    passportStat("海拔", "\(mountain.height)m")
+                    passportStat(AppText.value(zh: "海拔", en: "Elevation"), "\(mountain.height)m")
                     passportStatDivider
-                    passportStat("全港排名", mountain.rankText)
+                    passportStat(AppText.value(zh: "全港排名", en: "HK Rank"), mountain.localizedRankText)
                     passportStatDivider
-                    passportStat("地區", mountain.region)
+                    passportStat(AppText.value(zh: "地區", en: "Region"), mountain.localizedRegion)
                 }
                 .padding(.top, 22)
 
                 Spacer(minLength: 12)
 
-                Text("打卡日期 · \(dateText)")
+                Text(AppText.value(zh: "打卡日期 · \(dateText)", en: "Check-in date · \(dateText)"))
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(FrogTheme.faint)
             }
@@ -1388,7 +1445,7 @@ private enum WatermarkSaveError: LocalizedError {
     case unknown
 
     var errorDescription: String? {
-        "未能寫入相簿。"
+        AppText.value(zh: "未能寫入相簿。", en: "Could not write to Photos.")
     }
 }
 #endif

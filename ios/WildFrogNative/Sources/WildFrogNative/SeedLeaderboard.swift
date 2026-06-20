@@ -30,6 +30,11 @@ struct SeedHikerProfile: Identifiable, Hashable {
         return MountainCatalog.mountain(id: titleMountainId).unlockTitle
     }
 
+    var localizedUnlockedTitle: String? {
+        guard let titleMountainId else { return nil }
+        return MountainCatalog.mountain(id: titleMountainId).localizedUnlockTitle
+    }
+
     var avatarAssetName: String {
         let suffix = id.split(separator: "-").last.flatMap { Int($0) } ?? 1
         let assetIndex = ((suffix - 1) % 72) + 1
@@ -48,12 +53,16 @@ struct SeedLeaderboardEntry: Identifiable {
     var id: String { profile.id }
 
     func subtitle(scope: SeedLeaderboardScope) -> String {
-        let title = profile.unlockedTitle ?? "\(distinctPeaks)峰"
+        let title = profile.localizedUnlockedTitle ?? AppText.value(zh: "\(distinctPeaks)峰", en: "\(distinctPeaks) peaks")
+        let home = AppText.seedRegion(profile.homeRegion)
         switch scope {
         case .month:
-            return "\(profile.homeRegion) · \(profile.style) · \(title)"
+            return "\(home) · \(AppText.hikerStyle(profile.style)) · \(title)"
         case .all:
-            return "\(profile.homeRegion) · 累計 \(distinctPeaks) 座 · \(title)"
+            return AppText.value(
+                zh: "\(profile.homeRegion) · 累計 \(distinctPeaks) 座 · \(title)",
+                en: "\(home) · \(distinctPeaks) peaks total · \(title)"
+            )
         }
     }
 }
@@ -71,37 +80,57 @@ struct SeedAchievementSummary: Identifiable {
     let description: String
     let systemImage: String
     let tint: Color
+
+    var localizedTitle: String {
+        AppText.value(zh: title, en: englishTitle)
+    }
+
+    var localizedDescription: String {
+        AppText.value(zh: description, en: englishDescription)
+    }
+
+    private var englishTitle: String {
+        switch id {
+        case "peaks1": return "First Peak"
+        case "peaks10": return "Ten Peaks"
+        case "peaks20": return "Trailblazer"
+        case "peaks50": return "Peak Explorer"
+        case "peaks100": return "Century Hiker"
+        case "peaks300": return "300 Peak Champion"
+        case "checkins25": return "Dedicated Logger"
+        case "checkins300": return "Check-in Champion"
+        case "days7": return "Seven Active Days"
+        case "days30": return "Thirty Active Days"
+        case "regions4": return "All-region Explorer"
+        case "height700": return "700m Climber"
+        case "height957": return "Highest Point"
+        default: return title
+        }
+    }
+
+    private var englishDescription: String {
+        let number = Int(String(id.filter { $0.isNumber })) ?? 0
+        if id.hasPrefix("peaks") {
+            return number == 1 ? "Summit 1 peak" : "Summit \(number) peaks"
+        }
+        if id.hasPrefix("checkins") {
+            return number == 1 ? "Complete 1 check-in" : "Complete \(number) check-ins"
+        }
+        if id.hasPrefix("days") {
+            return number == 1 ? "Check in on 1 active day" : "Check in on \(number) active days"
+        }
+        if id.hasPrefix("regions") {
+            return "Explore \(number) Hong Kong regions"
+        }
+        if id.hasPrefix("height") {
+            return "Reach a peak above \(number)m"
+        }
+        return description
+    }
 }
 
 enum SeedLeaderboard {
-    private static let monthScoreCap = 24
-    private static let totalScoreCap = 99
-
-    private static let names = [
-        "阿晴", "kinjai", "Ka Man", "Hei Lam", "jason.c", "嘉欣", "Lok Lok", "Yannis", "阿峰", "ms.joey",
-        "Ho Yin", "cc.cheung", "Ming C.", "小米", "kelvinw", "Yan Yan", "Tsz Y.", "Audrey", "chris.hk", "晴晴",
-        "阿健", "Vivi", "ryan_ng", "May L.", "子謙", "wing.s", "阿珊", "Marcus", "hoyi", "Kiki C.",
-        "Kenji", "Jasmine", "tony.t", "阿浩", "nicolew", "Ben C.", "Cherry", "Ivan", "Rachel", "Long 仔",
-        "Phoebe", "AK", "阿恩", "Toby Y.", "Grace", "darren.hk", "Jessie", "Howard", "Carmen", "Leo",
-        "yan.c", "Nora", "Brian", "阿桐", "elaine.l", "Anson", "Mavis", "kit_山路", "Janice", "Oscar",
-        "Tim C.", "Crystal", "阿邦", "suki.s", "Daniel", "琪琪", "Rico", "阿朗", "Ada", "Wallace",
-        "Yuki", "Aaron"
-    ]
-
-    private static let homeRegions = ["沙田", "港島東", "大埔", "九龍", "西貢", "荃灣", "將軍澳", "屯元天", "大嶼山", "離島"]
-    private static let styles = ["週末慢行", "收工散步", "相機先行", "日出線", "越野跑", "海邊山徑", "朋友約行", "清晨上山", "短線常客", "雨後打卡", "親子慢走", "夜景路線"]
-    private static let titleMountainIds = [
-        "tai-mo-shan", "lantau-peak", "sunset-peak", "lion-rock", "ma-on-shan", "sharp-peak",
-        "high-junk-peak", "high-west", "tai-to-yan", "kau-nga-ling", "kai-kung-shan", "tung-wan-shan",
-        "pyramid-hill", "north-peak-the-twins", "tai-tung", "wo-tong-kong", "ping-fung-mei", "sheung-tsz-fung"
-    ]
-    private static let heroMountainIds = [
-        "wo-tong-kong", "kam-sing-teng", "tung-wan-shan", "sam-chi-heung-north-peak", "tai-tung",
-        "miu-tsai-tun", "sharp-peak", "north-peak-the-twins", "sunset-peak", "lantau-peak",
-        "high-junk-peak", "keung-shan", "tai-to-yan", "ping-fung-mei", "sheung-tsz-fung",
-        "kowloon-peak", "lion-rock", "pyramid-hill"
-    ]
-    private static let cadenceOptions = [2, 3, 3, 4, 4, 5, 6, 7, 9]
+    static let profiles: [SeedHikerProfile] = []
 
     private static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
@@ -113,52 +142,31 @@ enum SeedLeaderboard {
         calendar.date(from: DateComponents(year: 2026, month: 6, day: 1)) ?? Date(timeIntervalSince1970: 1_780_272_000)
     }
 
-    static let profiles: [SeedHikerProfile] = names.enumerated().map { index, name in
-        let topBoost = max(0, 18 - index)
-        let baseMonth = min(18, 2 + ((index * 5) % 8) + topBoost / 3)
-        let baseTotal = min(88, 14 + ((index * 29) % 44) + topBoost * 2)
-        let basePeaks = min(42, max(2, baseTotal / 4 + ((index * 5) % 11)))
-        let hasTitle = index % 5 != 4
-        return SeedHikerProfile(
-            id: String(format: "seed-hiker-%03d", index + 1),
-            name: name,
-            homeRegion: homeRegions[index % homeRegions.count],
-            style: styles[(index * 3) % styles.count],
-            titleMountainId: hasTitle ? titleMountainIds[(index * 5) % titleMountainIds.count] : nil,
-            heroMountainId: heroMountainIds[(index * 7) % heroMountainIds.count],
-            progressSeed: index * 31 + 17,
-            baseMonthCheckIns: baseMonth,
-            baseTotalCheckIns: baseTotal,
-            baseDistinctPeaks: basePeaks,
-            cadenceDays: cadenceOptions[index % cadenceOptions.count],
-            weekendCycle: 3 + (index % 5)
-        )
+    static func entries(scope: SeedLeaderboardScope, asOf date: Date) -> [SeedLeaderboardEntry] {
+        entries(profiles: profiles, scope: scope, asOf: date)
     }
 
-    static func entries(scope: SeedLeaderboardScope, asOf date: Date) -> [SeedLeaderboardEntry] {
-        let current = rankedProfiles(scope: scope, asOf: date)
-        let previousDate = calendar.date(byAdding: .day, value: -7, to: date) ?? date
-        let previousRanks = Dictionary(
-            uniqueKeysWithValues: rankedProfiles(scope: scope, asOf: previousDate).map { ($0.profile.id, $0.rank) }
-        )
+    static func entries(profiles: [SeedHikerProfile], scope: SeedLeaderboardScope, asOf date: Date) -> [SeedLeaderboardEntry] {
+        let current = rankedProfiles(profiles: profiles, scope: scope, asOf: date)
 
         return current.map { row in
-            let previousRank = previousRanks[row.profile.id] ?? row.rank
-            let deltaValue = previousRank - row.rank
-            let direction: SeedLeaderboardDelta = deltaValue > 0 ? .up : (deltaValue < 0 ? .down : .flat)
             return SeedLeaderboardEntry(
                 rank: row.rank,
                 profile: row.profile,
                 score: row.score,
                 distinctPeaks: row.distinctPeaks,
-                delta: direction,
-                deltaN: abs(deltaValue)
+                delta: .flat,
+                deltaN: 0
             )
         }
     }
 
     static func rank(for score: Int, scope: SeedLeaderboardScope, asOf date: Date) -> Int {
-        rankedProfiles(scope: scope, asOf: date).filter { $0.score > score }.count + 1
+        rank(for: score, among: profiles, scope: scope, asOf: date)
+    }
+
+    static func rank(for score: Int, among profiles: [SeedHikerProfile], scope: SeedLeaderboardScope, asOf date: Date) -> Int {
+        rankedProfiles(profiles: profiles, scope: scope, asOf: date).filter { $0.score > score }.count + 1
     }
 
     static func checkedMountains(for profile: SeedHikerProfile, asOf date: Date) -> [Mountain] {
@@ -233,7 +241,7 @@ enum SeedLeaderboard {
         return Array(candidates.filter(\.isUnlocked).map(\.badge).prefix(limit))
     }
 
-    private static func rankedProfiles(scope: SeedLeaderboardScope, asOf date: Date) -> [(rank: Int, profile: SeedHikerProfile, score: Int, distinctPeaks: Int)] {
+    private static func rankedProfiles(profiles: [SeedHikerProfile], scope: SeedLeaderboardScope, asOf date: Date) -> [(rank: Int, profile: SeedHikerProfile, score: Int, distinctPeaks: Int)] {
         profiles
             .map { profile in
                 let score = score(for: profile, scope: scope, asOf: date)
@@ -253,9 +261,9 @@ enum SeedLeaderboard {
     static func score(for profile: SeedHikerProfile, scope: SeedLeaderboardScope, asOf date: Date) -> Int {
         switch scope {
         case .month:
-            return min(monthScoreCap, profile.baseMonthCheckIns + rollingGain(for: profile, from: monthStart(for: date), to: date))
+            return max(0, profile.baseMonthCheckIns + rollingGain(for: profile, from: monthStart(for: date), to: date))
         case .all:
-            return min(totalScoreCap, profile.baseTotalCheckIns + rollingGain(for: profile, from: seedEpoch, to: date))
+            return max(0, profile.baseTotalCheckIns + rollingGain(for: profile, from: seedEpoch, to: date))
         }
     }
 
