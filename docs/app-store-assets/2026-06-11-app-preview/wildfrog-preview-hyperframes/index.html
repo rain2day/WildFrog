@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="zh-Hant" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=886, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 886px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f6f0e2;
+      }
+
+      body {
+        font-family: "Avenir Next", sans-serif;
+        color: #0b231a;
+      }
+
+      #root {
+        position: relative;
+        width: 886px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f6f0e2;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 886px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f6f0e2;
+      }
+
+      #scene1 {
+        z-index: 1;
+      }
+
+      #scene2,
+      #scene3,
+      #scene4,
+      #scene5 {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(21, 62, 47, 0.06), rgba(21, 62, 47, 0.12)),
+          linear-gradient(0deg, rgba(246, 240, 226, 0.08), rgba(246, 240, 226, 0));
+      }
+
+      .paper {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 22% 8%, rgba(168, 196, 207, 0.42), rgba(168, 196, 207, 0) 28%),
+          linear-gradient(180deg, #f6f0e2 0%, #efe3c8 100%);
+      }
+
+      .grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.14;
+        background-image:
+          linear-gradient(90deg, rgba(21, 62, 47, 0.04) 1px, rgba(21, 62, 47, 0) 1px),
+          linear-gradient(0deg, rgba(21, 62, 47, 0.03) 1px, rgba(21, 62, 47, 0) 1px);
+        background-size: 38px 38px;
+      }
+
+      .contours {
+        position: absolute;
+        width: 820px;
+        height: 820px;
+        border: 2px solid rgba(21, 62, 47, 0.12);
+        border-radius: 48% 52% 45% 55%;
+        transform: rotate(-13deg);
+      }
+
+      .contours::before,
+      .contours::after {
+        content: "";
+        position: absolute;
+        inset: 60px;
+        border: 2px solid rgba(21, 62, 47, 0.1);
+        border-radius: 54% 46% 51% 49%;
+      }
+
+      .contours::after {
+        inset: 138px;
+        border-color: rgba(212, 91, 43, 0.17);
+        transform: rotate(12deg);
+      }
+
+      .content {
+        position: relative;
+        z-index: 5;
+        width: 100%;
+        height: 100%;
+        padding: 72px 58px 72px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .brand img {
+        width: 124px;
+        height: auto;
+        display: block;
+      }
+
+      .eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 18px;
+        line-height: 1.2;
+        color: #071811;
+        font-weight: 800;
+        text-transform: uppercase;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .headline {
+        font-family: "Georgia", serif;
+        font-weight: 900;
+        font-size: 88px;
+        line-height: 0.98;
+        color: #153e2f;
+      }
+
+      .headline span {
+        display: block;
+      }
+
+      .subcopy {
+        max-width: 620px;
+        font-size: 30px;
+        line-height: 1.38;
+        font-weight: 700;
+        color: rgba(21, 62, 47, 0.86);
+      }
+
+      .meta-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .pill {
+        height: 44px;
+        padding: 0 18px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(21, 62, 47, 0.18);
+        background: rgba(246, 240, 226, 0.86);
+        color: #153e2f;
+        font-size: 18px;
+        font-weight: 850;
+      }
+
+      .pill.orange {
+        background: #fff8ec;
+        color: #0b231a;
+        border: 2px solid #0b231a;
+        box-shadow: inset 0 -4px 0 rgba(212, 91, 43, 0.38);
+      }
+
+      .rule {
+        width: 100%;
+        height: 2px;
+        transform-origin: left center;
+        background: rgba(21, 62, 47, 0.24);
+      }
+
+      .phone {
+        position: relative;
+        width: 610px;
+        height: 1320px;
+        border-radius: 84px;
+        background:
+          linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 18%),
+          linear-gradient(160deg, #303d35 0%, #07120e 38%, #13241c 72%, #030605 100%);
+        padding: 18px;
+        overflow: visible;
+        isolation: isolate;
+        box-shadow:
+          0 36px 88px rgba(21, 62, 47, 0.24),
+          0 0 0 2px rgba(3, 6, 5, 0.9),
+          0 0 0 5px rgba(222, 232, 222, 0.14),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.2),
+          inset 0 -18px 30px rgba(0, 0, 0, 0.22);
+      }
+
+      .phone.small {
+        width: 520px;
+        height: 1125px;
+        border-radius: 76px;
+        padding: 14px;
+      }
+
+      .phone.wide {
+        width: 660px;
+        height: 1426px;
+      }
+
+      .phone.hero {
+        width: 500px;
+        height: 1082px;
+        border-radius: 76px;
+        padding: 15px;
+      }
+
+      .phone-screen {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 64px;
+        display: block;
+        background: #f6f0e2;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.18),
+          inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+      }
+
+      .phone.small .phone-screen,
+      .phone.hero .phone-screen {
+        border-radius: 58px;
+      }
+
+      .phone-island {
+        position: absolute;
+        top: 31px;
+        left: 50%;
+        z-index: 7;
+        width: 160px;
+        height: 43px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background:
+          radial-gradient(circle at 78% 44%, rgba(44, 58, 50, 0.75), rgba(44, 58, 50, 0) 9%),
+          #030605;
+        box-shadow:
+          inset 0 1px 1px rgba(255, 255, 255, 0.16),
+          0 2px 7px rgba(0, 0, 0, 0.26);
+      }
+
+      .phone.hero .phone-island,
+      .phone.small .phone-island {
+        top: 25px;
+        width: 132px;
+        height: 36px;
+      }
+
+      .phone-glass {
+        position: absolute;
+        inset: 18px;
+        z-index: 5;
+        border-radius: 64px;
+        pointer-events: none;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+          inset 0 18px 34px rgba(255, 255, 255, 0.08),
+          inset 0 -26px 34px rgba(0, 0, 0, 0.08);
+      }
+
+      .phone.hero .phone-glass,
+      .phone.small .phone-glass {
+        inset: 15px;
+        border-radius: 58px;
+      }
+
+      .phone-button {
+        position: absolute;
+        display: block;
+        width: 8px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #2e4037, #07120e 58%, #020403);
+        box-shadow: 0 0 0 1px rgba(3, 6, 5, 0.8);
+        z-index: 1;
+      }
+
+      .phone-button-left-a {
+        left: -8px;
+        top: 190px;
+        height: 78px;
+      }
+
+      .phone-button-left-b {
+        left: -9px;
+        top: 306px;
+        height: 126px;
+      }
+
+      .phone-button-right {
+        right: -9px;
+        top: 270px;
+        height: 154px;
+      }
+
+      .stamp-chip {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: #f6f0e2;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 14px 36px rgba(21, 62, 47, 0.16);
+        border: 2px solid rgba(212, 91, 43, 0.35);
+      }
+
+      .stamp-chip img {
+        width: 118px;
+        height: 118px;
+        object-fit: contain;
+        border-radius: 24px;
+      }
+
+      .stat-card {
+        background: rgba(246, 240, 226, 0.92);
+        border: 1px solid rgba(21, 62, 47, 0.16);
+        border-radius: 24px;
+        padding: 18px 20px;
+        box-shadow: 0 16px 40px rgba(21, 62, 47, 0.12);
+      }
+
+      .stat-card strong {
+        display: block;
+        font-size: 38px;
+        line-height: 1;
+        font-weight: 900;
+        color: #153e2f;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stat-card span {
+        display: block;
+        margin-top: 8px;
+        font-size: 17px;
+        font-weight: 800;
+        color: rgba(21, 62, 47, 0.66);
+      }
+
+      .app-caption {
+        font-size: 24px;
+        line-height: 1.25;
+        font-weight: 850;
+        color: #153e2f;
+      }
+
+      .scene-home .content {
+        justify-content: flex-start;
+        gap: 18px;
+        padding: 74px 54px 62px;
+      }
+
+      .scene-home .hero-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        max-width: 690px;
+      }
+
+      .scene-home .brand {
+        align-self: flex-start;
+        padding: 14px 18px;
+        border-radius: 26px;
+        background: rgba(246, 240, 226, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.44);
+        backdrop-filter: blur(10px);
+      }
+
+      .home-device-wrap {
+        position: relative;
+        flex: 1;
+        min-height: 1018px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .scene-home .home-panel {
+        width: 612px;
+        align-self: center;
+        padding: 20px;
+        border-radius: 32px;
+        background: rgba(246, 240, 226, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(10px);
+      }
+
+      .scene-home .home-panel .meta-row {
+        margin-top: 12px;
+      }
+
+      .scene-detail .content {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-content: start;
+      }
+
+      .detail-layout {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+        height: 100%;
+      }
+
+      .detail-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-top: 26px;
+      }
+
+      .detail-copy .headline {
+        font-size: 74px;
+      }
+
+      .detail-phone-wrap {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      .detail-cards {
+        position: absolute;
+        left: 8px;
+        bottom: 210px;
+        display: grid;
+        grid-template-columns: 170px 170px;
+        gap: 12px;
+        z-index: 6;
+      }
+
+      .floating-route {
+        position: absolute;
+        right: 18px;
+        top: 700px;
+        width: 210px;
+        padding: 18px;
+        background: #153e2f;
+        color: #f6f0e2;
+        border-radius: 26px;
+        box-shadow: 0 18px 44px rgba(21, 62, 47, 0.28);
+        z-index: 8;
+      }
+
+      .floating-route strong {
+        display: block;
+        font-size: 26px;
+      }
+
+      .floating-route span {
+        display: block;
+        margin-top: 7px;
+        font-size: 16px;
+        color: rgba(246, 240, 226, 0.76);
+      }
+
+      .scene-watermark {
+        background: #153e2f;
+        color: #f6f0e2;
+      }
+
+      .scene-watermark .paper {
+        background:
+          radial-gradient(circle at 78% 24%, rgba(212, 91, 43, 0.34), rgba(212, 91, 43, 0) 34%),
+          linear-gradient(180deg, #1b4b39 0%, #153e2f 68%, #102a20 100%);
+      }
+
+      .scene-watermark .headline,
+      .scene-watermark .app-caption,
+      .scene-watermark .subcopy {
+        color: #f6f0e2;
+      }
+
+      .scene-watermark .eyebrow {
+        color: #f4c58a;
+      }
+
+      .watermark-layout {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 28px;
+      }
+
+      .watermark-phone-row {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        min-height: 1050px;
+      }
+
+      .watermark-phone-row .phone {
+        box-shadow: 0 36px 90px rgba(0, 0, 0, 0.38);
+      }
+
+      .card-peek {
+        position: absolute;
+        right: 56px;
+        bottom: 92px;
+        width: 268px;
+        padding: 14px;
+        border-radius: 30px;
+        background: #f6f0e2;
+        color: #153e2f;
+        box-shadow: 0 26px 80px rgba(0, 0, 0, 0.28);
+        z-index: 8;
+      }
+
+      .card-peek img {
+        width: 100%;
+        border-radius: 18px;
+        display: block;
+      }
+
+      .card-peek span {
+        display: block;
+        margin-top: 10px;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .scene-stamps .content {
+        padding-top: 70px;
+      }
+
+      .stamps-layout {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 30px;
+      }
+
+      .stamp-phone-zone {
+        position: relative;
+        display: flex;
+        justify-content: center;
+      }
+
+      .stamp-count {
+        position: absolute;
+        left: 24px;
+        top: 120px;
+        width: 220px;
+        padding: 20px;
+        border-radius: 28px;
+        background: #d45b2b;
+        color: #fff8ec;
+        box-shadow: 0 18px 50px rgba(212, 91, 43, 0.24);
+        z-index: 10;
+      }
+
+      .stamp-count strong {
+        display: block;
+        font-size: 54px;
+        line-height: 0.95;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stamp-count span {
+        display: block;
+        margin-top: 9px;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .pulse-ring {
+        position: absolute;
+        width: 132px;
+        height: 132px;
+        border-radius: 50%;
+        border: 4px solid rgba(212, 91, 43, 0.58);
+        opacity: 0.7;
+        z-index: 9;
+      }
+
+      .scene-certificate .content {
+        justify-content: space-between;
+        padding-top: 64px;
+      }
+
+      .certificate-layout {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        height: 100%;
+      }
+
+      .certificate-hero {
+        position: relative;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .certificate-copy {
+        display: grid;
+        gap: 14px;
+      }
+
+      .certificate-copy .headline {
+        font-size: 78px;
+      }
+
+      .outro-lockup {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 20px;
+        border-radius: 30px;
+        background: rgba(21, 62, 47, 0.92);
+        color: #f6f0e2;
+      }
+
+      .outro-lockup img {
+        width: 76px;
+        height: 76px;
+        border-radius: 18px;
+      }
+
+      .outro-lockup strong {
+        display: block;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .outro-lockup span {
+        display: block;
+        margin-top: 6px;
+        font-size: 18px;
+        color: rgba(246, 240, 226, 0.72);
+      }
+
+      .transition-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 50;
+        pointer-events: none;
+      }
+
+      #leak-warm {
+        background: rgba(212, 91, 43, 0.72);
+        opacity: 0;
+      }
+
+      .leak {
+        position: absolute;
+        width: 1280px;
+        height: 1280px;
+        border-radius: 50%;
+        opacity: 0;
+        background: radial-gradient(circle, rgba(255, 236, 188, 0.95), rgba(212, 91, 43, 0.24) 38%, rgba(212, 91, 43, 0) 72%);
+        filter: blur(20px);
+      }
+
+      #leak-a {
+        left: -760px;
+        top: -120px;
+      }
+
+      #leak-b {
+        right: -820px;
+        bottom: -220px;
+      }
+
+      #flash {
+        background: #fff8ec;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="24.2"
+      data-width="886"
+      data-height="1920"
+    >
+      <div id="scene1" class="scene scene-home">
+        <div class="paper"></div>
+        <div class="grain"></div>
+        <div class="scrim"></div>
+        <div id="s1-contour" class="contours" style="left: -210px; bottom: -180px" data-layout-allow-overflow></div>
+        <div class="content">
+          <div id="s1-brand" class="brand">
+            <img src="media/wildfrog-logo.png" alt="WildFrog" />
+            <div class="eyebrow">HK PEAK PASSPORT</div>
+          </div>
+          <div class="hero-copy">
+            <div id="s1-rule" class="rule"></div>
+            <h1 id="s1-title" class="headline">
+              <span>香港山峰</span>
+              <span>變成你的足跡</span>
+            </h1>
+            <p id="s1-sub" class="subcopy">地圖、登頂打卡、印章收藏，一次記低每段山野路線。</p>
+          </div>
+          <div class="home-device-wrap">
+            <div id="s1-phone" class="phone hero" data-layout-allow-overflow>
+              <span class="phone-button phone-button-left-a"></span>
+              <span class="phone-button phone-button-left-b"></span>
+              <span class="phone-button phone-button-right"></span>
+              <span class="phone-island"></span>
+              <img class="phone-screen" src="media/01-home.png" alt="" />
+              <span class="phone-glass"></span>
+            </div>
+          </div>
+          <div id="s1-panel" class="home-panel">
+            <div class="app-caption">330 個山峰地圖，由探索開始。</div>
+            <div class="meta-row">
+              <span class="pill orange">330 PEAKS</span>
+              <span class="pill">MAP</span>
+              <span class="pill">CHECK-IN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene2" class="scene scene-detail">
+        <div class="paper"></div>
+        <div class="grain"></div>
+        <div id="s2-contour" class="contours" style="right: -260px; top: 64px" data-layout-allow-overflow></div>
+        <div class="content">
+          <div class="detail-layout">
+            <div class="detail-copy">
+              <div id="s2-eye" class="eyebrow">MOUNTAIN DETAIL</div>
+              <h2 id="s2-title" class="headline">
+                <span>揀一座山</span>
+                <span>即刻有路線感</span>
+              </h2>
+              <p id="s2-sub" class="subcopy">高度、地區、地圖與打卡入口集中一頁，出發前先認清目標。</p>
+            </div>
+            <div class="detail-phone-wrap">
+              <div id="s2-phone" class="phone wide" data-layout-allow-overflow>
+                <span class="phone-button phone-button-left-a"></span>
+                <span class="phone-button phone-button-left-b"></span>
+                <span class="phone-button phone-button-right"></span>
+                <span class="phone-island"></span>
+                <img class="phone-screen" src="media/02-detail.png" alt="" />
+                <span class="phone-glass"></span>
+              </div>
+              <div class="detail-cards">
+                <div id="s2-card1" class="stat-card"><strong>957m</strong><span>大帽山高度</span></div>
+                <div id="s2-card2" class="stat-card"><strong>#1</strong><span>300 峰排行</span></div>
+              </div>
+              <div id="s2-route" class="floating-route">
+                <strong>開始打卡</strong>
+                <span>從山峰詳情直入證明流程</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene3" class="scene scene-watermark">
+        <div class="paper"></div>
+        <div class="grain"></div>
+        <div id="s3-contour" class="contours" style="left: -300px; top: 600px; border-color: rgba(246,240,226,0.14)" data-layout-allow-overflow></div>
+        <div class="content">
+          <div class="watermark-layout">
+            <div>
+              <div id="s3-eye" class="eyebrow">CHECK-IN MOMENT</div>
+              <h2 id="s3-title" class="headline">
+                <span>登頂一刻</span>
+                <span>變成水印卡</span>
+              </h2>
+            </div>
+            <div class="watermark-phone-row">
+              <div id="s3-phone" class="phone" data-layout-allow-overflow>
+                <span class="phone-button phone-button-left-a"></span>
+                <span class="phone-button phone-button-left-b"></span>
+                <span class="phone-button phone-button-right"></span>
+                <span class="phone-island"></span>
+                <img class="phone-screen" src="media/03-watermark.png" alt="" />
+                <span class="phone-glass"></span>
+              </div>
+              <div id="s3-card" class="card-peek">
+                <img src="media/03-watermark-card.png" alt="" />
+                <span>獅子山 · 2026.06.11</span>
+              </div>
+            </div>
+            <p id="s3-sub" class="subcopy">用相片保留山峰、日期與排名，分享時更似一本真正的山野護照。</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene4" class="scene scene-stamps">
+        <div class="paper"></div>
+        <div class="grain"></div>
+        <div id="s4-contour" class="contours" style="right: -340px; bottom: -180px" data-layout-allow-overflow></div>
+        <div class="content">
+          <div class="stamps-layout">
+            <div>
+              <div id="s4-eye" class="eyebrow">STAMP WALL</div>
+              <h2 id="s4-title" class="headline">
+                <span>每一座完成</span>
+                <span>都留低一個印章</span>
+              </h2>
+            </div>
+            <div class="stamp-phone-zone">
+              <div id="s4-phone" class="phone wide" data-layout-allow-overflow>
+                <span class="phone-button phone-button-left-a"></span>
+                <span class="phone-button phone-button-left-b"></span>
+                <span class="phone-button phone-button-right"></span>
+                <span class="phone-island"></span>
+                <img class="phone-screen" src="media/04-stamps.png" alt="" />
+                <span class="phone-glass"></span>
+              </div>
+              <div id="s4-count" class="stamp-count"><strong>16</strong><span>已收藏印章</span></div>
+              <div id="s4-ring1" class="pulse-ring" style="right: 184px; top: 118px"></div>
+              <div id="s4-ring2" class="pulse-ring" style="right: 260px; top: 410px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene5" class="scene scene-certificate">
+        <div class="paper"></div>
+        <div class="grain"></div>
+        <div id="s5-contour" class="contours" style="left: -320px; bottom: 170px" data-layout-allow-overflow></div>
+        <div class="content">
+          <div class="certificate-layout">
+            <div class="certificate-copy">
+              <div id="s5-eye" class="eyebrow">PEAK CONQUEST CERTIFICATE</div>
+              <h2 id="s5-title" class="headline">
+                <span>完成登頂</span>
+                <span>即刻生成證書</span>
+              </h2>
+              <p id="s5-sub" class="subcopy">將一次行山，收進自己的 Peak Passport。</p>
+            </div>
+            <div class="certificate-hero">
+              <div id="s5-phone" class="phone wide" data-layout-allow-overflow>
+                <span class="phone-button phone-button-left-a"></span>
+                <span class="phone-button phone-button-left-b"></span>
+                <span class="phone-button phone-button-right"></span>
+                <span class="phone-island"></span>
+                <img class="phone-screen" src="media/05-certificate.png" alt="" />
+                <span class="phone-glass"></span>
+              </div>
+              <div id="s5-stamp" class="stamp-chip" style="right: 20px; top: 60px">
+                <img src="media/app-icon-ios-marketing-1024@1x.png" alt="" />
+              </div>
+            </div>
+            <div id="s5-lockup" class="outro-lockup">
+              <img src="media/app-icon-lockup.png" alt="" />
+              <div>
+                <strong>WildFrog</strong>
+                <span>香港山峰打卡與行程記錄</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="leak-warm" class="transition-layer"></div>
+      <div id="leak-a" class="leak"></div>
+      <div id="leak-b" class="leak"></div>
+      <div id="flash" class="transition-layer"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+      var W = 886;
+
+      function lightLeak(oldSel, newSel, T) {
+        tl.to("#leak-warm", { opacity: 0.36, duration: 0.28, ease: "power1.in", overwrite: "auto" }, T);
+        tl.to("#leak-a", { opacity: 0.82, x: 340, duration: 0.58, ease: "sine.inOut", overwrite: "auto" }, T + 0.04);
+        tl.to("#leak-b", { opacity: 0.62, x: -280, duration: 0.68, ease: "sine.inOut", overwrite: "auto" }, T + 0.08);
+        tl.to("#leak-warm", { opacity: 0.58, duration: 0.14, ease: "power2.in", overwrite: "auto" }, T + 0.34);
+        tl.set(oldSel, { opacity: 0 }, T + 0.46);
+        tl.set(oldSel, { visibility: "hidden" }, T + 0.47);
+        tl.set(newSel, { visibility: "visible", opacity: 1, x: 0, y: 0, scale: 1, filter: "blur(0px)" }, T + 0.46);
+        tl.to("#leak-warm", { opacity: 0, duration: 0.42, ease: "power2.out", overwrite: "auto" }, T + 0.52);
+        tl.to("#leak-a", { opacity: 0, x: 620, duration: 0.38, ease: "power1.out", overwrite: "auto" }, T + 0.52);
+        tl.to("#leak-b", { opacity: 0, x: -520, duration: 0.42, ease: "power1.out", overwrite: "auto" }, T + 0.54);
+        tl.set(["#leak-a", "#leak-b"], { x: 0 }, T + 1.05);
+      }
+
+      function pushSlide(oldSel, newSel, T) {
+        tl.set(newSel, { visibility: "visible", x: W, opacity: 1 }, T);
+        tl.to(oldSel, { x: -W, duration: 0.32, ease: "power3.inOut", overwrite: "auto" }, T);
+        tl.to(newSel, { x: 0, duration: 0.32, ease: "power3.inOut", overwrite: "auto" }, T);
+        tl.set(oldSel, { visibility: "hidden" }, T + 0.34);
+      }
+
+      function blurCrossfade(oldSel, newSel, T) {
+        tl.set(newSel, { visibility: "visible" }, T);
+        tl.to(oldSel, { filter: "blur(14px)", scale: 1.025, opacity: 0, duration: 0.56, ease: "power2.inOut", overwrite: "auto" }, T);
+        tl.fromTo(newSel, { filter: "blur(14px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.62, ease: "power1.out", overwrite: "auto" }, T + 0.08);
+        tl.set(oldSel, { visibility: "hidden" }, T + 0.58);
+      }
+
+      function flashReveal(oldSel, newSel, T) {
+        tl.to(oldSel, { filter: "brightness(1.45)", scale: 1.02, duration: 0.22, ease: "power1.in", overwrite: "auto" }, T);
+        tl.to(oldSel, { filter: "brightness(2.8)", scale: 1.045, duration: 0.24, ease: "power2.in", overwrite: "auto" }, T + 0.18);
+        tl.to("#flash", { opacity: 0.82, duration: 0.24, ease: "power1.in", overwrite: "auto" }, T + 0.2);
+        tl.set(oldSel, { opacity: 0, filter: "brightness(1)", scale: 1 }, T + 0.38);
+        tl.set(oldSel, { visibility: "hidden" }, T + 0.39);
+        tl.set(newSel, { visibility: "visible", opacity: 1, filter: "brightness(1)", scale: 1 }, T + 0.38);
+        tl.to("#flash", { opacity: 0, duration: 0.42, ease: "power2.out", overwrite: "auto" }, T + 0.4);
+      }
+
+      tl.from("#s1-brand", { y: -34, opacity: 0, duration: 0.58, ease: "back.out(1.4)" }, 0.22);
+      tl.from("#s1-rule", { scaleX: 0, duration: 0.72, ease: "power4.out" }, 0.42);
+      tl.from("#s1-title span", { x: -46, opacity: 0, duration: 0.68, stagger: 0.13, ease: "expo.out" }, 0.58);
+      tl.from("#s1-sub", { y: 28, opacity: 0, duration: 0.52, ease: "power2.out" }, 0.94);
+      tl.from("#s1-phone", { y: 62, scale: 0.94, duration: 0.76, ease: "back.out(1.12)" }, 0.28);
+      tl.from("#s1-panel", { y: 48, opacity: 0, scale: 0.96, duration: 0.66, ease: "power3.out" }, 1.48);
+      tl.to("#s1-phone", { y: -28, duration: 2.36, ease: "sine.inOut" }, 1.66);
+      tl.to("#s1-contour", { x: 52, y: -28, rotation: -7, duration: 4.0, ease: "sine.inOut" }, 0.2);
+
+      lightLeak("#scene1", "#scene2", 4.15);
+
+      tl.from("#s2-eye", { x: -34, opacity: 0, duration: 0.42, ease: "power4.out" }, 4.72);
+      tl.from("#s2-title span", { y: 54, opacity: 0, duration: 0.62, stagger: 0.11, ease: "expo.out" }, 4.9);
+      tl.from("#s2-sub", { x: 36, opacity: 0, duration: 0.54, ease: "power2.out" }, 5.22);
+      tl.from("#s2-phone", { x: 78, y: 24, rotation: 2.2, opacity: 0, duration: 0.74, ease: "back.out(1.2)" }, 5.38);
+      tl.from("#s2-card1", { x: -64, opacity: 0, scale: 0.92, duration: 0.42, ease: "power3.out" }, 5.78);
+      tl.from("#s2-card2", { y: 56, opacity: 0, scale: 0.9, duration: 0.48, ease: "expo.out" }, 5.92);
+      tl.from("#s2-route", { x: 62, opacity: 0, rotation: -2, duration: 0.58, ease: "power4.out" }, 6.08);
+      tl.to("#s2-phone", { y: -24, duration: 2.55, ease: "sine.inOut" }, 6.18);
+      tl.to("#s2-contour", { x: -64, y: 30, rotation: -20, duration: 3.6, ease: "sine.inOut" }, 5.0);
+
+      pushSlide("#scene2", "#scene3", 8.72);
+
+      tl.from("#s3-eye", { y: -28, opacity: 0, duration: 0.38, ease: "power2.out" }, 9.34);
+      tl.from("#s3-title span", { x: -54, opacity: 0, duration: 0.62, stagger: 0.12, ease: "expo.out" }, 9.5);
+      tl.from("#s3-phone", { scale: 0.9, y: 80, opacity: 0, duration: 0.72, ease: "back.out(1.15)" }, 9.9);
+      tl.from("#s3-card", { x: 86, y: 42, rotation: 4, opacity: 0, duration: 0.68, ease: "power4.out" }, 10.28);
+      tl.from("#s3-sub", { y: 40, opacity: 0, duration: 0.5, ease: "sine.out" }, 10.72);
+      tl.to("#s3-card", { y: -22, rotation: 1.2, duration: 2.44, ease: "sine.inOut" }, 10.98);
+      tl.to("#s3-contour", { x: 80, rotation: -2, duration: 3.4, ease: "sine.inOut" }, 9.6);
+
+      blurCrossfade("#scene3", "#scene4", 13.02);
+
+      tl.from("#s4-eye", { x: -28, opacity: 0, duration: 0.36, ease: "power2.out" }, 13.72);
+      tl.from("#s4-title span", { y: 48, opacity: 0, duration: 0.58, stagger: 0.12, ease: "expo.out" }, 13.88);
+      tl.from("#s4-phone", { y: 84, opacity: 0, scale: 0.93, duration: 0.72, ease: "back.out(1.25)" }, 13.96);
+      tl.from("#s4-count", { x: -76, rotation: -4, opacity: 0, duration: 0.5, ease: "power4.out" }, 14.34);
+      tl.from("#s4-ring1", { scale: 0.35, opacity: 0, duration: 0.42, ease: "expo.out" }, 14.62);
+      tl.from("#s4-ring2", { scale: 0.35, opacity: 0, duration: 0.42, ease: "power3.out" }, 14.8);
+      tl.to("#s4-ring1", { scale: 1.42, opacity: 0, duration: 1.15, repeat: 1, ease: "sine.out" }, 15.24);
+      tl.to("#s4-ring2", { scale: 1.36, opacity: 0, duration: 1.2, repeat: 1, ease: "sine.out" }, 15.38);
+      tl.to("#s4-phone", { y: -38, duration: 2.28, ease: "sine.inOut" }, 14.74);
+      tl.to("#s4-contour", { x: -72, y: -38, rotation: -4, duration: 3.5, ease: "sine.inOut" }, 13.9);
+
+      flashReveal("#scene4", "#scene5", 17.48);
+
+      tl.from("#s5-eye", { x: -26, opacity: 0, duration: 0.34, ease: "power2.out" }, 17.74);
+      tl.from("#s5-title span", { y: 50, opacity: 0, duration: 0.62, stagger: 0.12, ease: "expo.out" }, 17.84);
+      tl.from("#s5-phone", { scale: 0.88, y: 72, opacity: 0, duration: 0.82, ease: "back.out(1.18)" }, 17.82);
+      tl.from("#s5-sub", { x: 34, opacity: 0, duration: 0.46, ease: "power3.out" }, 18.02);
+      tl.from("#s5-stamp", { scale: 0.4, rotation: -18, opacity: 0, duration: 0.58, ease: "elastic.out(1, 0.62)" }, 18.62);
+      tl.from("#s5-lockup", { y: 44, opacity: 0, duration: 0.5, ease: "power3.out" }, 19.22);
+      tl.to("#s5-phone", { y: -26, duration: 3.0, ease: "sine.inOut" }, 18.68);
+      tl.to("#s5-stamp", { rotation: 5, scale: 1.05, duration: 1.66, ease: "sine.inOut" }, 19.36);
+      tl.to("#s5-contour", { x: 54, y: -24, rotation: -22, duration: 4.0, ease: "sine.inOut" }, 18.3);
+      tl.to("#scene5", { opacity: 0, duration: 0.65, ease: "power1.inOut" }, 23.45);
+      tl.set("#scene5", { visibility: "hidden" }, 24.11);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

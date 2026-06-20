@@ -70,11 +70,9 @@ struct WildFrogNativeApp: App {
                 }
                 .task(id: authService.session?.uid) {
                     await checkInStore.configure(for: authService.session?.uid)
-                    #if !DEBUG
                     if !authService.canUseReviewerTools {
                         locationManager.mockCoordinate = nil
                     }
-                    #endif
                 }
                 #if DEBUG
                 .task {
