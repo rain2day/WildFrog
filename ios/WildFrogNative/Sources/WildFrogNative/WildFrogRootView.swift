@@ -51,6 +51,8 @@ struct WildFrogRootView: View {
     @State private var checkInPath = NavigationPath()
     @State private var leaderboardPath = NavigationPath()
     @State private var profilePath = NavigationPath()
+    @State private var leaderboardProfiles: [SeedHikerProfile] = []
+    @State private var hasLoadedLeaderboardProfiles = false
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var recorder: TrackRecorder
 
@@ -126,7 +128,13 @@ struct WildFrogRootView: View {
                 case .checkIn:
                     NavigationStack(path: $checkInPath) { CheckInPickerView() }
                 case .leaderboard:
-                    NavigationStack(path: $leaderboardPath) { LeaderboardView().withNativeRoutes() }
+                    NavigationStack(path: $leaderboardPath) {
+                        LeaderboardView(
+                            leaderboardProfiles: $leaderboardProfiles,
+                            hasLoadedLeaderboardProfiles: $hasLoadedLeaderboardProfiles
+                        )
+                        .withNativeRoutes()
+                    }
                 case .profile:
                     NavigationStack(path: $profilePath) { ProfileView() }
                 }

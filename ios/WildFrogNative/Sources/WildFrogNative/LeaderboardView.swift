@@ -9,7 +9,8 @@ struct LeaderboardView: View {
     @State private var scope: Scope = .month
     @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
     @State private var leaderboardDate = Date()
-    @State private var leaderboardProfiles: [SeedHikerProfile] = []
+    @Binding private var leaderboardProfiles: [SeedHikerProfile]
+    @Binding private var hasLoadedLeaderboardProfiles: Bool
     @State private var leaderboardLoadState: LeaderboardLoadState = .idle
     @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var checkInStore: CheckInStore
@@ -22,6 +23,17 @@ struct LeaderboardView: View {
     private var currentEntries: [SeedLeaderboardEntry] { SeedLeaderboard.entries(profiles: leaderboardProfiles, scope: seedScope, asOf: leaderboardDate) }
     private var currentLeader: SeedLeaderboardEntry? { currentEntries.first }
     private var currentRows: [SeedLeaderboardEntry] { Array(currentEntries.dropFirst().prefix(8)) }
+    private var isWaitingForFirstLeaderboardLoad: Bool {
+        !hasLoadedLeaderboardProfiles && (leaderboardLoadState == .idle || leaderboardLoadState == .loading)
+    }
+
+    init(
+        leaderboardProfiles: Binding<[SeedHikerProfile]>,
+        hasLoadedLeaderboardProfiles: Binding<Bool>
+    ) {
+        _leaderboardProfiles = leaderboardProfiles
+        _hasLoadedLeaderboardProfiles = hasLoadedLeaderboardProfiles
+    }
 
     /// Real personal stats from CheckInStore (true data, personal only).
     private var myTotalCheckIns: Int { checkInStore.totalCheckIns }
@@ -224,17 +236,17 @@ struct LeaderboardView: View {
 
     private var leaderboardStatusCard: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: leaderboardLoadState == .loading ? "arrow.triangle.2.circlepath" : "chart.bar.doc.horizontal")
+            Image(systemName: isWaitingForFirstLeaderboardLoad ? "arrow.triangle.2.circlepath" : "chart.bar.doc.horizontal")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(FrogTheme.orange)
                 .frame(width: 38, height: 38)
                 .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             VStack(alignment: .leading, spacing: 5) {
-                Text(leaderboardLoadState == .failed ? AppText.value(zh: "未能載入排行", en: "Could not load ranking") : AppText.value(zh: "暫時未有公開排行", en: "No public ranking yet"))
+                Text(leaderboardStatusTitle)
                     .font(.frogRow.weight(.black))
                     .foregroundStyle(FrogTheme.ink)
-                Text(leaderboardLoadState == .loading ? AppText.value(zh: "正在同步排行榜...", en: "Syncing leaderboard...") : AppText.value(zh: "有公開打卡紀錄後，排行會自動更新。", en: "The ranking updates when public check-ins are available."))
+                Text(leaderboardStatusSubtitle)
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -242,6 +254,26 @@ struct LeaderboardView: View {
         }
         .padding(15)
         .cardStyle(cornerRadius: 16)
+    }
+
+    private var leaderboardStatusTitle: String {
+        if isWaitingForFirstLeaderboardLoad {
+            return AppText.value(zh: "正在同步排行榜", en: "Syncing leaderboard")
+        }
+        if leaderboardLoadState == .failed {
+            return AppText.value(zh: "未能載入排行", en: "Could not load ranking")
+        }
+        return AppText.value(zh: "暫時未有公開排行", en: "No public ranking yet")
+    }
+
+    private var leaderboardStatusSubtitle: String {
+        if isWaitingForFirstLeaderboardLoad {
+            return AppText.value(zh: "排行資料載入後會即時顯示。", en: "Ranking data will appear as soon as it loads.")
+        }
+        if leaderboardLoadState == .failed {
+            return AppText.value(zh: "請稍後再試；已有資料會保留顯示。", en: "Please try again later; existing data stays visible.")
+        }
+        return AppText.value(zh: "有公開打卡紀錄後，排行會自動更新。", en: "The ranking updates when public check-ins are available.")
     }
 
     private func leaderBand(_ currentLeader: SeedLeaderboardEntry) -> some View {
@@ -423,14 +455,21 @@ struct LeaderboardView: View {
 
     @MainActor
     private func loadLeaderboardProfiles() async {
+        guard leaderboardLoadState != .loading else {
+            return
+        }
+
         leaderboardLoadState = .loading
         do {
             leaderboardProfiles = try await FirestoreService().fetchLeaderboardProfiles()
+            hasLoadedLeaderboardProfiles = true
             leaderboardLoadState = .loaded
         } catch is CancellationError {
+            if leaderboardProfiles.isEmpty {
+                leaderboardLoadState = .idle
+            }
             return
         } catch {
-            leaderboardProfiles = []
             leaderboardLoadState = .failed
         }
     }
