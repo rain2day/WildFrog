@@ -131,7 +131,7 @@ struct ProfileAuthSession: Equatable {
     }
 
     var statusTitle: String {
-        "\(providerLabel) 已登入"
+        AppText.value(zh: "\(providerLabel) 已登入", en: "\(providerLabel) signed in")
     }
 }
 
@@ -154,7 +154,7 @@ enum WildFrogReviewerAccess {
 @Observable
 final class ProfileAuthService {
     private(set) var session: ProfileAuthSession?
-    private(set) var statusMessage = "未登入"
+    private(set) var statusMessage = AppText.value(zh: "未登入", en: "Not signed in")
     private(set) var isBusy = false
 
     #if canImport(FirebaseAuth)
@@ -176,6 +176,20 @@ final class ProfileAuthService {
         guard !isActivated else { return }
         isActivated = true
 
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-qaSignedIn") {
+            session = ProfileAuthSession(
+                uid: "wildfrog-qa-screenshot",
+                email: WildFrogReviewerAccess.accountEmail,
+                phoneNumber: nil,
+                displayName: "WildFrog Demo",
+                providerLabel: "Demo"
+            )
+            statusMessage = AppText.value(zh: "截圖模式已登入", en: "Signed in for screenshot mode")
+            return
+        }
+        #endif
+
         WildFrogFirebaseBootstrap.configureIfNeeded()
         observeAuthState()
     }
@@ -185,7 +199,7 @@ final class ProfileAuthService {
     }
 
     var profileLine: String {
-        session?.profileLine ?? "用頭像同登入同步你的登山紀錄"
+        session?.profileLine ?? AppText.value(zh: "用頭像同登入同步你的登山紀錄", en: "Sign in to sync your hiking record")
     }
 
     var canUseReviewerTools: Bool {
@@ -196,7 +210,8 @@ final class ProfileAuthService {
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         #if canImport(FirebaseAuth)
-        await runFirebaseAuthAction(successMessage: "已用 Email 登入 Firebase。") { completion in
+        statusMessage = AppText.value(zh: "正在用 Email 登入...", en: "Signing in with Email...")
+        await runFirebaseAuthAction(successMessage: AppText.value(zh: "已用 Email 登入 Firebase。", en: "Signed in with Email.")) { completion in
             Auth.auth().signIn(withEmail: normalizedEmail, password: password, completion: completion)
         }
         #else
@@ -208,7 +223,8 @@ final class ProfileAuthService {
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         #if canImport(FirebaseAuth)
-        await runFirebaseAuthAction(successMessage: "已建立 Firebase Email 帳戶並登入。") { completion in
+        statusMessage = AppText.value(zh: "正在建立 Email 帳戶...", en: "Creating Email account...")
+        await runFirebaseAuthAction(successMessage: AppText.value(zh: "已建立 Firebase Email 帳戶並登入。", en: "Created Email account and signed in.")) { completion in
             Auth.auth().createUser(withEmail: normalizedEmail, password: password, completion: completion)
         }
         #else
@@ -219,22 +235,22 @@ final class ProfileAuthService {
     func signInWithGoogle() async {
         #if canImport(UIKit) && canImport(GoogleSignIn) && canImport(FirebaseAuth) && canImport(FirebaseCore)
         guard let clientID = WildFrogFirebaseBootstrap.googleClientID else {
-            statusMessage = "Google 登入未能開始：現有 GoogleService-Info.plist 缺少 CLIENT_ID。請在 Firebase Console enable Google provider 後重新下載 plist。"
+            statusMessage = AppText.value(zh: "Google 登入未能開始：現有 GoogleService-Info.plist 缺少 CLIENT_ID。請在 Firebase Console enable Google provider 後重新下載 plist。", en: "Google sign-in cannot start: GoogleService-Info.plist is missing CLIENT_ID. Enable Google provider in Firebase Console and download the plist again.")
             return
         }
 
         guard let reversedClientID = WildFrogFirebaseBootstrap.googleReversedClientID else {
-            statusMessage = "Google 登入未能開始：現有 GoogleService-Info.plist 缺少 REVERSED_CLIENT_ID。請重新下載已啟用 Google provider 的 plist。"
+            statusMessage = AppText.value(zh: "Google 登入未能開始：現有 GoogleService-Info.plist 缺少 REVERSED_CLIENT_ID。請重新下載已啟用 Google provider 的 plist。", en: "Google sign-in cannot start: GoogleService-Info.plist is missing REVERSED_CLIENT_ID.")
             return
         }
 
         guard WildFrogFirebaseBootstrap.hasURLScheme(reversedClientID) else {
-            statusMessage = "Google 登入未能開始：Info.plist 未加入 Google URL scheme \(reversedClientID)。"
+            statusMessage = AppText.value(zh: "Google 登入未能開始：Info.plist 未加入 Google URL scheme \(reversedClientID)。", en: "Google sign-in cannot start: Info.plist is missing URL scheme \(reversedClientID).")
             return
         }
 
         guard let presentingViewController = UIApplication.shared.wildFrogTopViewController else {
-            statusMessage = "Google 登入未能開始：找不到目前畫面。"
+            statusMessage = AppText.value(zh: "Google 登入未能開始：找不到目前畫面。", en: "Google sign-in cannot start: no presenting screen found.")
             return
         }
 
@@ -260,7 +276,7 @@ final class ProfileAuthService {
             }
 
             guard let idToken = result.user.idToken?.tokenString else {
-                statusMessage = "Google 登入失敗：Google 沒有回傳 ID token。"
+                statusMessage = AppText.value(zh: "Google 登入失敗：Google 沒有回傳 ID token。", en: "Google sign-in failed: no ID token returned.")
                 return
             }
 
@@ -268,48 +284,22 @@ final class ProfileAuthService {
                 withIDToken: idToken,
                 accessToken: result.user.accessToken.tokenString
             )
-            await signIn(with: credential, successMessage: "已用 Google 登入 Firebase。")
+            await signIn(with: credential, successMessage: AppText.value(zh: "已用 Google 登入 Firebase。", en: "Signed in with Google."))
         } catch {
             statusMessage = Self.readableAuthError(error)
         }
         #else
-        statusMessage = "Google 登入未能執行：GoogleSignIn 或 FirebaseAuth SDK 未連入此 build。"
+        statusMessage = AppText.value(zh: "Google 登入未能執行：GoogleSignIn 或 FirebaseAuth SDK 未連入此 build。", en: "Google sign-in is unavailable in this build.")
         #endif
     }
 
     func signInWithApple() {
         #if canImport(AuthenticationServices) && canImport(FirebaseAuth) && canImport(CryptoKit)
-        let nonce = Self.randomNonceString()
-        let request = ASAuthorizationAppleIDProvider().createRequest()
-        request.requestedScopes = [.fullName, .email]
-        request.nonce = Self.sha256(nonce)
-
-        isBusy = true
-        statusMessage = "正在開啟 Apple ID 登入..."
-
-        let coordinator = AppleSignInCoordinator(nonce: nonce) { [weak self] result in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.isBusy = false
-
-                switch result {
-                case .success(let appleResult):
-                    await self.signInWithAppleCredential(appleResult)
-                case .failure(let error):
-                    self.statusMessage = Self.readableAuthError(error)
-                }
-
-                self.appleSignInCoordinator = nil
-            }
+        Task { @MainActor in
+            await signInWithAppleInteractively()
         }
-        appleSignInCoordinator = coordinator
-
-        let controller = ASAuthorizationController(authorizationRequests: [request])
-        controller.delegate = coordinator
-        controller.presentationContextProvider = coordinator
-        controller.performRequests()
         #else
-        statusMessage = "Apple ID 登入未能執行：AuthenticationServices / FirebaseAuth / CryptoKit 未連入此 build。"
+        statusMessage = AppText.value(zh: "Apple ID 登入未能執行：AuthenticationServices / FirebaseAuth / CryptoKit 未連入此 build。", en: "Apple ID sign-in is unavailable in this build.")
         #endif
     }
 
@@ -340,14 +330,14 @@ final class ProfileAuthService {
 
             phoneVerificationID = verificationID
             phoneVerificationNumber = normalizedPhone
-            statusMessage = "SMS 驗證碼已送出到 \(normalizedPhone)。"
+            statusMessage = AppText.value(zh: "SMS 驗證碼已送出到 \(normalizedPhone)。", en: "SMS verification code sent to \(normalizedPhone).")
             return true
         } catch {
             statusMessage = Self.readableAuthError(error)
             return false
         }
         #else
-        statusMessage = "電話登入未能執行：FirebaseAuth SDK 未連入此 build。"
+        statusMessage = AppText.value(zh: "電話登入未能執行：FirebaseAuth SDK 未連入此 build。", en: "Phone sign-in is unavailable in this build.")
         return false
         #endif
     }
@@ -358,7 +348,7 @@ final class ProfileAuthService {
 
         #if os(iOS) && canImport(FirebaseAuth)
         guard let phoneVerificationID else {
-            statusMessage = "請先發送 SMS 驗證碼。"
+            statusMessage = AppText.value(zh: "請先發送 SMS 驗證碼。", en: "Please send an SMS verification code first.")
             return false
         }
 
@@ -366,7 +356,7 @@ final class ProfileAuthService {
             withVerificationID: phoneVerificationID,
             verificationCode: normalizedCode
         )
-        await signIn(with: credential, successMessage: "已用電話號碼登入 Firebase。")
+        await signIn(with: credential, successMessage: AppText.value(zh: "已用電話號碼登入 Firebase。", en: "Signed in with phone number."))
 
         if isSignedIn {
             self.phoneVerificationID = nil
@@ -375,7 +365,7 @@ final class ProfileAuthService {
         }
         return false
         #else
-        statusMessage = "電話登入未能執行：FirebaseAuth SDK 未連入此 build。"
+        statusMessage = AppText.value(zh: "電話登入未能執行：FirebaseAuth SDK 未連入此 build。", en: "Phone sign-in is unavailable in this build.")
         return false
         #endif
     }
@@ -383,24 +373,17 @@ final class ProfileAuthService {
     func signOut() {
         #if canImport(FirebaseAuth)
         do {
-            #if canImport(GoogleSignIn)
-            GIDSignIn.sharedInstance.signOut()
-            #endif
             try Auth.auth().signOut()
             session = nil
-            statusMessage = "已登出"
-            // Profile cosmetics are device-local; clear so the next account doesn't inherit them.
-            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
-            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
+            statusMessage = AppText.value(zh: "已登出", en: "Signed out")
+            clearLocalAccountData(removePhotos: false)
         } catch {
             statusMessage = Self.readableAuthError(error)
         }
         #else
         session = nil
-        statusMessage = "已回到訪客模式"
-        // Profile cosmetics are device-local; clear so the next account doesn't inherit them.
-        UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
-        UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
+        statusMessage = AppText.value(zh: "已回到訪客模式", en: "Back to guest mode")
+        clearLocalAccountData(removePhotos: false)
         #endif
     }
 
@@ -408,68 +391,45 @@ final class ProfileAuthService {
         #if canImport(FirebaseAuth)
         guard let user = Auth.auth().currentUser else {
             session = nil
-            statusMessage = "已回到訪客模式"
+            statusMessage = AppText.value(zh: "已回到訪客模式", en: "Back to guest mode")
             return
         }
         let uid = user.uid
         isBusy = true
         defer { isBusy = false }
 
-        // Best-effort: remove the user's cloud check-ins before deleting the auth user.
-        try? await FirestoreService().deleteUserCheckIns(userId: uid)
-
         do {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                user.delete { error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else {
-                        continuation.resume()
-                    }
-                }
-            }
-            #if canImport(GoogleSignIn)
-            GIDSignIn.sharedInstance.signOut()
-            #endif
-
-            // Best-effort: remove summit photos stored as .jpg in the app's Documents directory.
-            let fm = FileManager.default
-            if let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first,
-               let contents = try? fm.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil) {
-                for file in contents where file.pathExtension.lowercased() == "jpg" {
-                    try? fm.removeItem(at: file)
-                }
-            }
+            try await prepareForAccountDeletion(user)
+            try await FirestoreService().deleteUserCheckIns(userId: uid)
+            try await user.delete()
 
             session = nil
-            statusMessage = "帳戶已刪除"
-            // Profile cosmetics are device-local; clear so the next account doesn't inherit them.
-            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
-            UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
+            statusMessage = AppText.value(zh: "帳戶已刪除", en: "Account deleted")
+            clearLocalAccountData(removePhotos: true)
         } catch {
             statusMessage = Self.readableAuthError(error)
         }
         #else
         session = nil
-        statusMessage = "帳戶已刪除（示範）"
+        statusMessage = AppText.value(zh: "帳戶已刪除（示範）", en: "Account deleted (demo)")
         #endif
     }
 
     func updateDisplayName(_ rawName: String) async {
         let trimmedName = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
-            statusMessage = "名稱不可留空。"
+            statusMessage = AppText.value(zh: "名稱不可留空。", en: "Name cannot be empty.")
             return
         }
         guard trimmedName.count <= 24 else {
-            statusMessage = "名稱最多 24 個字。"
+            statusMessage = AppText.value(zh: "名稱最多 24 個字。", en: "Name must be 24 characters or fewer.")
             return
         }
 
         #if canImport(FirebaseAuth)
         guard let user = Auth.auth().currentUser else {
             replaceSessionDisplayName(trimmedName)
-            statusMessage = "名稱已更新。"
+            statusMessage = AppText.value(zh: "名稱已更新。", en: "Name updated.")
             return
         }
 
@@ -489,18 +449,18 @@ final class ProfileAuthService {
                 }
             }
             replaceSessionDisplayName(trimmedName)
-            statusMessage = "名稱已更新。"
+            statusMessage = AppText.value(zh: "名稱已更新。", en: "Name updated.")
         } catch {
             statusMessage = Self.readableAuthError(error)
         }
         #else
         replaceSessionDisplayName(trimmedName)
-        statusMessage = "名稱已更新。"
+        statusMessage = AppText.value(zh: "名稱已更新。", en: "Name updated.")
         #endif
     }
 
     func noteAvatarUpdated() {
-        statusMessage = "頭像已更新"
+        statusMessage = AppText.value(zh: "頭像已更新", en: "Avatar updated")
     }
 
     func noteAvatarFailed(_ message: String) {
@@ -576,20 +536,79 @@ final class ProfileAuthService {
     }
 
     #if canImport(AuthenticationServices) && canImport(FirebaseAuth)
+    private func prepareForAccountDeletion(_ user: User) async throws {
+        if Self.usesAppleProvider(user) {
+            statusMessage = AppText.value(zh: "請再次用 Apple ID 確認刪除帳戶...", en: "Confirm with Apple ID to delete your account...")
+            try await reauthenticateAndRevokeAppleToken(for: user)
+            return
+        }
+
+        guard Self.hasRecentSignIn(user) else {
+            throw ProfileAuthError.recentLoginRequired
+        }
+    }
+
+    private func signInWithAppleInteractively() async {
+        isBusy = true
+        defer { isBusy = false }
+
+        statusMessage = AppText.value(zh: "正在開啟 Apple ID 登入...", en: "Opening Apple ID sign-in...")
+
+        do {
+            let appleResult = try await requestAppleCredential()
+            await signInWithAppleCredential(appleResult)
+        } catch {
+            statusMessage = Self.readableAuthError(error)
+        }
+    }
+
     private func signInWithAppleCredential(_ appleResult: AppleSignInResult) async {
         let credential = OAuthProvider.appleCredential(
             withIDToken: appleResult.idToken,
             rawNonce: appleResult.nonce,
             fullName: appleResult.fullName
         )
-        await signIn(with: credential, successMessage: "已用 Apple ID 登入 Firebase。")
+        await signIn(with: credential, successMessage: AppText.value(zh: "已用 Apple ID 登入 Firebase。", en: "Signed in with Apple ID."))
+    }
+
+    private func reauthenticateAndRevokeAppleToken(for user: User) async throws {
+        let appleResult = try await requestAppleCredential()
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: appleResult.idToken,
+            rawNonce: appleResult.nonce,
+            fullName: appleResult.fullName
+        )
+        _ = try await user.reauthenticate(with: credential)
+        try await Auth.auth().revokeToken(withAuthorizationCode: appleResult.authorizationCode)
+    }
+
+    private func requestAppleCredential() async throws -> AppleSignInResult {
+        let nonce = Self.randomNonceString()
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        request.requestedScopes = [.fullName, .email]
+        request.nonce = Self.sha256(nonce)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let coordinator = AppleSignInCoordinator(nonce: nonce) { [weak self] result in
+                Task { @MainActor [weak self] in
+                    self?.appleSignInCoordinator = nil
+                    continuation.resume(with: result)
+                }
+            }
+            appleSignInCoordinator = coordinator
+
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = coordinator
+            controller.presentationContextProvider = coordinator
+            controller.performRequests()
+        }
     }
     #endif
 
     private func apply(user: User?) {
         guard let user else {
             session = nil
-            statusMessage = "未登入"
+            statusMessage = AppText.value(zh: "未登入", en: "Not signed in")
             return
         }
 
@@ -602,8 +621,8 @@ final class ProfileAuthService {
         )
         session = newSession
 
-        if statusMessage.isEmpty || statusMessage == "未登入" {
-            statusMessage = "已以\(newSession.providerLabel)登入，紀錄已雲端同步。"
+        if statusMessage.isEmpty || statusMessage == "未登入" || statusMessage == "Not signed in" {
+            statusMessage = AppText.value(zh: "已以\(newSession.providerLabel)登入，紀錄已雲端同步。", en: "Signed in with \(newSession.providerLabel). Your records are synced.")
         }
     }
 
@@ -614,7 +633,7 @@ final class ProfileAuthService {
         case "password":
             return "Email"
         case "phone":
-            return "電話"
+            return AppText.value(zh: "電話", en: "Phone")
         case "google.com":
             return "Google"
         case "apple.com":
@@ -623,10 +642,42 @@ final class ProfileAuthService {
             return providerID
         }
     }
+
+    private static func usesAppleProvider(_ user: User) -> Bool {
+        user.providerData.contains { $0.providerID == "apple.com" } || user.providerID == "apple.com"
+    }
+
+    private static func hasRecentSignIn(_ user: User) -> Bool {
+        guard let lastSignInDate = user.metadata.lastSignInDate else {
+            return false
+        }
+        return Date().timeIntervalSince(lastSignInDate) < 4 * 60
+    }
     #endif
 
     private func markFirebaseAuthMissing() {
-        statusMessage = "Firebase Auth SDK 未連入此 build，Email 登入未能執行。"
+        statusMessage = AppText.value(zh: "Firebase Auth SDK 未連入此 build，Email 登入未能執行。", en: "Firebase Auth SDK is not linked in this build, so Email sign-in cannot run.")
+    }
+
+    private func clearLocalAccountData(removePhotos: Bool) {
+        #if canImport(GoogleSignIn)
+        GIDSignIn.sharedInstance.signOut()
+        #endif
+
+        UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
+        UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
+
+        guard removePhotos else { return }
+
+        let fm = FileManager.default
+        guard let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first,
+              let contents = try? fm.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil) else {
+            return
+        }
+
+        for file in contents where file.pathExtension.lowercased() == "jpg" {
+            try? fm.removeItem(at: file)
+        }
     }
 
     private func replaceSessionDisplayName(_ displayName: String) {
@@ -642,22 +693,37 @@ final class ProfileAuthService {
 
     private static func readableAuthError(_ error: Error) -> String {
         if case ProfileAuthError.emptyAuthResult = error {
-            return "登入失敗：Firebase 沒有回傳有效用戶。"
+            return AppText.value(zh: "登入失敗：Firebase 沒有回傳有效用戶。", en: "Sign-in failed: Firebase did not return a valid user.")
         }
 
         if case ProfileAuthError.emptyVerificationResult = error {
-            return "電話驗證失敗：Firebase 沒有回傳 verification ID。"
+            return AppText.value(zh: "電話驗證失敗：Firebase 沒有回傳 verification ID。", en: "Phone verification failed: Firebase did not return a verification ID.")
         }
 
         if case ProfileAuthError.invalidAppleCredential(let reason) = error {
-            return "Apple ID 登入失敗：\(reason)"
+            return AppText.value(zh: "Apple ID 登入失敗：\(reason)", en: "Apple ID sign-in failed: \(reason)")
         }
 
-        let description = (error as NSError).localizedDescription
-        guard !description.isEmpty else {
-            return "登入失敗，請稍後再試。"
+        if case ProfileAuthError.recentLoginRequired = error {
+            return AppText.value(zh: "為保障帳戶安全，請先登出再重新登入，然後再刪除帳戶。你的雲端打卡紀錄未有刪除。", en: "For account security, sign out and sign in again before deleting your account. Your cloud check-ins were not deleted.")
         }
-        return "登入失敗：\(description)"
+
+        let nsError = error as NSError
+        #if canImport(FirebaseAuth)
+        if nsError.code == AuthErrorCode.requiresRecentLogin.rawValue {
+            return AppText.value(zh: "為保障帳戶安全，請先登出再重新登入，然後再刪除帳戶。你的雲端打卡紀錄未有刪除。", en: "For account security, sign out and sign in again before deleting your account. Your cloud check-ins were not deleted.")
+        }
+        #endif
+
+        let description = nsError.localizedDescription
+        if description.lowercased().contains("cancel") || description.contains("取消") {
+            return AppText.value(zh: "已取消登入。", en: "Sign-in cancelled.")
+        }
+
+        guard !description.isEmpty else {
+            return AppText.value(zh: "登入失敗，請稍後再試。", en: "Sign-in failed. Please try again later.")
+        }
+        return AppText.value(zh: "登入失敗：\(description)", en: "Sign-in failed: \(description)")
     }
 
     private static func normalizedPhoneNumber(_ phoneNumber: String) -> String {
@@ -696,6 +762,7 @@ private enum ProfileAuthError: Error {
     case emptyAuthResult
     case emptyVerificationResult
     case invalidAppleCredential(String)
+    case recentLoginRequired
 }
 
 #if canImport(AuthenticationServices)
@@ -703,6 +770,7 @@ private struct AppleSignInResult {
     let idToken: String
     let nonce: String
     let fullName: PersonNameComponents?
+    let authorizationCode: String
 }
 
 private final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
@@ -734,7 +802,13 @@ private final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerD
             return
         }
 
-        completion(.success(AppleSignInResult(idToken: token, nonce: nonce, fullName: credential.fullName)))
+        guard let authorizationCodeData = credential.authorizationCode,
+              let authorizationCode = String(data: authorizationCodeData, encoding: .utf8) else {
+            completion(.failure(ProfileAuthError.invalidAppleCredential("Apple 沒有回傳可撤銷憑證所需的 authorization code。")))
+            return
+        }
+
+        completion(.success(AppleSignInResult(idToken: token, nonce: nonce, fullName: credential.fullName, authorizationCode: authorizationCode)))
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {

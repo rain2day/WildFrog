@@ -12,6 +12,7 @@ enum FrogTheme {
     static let orangeSoft = Color(red: 241 / 255, green: 226 / 255, blue: 214 / 255) // #F1E2D6
 
     // greens — calm, low-chroma foliage
+    static let logoBase = Color(red: 16 / 255, green: 40 / 255, blue: 24 / 255) // #102818
     static let moss = Color(red: 46 / 255, green: 99 / 255, blue: 71 / 255)      // #2E6347 pine
     static let mossSoft = Color(red: 227 / 255, green: 235 / 255, blue: 226 / 255) // #E3EBE2
     static let forest = Color(red: 18 / 255, green: 42 / 255, blue: 30 / 255)    // #122A1E
@@ -150,6 +151,94 @@ struct WildFrogBrandMark: View {
             .scaledToFit()
             .frame(width: size, height: size)
             .accessibilityLabel("WildFrog")
+    }
+}
+
+/// Full WildFrog lockup used on auth surfaces where the brand can take more
+/// vertical space than the compact mark.
+struct WildFrogLoginLogo: View {
+    var width: CGFloat = 188
+
+    var body: some View {
+        Image("WildFrogLoginLogo")
+            .resizable()
+            .renderingMode(.original)
+            .scaledToFit()
+            .frame(width: width)
+            .accessibilityLabel("WildFrog")
+    }
+}
+
+struct WildFrogLoginPinLogo: View {
+    var width: CGFloat = 182
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            LoginPinBacking()
+                .fill(FrogTheme.logoBase)
+                .overlay {
+                    LoginPinBacking()
+                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                }
+                .shadow(color: FrogTheme.logoBase.opacity(0.34), radius: 16, y: 8)
+
+            Circle()
+                .fill(Color.white.opacity(0.9))
+                .frame(width: width * 0.74, height: width * 0.74)
+                .padding(.top, width * 0.15)
+
+            WildFrogLoginLogo(width: width * 0.58)
+                .padding(.top, width * 0.22)
+        }
+        .frame(width: width, height: width * 1.32)
+        .accessibilityElement()
+        .accessibilityLabel("WildFrog")
+    }
+}
+
+private struct LoginPinBacking: Shape {
+    func path(in rect: CGRect) -> Path {
+        let width = rect.width
+        let top = rect.minY + width * 0.03
+        let point = CGPoint(x: rect.midX, y: rect.maxY - width * 0.04)
+        let left = rect.minX + width * 0.035
+        let right = rect.maxX - width * 0.035
+        let lowerJoinY = top + width * 0.98
+        var path = Path()
+
+        path.move(to: point)
+        path.addCurve(
+            to: CGPoint(x: rect.midX - width * 0.28, y: lowerJoinY),
+            control1: CGPoint(x: rect.midX - width * 0.08, y: rect.maxY - width * 0.22),
+            control2: CGPoint(x: rect.midX - width * 0.22, y: lowerJoinY + width * 0.02)
+        )
+        path.addCurve(
+            to: CGPoint(x: left, y: top + width * 0.52),
+            control1: CGPoint(x: rect.midX - width * 0.58, y: top + width * 0.94),
+            control2: CGPoint(x: left, y: top + width * 0.78)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: top),
+            control1: CGPoint(x: left, y: top + width * 0.23),
+            control2: CGPoint(x: rect.midX - width * 0.23, y: top)
+        )
+        path.addCurve(
+            to: CGPoint(x: right, y: top + width * 0.52),
+            control1: CGPoint(x: rect.midX + width * 0.23, y: top),
+            control2: CGPoint(x: right, y: top + width * 0.23)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.midX + width * 0.28, y: lowerJoinY),
+            control1: CGPoint(x: right, y: top + width * 0.78),
+            control2: CGPoint(x: rect.midX + width * 0.58, y: top + width * 0.94)
+        )
+        path.addCurve(
+            to: point,
+            control1: CGPoint(x: rect.midX + width * 0.22, y: lowerJoinY + width * 0.02),
+            control2: CGPoint(x: rect.midX + width * 0.08, y: rect.maxY - width * 0.22)
+        )
+        path.closeSubpath()
+        return path
     }
 }
 

@@ -22,7 +22,7 @@ struct ProviderPickerSheet: View {
                     VStack(spacing: 10) {
                         AuthProviderButton(
                             title: "Google",
-                            subtitle: "用 Google 帳戶登入",
+                            subtitle: AppText.value(zh: "用 Google 帳戶登入", en: "Sign in with Google"),
                             mark: .letter("G"),
                             tint: Color(red: 66 / 255, green: 133 / 255, blue: 244 / 255)
                         ) {
@@ -31,7 +31,7 @@ struct ProviderPickerSheet: View {
 
                         AuthProviderButton(
                             title: "Apple ID",
-                            subtitle: "用 Apple ID 登入",
+                            subtitle: AppText.value(zh: "用 Apple ID 登入", en: "Sign in with Apple ID"),
                             mark: .systemImage("apple.logo"),
                             tint: FrogTheme.ink
                         ) {
@@ -39,8 +39,8 @@ struct ProviderPickerSheet: View {
                         }
 
                         AuthProviderButton(
-                            title: "電郵",
-                            subtitle: "Email + 密碼",
+                            title: AppText.value(zh: "電郵", en: "Email"),
+                            subtitle: AppText.value(zh: "Email + 密碼", en: "Email + password"),
                             mark: .systemImage("envelope.fill"),
                             tint: FrogTheme.orange
                         ) {
@@ -48,8 +48,8 @@ struct ProviderPickerSheet: View {
                         }
 
                         AuthProviderButton(
-                            title: "電話號碼",
-                            subtitle: "SMS 驗證碼",
+                            title: AppText.value(zh: "電話號碼", en: "Phone"),
+                            subtitle: AppText.value(zh: "SMS 驗證碼", en: "SMS verification code"),
                             mark: .systemImage("phone.fill"),
                             tint: FrogTheme.moss
                         ) {
@@ -62,14 +62,14 @@ struct ProviderPickerSheet: View {
                     if authService.isBusy {
                         HStack(spacing: 8) {
                             ProgressView()
-                            Text("登入中…")
+                            Text(AppText.value(zh: "登入中…", en: "Signing in..."))
                                 .font(.frogCaption.weight(.semibold))
                                 .foregroundStyle(FrogTheme.muted)
                         }
                         .frame(maxWidth: .infinity)
                     }
 
-                    Label("WildFrog 唔會公開你的帳戶資料", systemImage: "lock.fill")
+                    Label(AppText.value(zh: "WildFrog 唔會公開你的帳戶資料", en: "WildFrog never publishes your account details"), systemImage: "lock.fill")
                         .font(.frogMicro.weight(.semibold))
                         .foregroundStyle(FrogTheme.muted)
                         .frame(maxWidth: .infinity)
@@ -91,7 +91,7 @@ struct ProviderPickerSheet: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
+                    Button(AppText.value(zh: "取消", en: "Cancel")) { dismiss() }
                         .font(.frogCaption.weight(.bold))
                         .foregroundStyle(FrogTheme.muted)
                 }
@@ -104,26 +104,25 @@ struct ProviderPickerSheet: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 14) {
-                WildFrogBrandMark(size: 92)
-                    .shadow(color: FrogTheme.warmShadow.opacity(0.12), radius: 12, y: 5)
+        VStack(alignment: .center, spacing: 12) {
+            WildFrogLoginLogo(width: 188)
+                .shadow(color: FrogTheme.warmShadow.opacity(0.12), radius: 12, y: 5)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("登入 WildFrog")
-                        .font(.frogDisplay)
-                        .foregroundStyle(FrogTheme.forest)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
+            VStack(alignment: .center, spacing: 4) {
+                Text(AppText.value(zh: "登入或建立帳戶", en: "Sign In or Create Account"))
+                    .font(.frogDisplay)
+                    .foregroundStyle(FrogTheme.forest)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
 
-                    Text("揀一個方式開始記錄你的山旅")
-                        .font(.frogCaption.weight(.semibold))
-                        .foregroundStyle(FrogTheme.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Text(AppText.value(zh: "揀一個方式開始記錄你的山旅", en: "Choose a sign-in method to start saving your hikes"))
+                    .font(.frogCaption.weight(.semibold))
+                    .foregroundStyle(FrogTheme.muted)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -207,16 +206,16 @@ private struct EmailAuthSheet: View {
             Section {
                 TextField("Email", text: $email)
                     .wildFrogEmailInput()
-                SecureField("密碼", text: $password)
+                SecureField(AppText.value(zh: "密碼", en: "Password"), text: $password)
             }
 
             Section {
-                Button("登入") {
+                Button(AppText.value(zh: "登入", en: "Sign In")) {
                     Task { await complete(.signIn) }
                 }
                 .disabled(!canSubmit || authService.isBusy)
 
-                Button("建立帳戶") {
+                Button(AppText.value(zh: "建立帳戶", en: "Create Account")) {
                     Task { await complete(.createAccount) }
                 }
                 .disabled(!canSubmit || authService.isBusy)
@@ -226,7 +225,7 @@ private struct EmailAuthSheet: View {
                 )
             }
         }
-        .navigationTitle("Email 登入")
+        .localizedNavigationTitle { AppText.value(zh: "Email 登入", en: "Email Sign In") }
         .nativeInlineTitle()
     }
 
@@ -260,17 +259,17 @@ private struct PhoneAuthSheet: View {
     var body: some View {
         Form {
             Section {
-                TextField("電話號碼", text: $phone)
+                TextField(AppText.value(zh: "電話號碼", en: "Phone number"), text: $phone)
                     .wildFrogPhoneInput()
 
                 if codeSent {
-                    TextField("6 位驗證碼", text: $code)
+                    TextField(AppText.value(zh: "6 位驗證碼", en: "6-digit code"), text: $code)
                         .wildFrogNumberInput()
                 }
             }
 
             Section {
-                Button(codeSent ? "完成登入" : "發送驗證碼") {
+                Button(codeSent ? AppText.value(zh: "完成登入", en: "Finish Sign In") : AppText.value(zh: "發送驗證碼", en: "Send Code")) {
                     Task {
                         if codeSent {
                             let signedIn = await authService.confirmPhoneCode(code)
@@ -283,12 +282,12 @@ private struct PhoneAuthSheet: View {
                 .disabled(!canSubmit || authService.isBusy)
             } footer: {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("使用電話登入可能會收到 SMS，費用依電訊商而定。")
+                    Text(AppText.value(zh: "使用電話登入可能會收到 SMS，費用依電訊商而定。", en: "Phone sign-in may send SMS messages. Carrier fees may apply."))
                     WildFrogLegalConsentFooter()
                 }
             }
         }
-        .navigationTitle("電話登入")
+        .localizedNavigationTitle { AppText.value(zh: "電話登入", en: "Phone Sign In") }
         .nativeInlineTitle()
     }
 

@@ -29,6 +29,7 @@ struct ProfileView: View {
     }
 
     @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
+    @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
     @State private var showTitlePicker = false
 
     /// The 稱號 the user has equipped — only valid while it's still a peak they've
@@ -36,7 +37,7 @@ struct ProfileView: View {
     private var equippedTitle: String? {
         guard !equippedTitleId.isEmpty,
               checkInStore.visitedMountainIds.contains(equippedTitleId) else { return nil }
-        return MountainCatalog.mountain(id: equippedTitleId).unlockTitle
+        return MountainCatalog.mountain(id: equippedTitleId).localizedUnlockTitle
     }
 
     private var completionRatio: Double {
@@ -68,7 +69,7 @@ struct ProfileView: View {
         .hiddenNavigationBar()
         .sheet(isPresented: $showProviderPicker) {
             ProviderPickerSheet()
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showNameEditor) {
@@ -84,7 +85,7 @@ struct ProfileView: View {
                 AllAchievementsView()
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
-                            Button("完成") { showAllAchievements = false }
+                            Button(AppText.value(zh: "完成", en: "Done")) { showAllAchievements = false }
                                 .font(.frogCaption.weight(.bold))
                                 .foregroundStyle(FrogTheme.orange)
                         }
@@ -107,13 +108,23 @@ struct ProfileView: View {
             // doesn't display the previous account's in-memory avatar.
             avatarData = UserDefaults.standard.data(forKey: Self.avatarStorageKey) ?? Data()
         }
-        .alert("刪除帳戶？", isPresented: $showDeleteAccount) {
-            Button("永久刪除", role: .destructive) {
+        #if DEBUG
+        .onAppear {
+            guard ProcessInfo.processInfo.arguments.contains("-qaProfileCertificate") else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if latestConqueredMountain != nil {
+                    showCertificateShare = true
+                }
+            }
+        }
+        #endif
+        .alert(AppText.value(zh: "刪除帳戶？", en: "Delete account?"), isPresented: $showDeleteAccount) {
+            Button(AppText.value(zh: "永久刪除", en: "Delete Permanently"), role: .destructive) {
                 Task { await authService.deleteAccount() }
             }
-            Button("取消", role: .cancel) {}
+            Button(AppText.value(zh: "取消", en: "Cancel"), role: .cancel) {}
         } message: {
-            Text("此動作無法復原。你的帳戶同雲端打卡紀錄會被永久刪除。")
+            Text(AppText.value(zh: "此動作無法復原。你的帳戶同雲端打卡紀錄會被永久刪除。", en: "This cannot be undone. Your account and cloud check-in records will be permanently deleted."))
         }
         .overlay(alignment: .bottomTrailing) {
             if shouldShowMockControls {
@@ -137,6 +148,7 @@ struct ProfileView: View {
 
                     VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
                         peakPassportCard
+                        languageCard
                         titleCard
                         recentCheckInCard
                         certificateCard
@@ -156,11 +168,7 @@ struct ProfileView: View {
 
     private var shouldShowMockControls: Bool {
         guard !ProcessInfo.processInfo.arguments.contains("-qaScreenshot") else { return false }
-        #if DEBUG
-        return true
-        #else
         return authService.canUseReviewerTools
-        #endif
     }
 
     private var mockFloatingButton: some View {
@@ -186,12 +194,12 @@ struct ProfileView: View {
         .buttonStyle(.plain)
         .padding(.trailing, FrogSpace.screenPadding)
         .padding(.bottom, 124) // clear the floating tab bar
-        .accessibilityLabel("測試定位")
+        .accessibilityLabel(AppText.value(zh: "測試定位", en: "Test Location"))
     }
 
     private var mockButtonLabel: String {
-        guard let mock = locationManager.mockCoordinate else { return "測試定位" }
-        return "模擬中 · \(mockLabel(for: mock))"
+        guard let mock = locationManager.mockCoordinate else { return AppText.value(zh: "測試定位", en: "Test Location") }
+        return AppText.value(zh: "模擬中 · \(mockLabel(for: mock))", en: "Mocking · \(mockLabel(for: mock))")
     }
 
     private func mockLabel(for coordinate: CLLocationCoordinate2D) -> String {
@@ -201,7 +209,7 @@ struct ProfileView: View {
             CLLocation(latitude: $1.coordinate.latitude, longitude: $1.coordinate.longitude).distance(from: here)
         }
         if let nearest {
-            return "\(nearest.nameZh) · \(nearest.height)m"
+            return "\(nearest.localizedName) · \(nearest.height)m"
         }
         return String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude)
     }
@@ -229,10 +237,10 @@ struct ProfileView: View {
                     } label: {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(mountain.nameZh)
+                                Text(mountain.localizedName)
                                     .font(.frogRow.weight(.bold))
                                     .foregroundStyle(FrogTheme.ink)
-                                Text("\(mountain.nameEn) · \(mountain.height)m · \(mountain.region)")
+                                Text("\(mountain.nameEn) · \(mountain.height)m · \(mountain.localizedRegion)")
                                     .font(.frogCaption)
                                     .foregroundStyle(FrogTheme.muted)
                                     .lineLimit(1)
@@ -244,16 +252,16 @@ struct ProfileView: View {
                     }
                 }
                 .listStyle(.plain)
-                .searchable(text: $search, prompt: "搜尋山峰名稱")
-                .navigationTitle("測試定位")
+                .searchable(text: $search, prompt: AppText.value(zh: "搜尋山峰名稱", en: "Search peak name"))
+                .localizedNavigationTitle { AppText.value(zh: "測試定位", en: "Test Location") }
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("取消") { dismiss() }
+                        Button(AppText.value(zh: "取消", en: "Cancel")) { dismiss() }
                     }
                     if locationManager.mockCoordinate != nil {
                         ToolbarItem(placement: .confirmationAction) {
-                            Button("關閉模擬", role: .destructive) {
+                            Button(AppText.value(zh: "關閉模擬", en: "Stop Mocking"), role: .destructive) {
                                 locationManager.mockCoordinate = nil
                                 dismiss()
                             }
@@ -268,7 +276,7 @@ struct ProfileView: View {
         let currentAvatarData = avatarData
 
         return ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true, sourceBadgeTopPadding: topInset + 48)
+            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0)
 
             LinearGradient(
                 colors: [
@@ -317,7 +325,7 @@ struct ProfileView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("更換頭像")
+                    .accessibilityLabel(AppText.value(zh: "更換頭像", en: "Change Avatar"))
 
                     // .info
                     VStack(alignment: .leading, spacing: 4) {
@@ -335,11 +343,11 @@ struct ProfileView: View {
                                     .shadow(color: Color.black.opacity(0.22), radius: 3, y: 1)
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel("更改名稱")
+                            .accessibilityLabel(AppText.value(zh: "更改名稱", en: "Edit Name"))
                         }
 
                         if let providerLabel = authService.session?.providerLabel {
-                            Text("以 \(providerLabel) 登入")
+                            Text(AppText.value(zh: "以 \(providerLabel) 登入", en: "Signed in with \(providerLabel)"))
                                 .font(.frogCaption)
                                 .foregroundStyle(.white.opacity(0.74))
                         }
@@ -360,9 +368,9 @@ struct ProfileView: View {
                         }
 
                         HStack(spacing: 16) {
-                            PassportMiniMetric(value: "\(checkInStore.totalCheckIns)", label: "打卡")
-                            PassportMiniMetric(value: "\(checkInStore.distinctMountainCount)", label: "山峰")
-                            PassportMiniMetric(value: "\(checkInStore.currentStreak)", label: "連續日")
+                            PassportMiniMetric(value: "\(checkInStore.totalCheckIns)", label: AppText.value(zh: "打卡", en: "Check-ins"))
+                            PassportMiniMetric(value: "\(checkInStore.distinctMountainCount)", label: AppText.value(zh: "山峰", en: "Peaks"))
+                            PassportMiniMetric(value: "\(checkInStore.currentStreak)", label: AppText.value(zh: "連續日", en: "Streak"))
                         }
                         .padding(.top, 7)
                     }
@@ -383,7 +391,7 @@ struct ProfileView: View {
         HStack(spacing: 5) {
             Image(systemName: "checkmark.icloud")
                 .font(.system(size: 11, weight: .bold))
-            Text("雲端帳戶")
+            Text(AppText.value(zh: "雲端帳戶", en: "Cloud Account"))
                 .font(.frogNum(10, weight: .bold))
         }
         .foregroundStyle(.white)
@@ -395,29 +403,38 @@ struct ProfileView: View {
 
     private var accountMenu: some View {
         Menu {
+            Section {
+                ForEach(AppLanguageMode.allCases) { mode in
+                    Button {
+                        languageModeRaw = mode.rawValue
+                    } label: {
+                        Label(mode.title, systemImage: languageModeRaw == mode.rawValue ? "checkmark" : "globe")
+                    }
+                }
+            }
             Button {
                 showNameEditor = true
             } label: {
-                Label("更改名稱", systemImage: "pencil")
+                Label(AppText.value(zh: "更改名稱", en: "Edit Name"), systemImage: "pencil")
             }
             Link(destination: WildFrogLegalLinks.privacy) {
-                Label("私隱政策", systemImage: "hand.raised.fill")
+                Label(AppText.value(zh: "私隱政策", en: "Privacy Policy"), systemImage: "hand.raised.fill")
             }
             Link(destination: WildFrogLegalLinks.terms) {
-                Label("使用條款", systemImage: "doc.text.fill")
+                Label(AppText.value(zh: "使用條款", en: "Terms of Use"), systemImage: "doc.text.fill")
             }
             Link(destination: WildFrogLegalLinks.support) {
-                Label("支援", systemImage: "questionmark.circle.fill")
+                Label(AppText.value(zh: "支援", en: "Support"), systemImage: "questionmark.circle.fill")
             }
             Button {
                 authService.signOut()
             } label: {
-                Label("登出", systemImage: "rectangle.portrait.and.arrow.right")
+                Label(AppText.value(zh: "登出", en: "Sign Out"), systemImage: "rectangle.portrait.and.arrow.right")
             }
             Button(role: .destructive) {
                 showDeleteAccount = true
             } label: {
-                Label("刪除帳戶", systemImage: "trash")
+                Label(AppText.value(zh: "刪除帳戶", en: "Delete Account"), systemImage: "trash")
             }
         } label: {
             Image(systemName: "ellipsis.circle.fill")
@@ -425,14 +442,45 @@ struct ProfileView: View {
                 .foregroundStyle(.white)
                 .shadow(color: Color.black.opacity(0.3), radius: 4, y: 1)
         }
-        .accessibilityLabel("帳戶選項")
+        .accessibilityLabel(AppText.value(zh: "帳戶選項", en: "Account Options"))
+    }
+
+    private var languageCard: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 12) {
+                Text(AppText.value(zh: "語言 · LANGUAGE", en: "LANGUAGE"))
+                    .font(.frogEyebrow)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(FrogTheme.moss)
+                Rectangle().fill(FrogTheme.line).frame(height: 1)
+            }
+
+            Picker(AppText.value(zh: "語言", en: "Language"), selection: $languageModeRaw) {
+                ForEach(AppLanguageMode.allCases) { mode in
+                    Text(mode.shortTitle).tag(mode.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .tint(FrogTheme.moss)
+
+            Text(AppText.value(zh: "目前：\(currentLanguageTitle)", en: "Current: \(currentLanguageTitle)"))
+                .font(.frogCaption)
+                .foregroundStyle(FrogTheme.muted)
+        }
+        .padding(FrogSpace.cardPadding)
+        .cardStyle()
+    }
+
+    private var currentLanguageTitle: String {
+        (AppLanguageMode(rawValue: languageModeRaw) ?? .system).title
     }
 
     /// 稱號: the title equipped for the leaderboard, chosen from conquered peaks.
     private var titleCard: some View {
         VStack(alignment: .leading, spacing: 13) {
             HStack(spacing: 12) {
-                Text("我的稱號 · TITLE")
+                Text(AppText.value(zh: "我的稱號 · TITLE", en: "MY TITLE"))
                     .font(.frogEyebrow)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -446,16 +494,16 @@ struct ProfileView: View {
                     .font(.system(size: 24, weight: .black))
                     .foregroundStyle(equippedTitle == nil ? FrogTheme.muted : FrogTheme.gold)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("排行榜顯示")
+                    Text(AppText.value(zh: "排行榜顯示", en: "Leaderboard Display"))
                         .font(.frogMicro.weight(.bold))
                         .foregroundStyle(FrogTheme.muted)
-                    Text(equippedTitle ?? "未設定稱號")
+                    Text(equippedTitle ?? AppText.value(zh: "未設定稱號", en: "No title selected"))
                         .font(.title3.weight(.black))
                         .foregroundStyle(equippedTitle == nil ? FrogTheme.muted : FrogTheme.forest)
                 }
                 Spacer(minLength: 0)
                 Button { showTitlePicker = true } label: {
-                    Text(equippedTitle == nil ? "選擇" : "更換")
+                    Text(equippedTitle == nil ? AppText.value(zh: "選擇", en: "Choose") : AppText.value(zh: "更換", en: "Change"))
                         .font(.frogCaption.weight(.bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
@@ -465,7 +513,7 @@ struct ProfileView: View {
                 .buttonStyle(.plain)
             }
 
-            Text("已征服 \(checkInStore.distinctMountainCount) 座山 · 每征服一座解鎖一個稱號")
+            Text(AppText.value(zh: "已征服 \(checkInStore.distinctMountainCount) 座山 · 每征服一座解鎖一個稱號", en: "\(checkInStore.distinctMountainCount) peaks conquered · each peak unlocks a title"))
                 .font(.frogCaption)
                 .foregroundStyle(FrogTheme.muted)
         }
@@ -514,7 +562,7 @@ struct ProfileView: View {
 
             NavigationLink(value: NativeRoute.allStamps) {
                 HStack(spacing: 5) {
-                    Text("全部 \(MountainCatalog.catalogCount)")
+                    Text(AppText.value(zh: "全部 \(MountainCatalog.catalogCount)", en: "All \(MountainCatalog.catalogCount)"))
                     Image(systemName: "arrow.right")
                         .font(.frogMicro)
                 }
@@ -538,7 +586,7 @@ struct ProfileView: View {
     private var recentCheckInCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                Text("最近打卡 · RECENT")
+                Text(AppText.value(zh: "最近打卡 · RECENT", en: "RECENT CHECK-IN"))
                     .font(.frogEyebrow)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -554,10 +602,10 @@ struct ProfileView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(FrogTheme.muted)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("仲未有打卡紀錄")
+                        Text(AppText.value(zh: "仲未有打卡紀錄", en: "No check-ins yet"))
                             .font(.frogRow)
                             .foregroundStyle(FrogTheme.ink)
-                        Text("完成第一次打卡後，呢度會顯示你最近征服嘅山峰。")
+                        Text(AppText.value(zh: "完成第一次打卡後，呢度會顯示你最近征服嘅山峰。", en: "After your first check-in, your latest conquered peak will appear here."))
                             .font(.frogCaption)
                             .foregroundStyle(FrogTheme.muted)
                     }
@@ -576,9 +624,9 @@ struct ProfileView: View {
                             endPoint: .bottom
                         )
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(recentMountain.displayName)
+                            Text(recentMountain.localizedName)
                                 .font(.frogTitle)
-                            Text("\(recentMountain.height)m · \(recentMountain.region) · \(checkInStore.count(for: recentMountain.id)) 次")
+                            Text(AppText.value(zh: "\(recentMountain.height)m · \(recentMountain.region) · \(checkInStore.count(for: recentMountain.id)) 次", en: "\(recentMountain.height)m · \(recentMountain.localizedRegion) · \(AppText.times(checkInStore.count(for: recentMountain.id)))"))
                                 .font(.frogCaption)
                         }
                         .foregroundStyle(.white)
@@ -609,12 +657,12 @@ struct ProfileView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("登頂證書")
+                Text(AppText.value(zh: "登頂證書", en: "Summit Certificate"))
                     .font(.frogRow.weight(.bold))
                     .foregroundStyle(FrogTheme.ink)
                 Text(latest == nil
-                     ? "完成打卡後解鎖你的收藏證書"
-                     : "最近征服 \(latest!.nameZh) · 收藏證書")
+                     ? AppText.value(zh: "完成打卡後解鎖你的收藏證書", en: "Unlock your collectible certificate after checking in")
+                     : AppText.value(zh: "最近征服 \(latest!.nameZh) · 收藏證書", en: "Latest: \(latest!.localizedName) · collectible certificate"))
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
                     .lineLimit(2)
@@ -624,7 +672,7 @@ struct ProfileView: View {
 
             if latest != nil {
                 Button { showCertificateShare = true } label: {
-                    Text("查看")
+                    Text(AppText.value(zh: "查看", en: "View"))
                         .font(.frogMicro.weight(.bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
@@ -648,7 +696,7 @@ struct ProfileView: View {
             // .wf-section — eyebrow + hairline rule + "View All" chevron
             Button { showAllAchievements = true } label: {
                 HStack(spacing: 12) {
-                    Text("成就 · ACHIEVEMENTS")
+                    Text(AppText.value(zh: "成就 · ACHIEVEMENTS", en: "ACHIEVEMENTS"))
                         .font(.frogEyebrow)
                         .tracking(1.2)
                         .textCase(.uppercase)
@@ -662,7 +710,7 @@ struct ProfileView: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("查看全部成就")
+            .accessibilityLabel(AppText.value(zh: "查看全部成就", en: "View All Achievements"))
 
             // .achv — 4-up circular stamp badges
             HStack(spacing: 10) {
@@ -684,7 +732,7 @@ struct ProfileView: View {
 
         do {
             guard let data = try await item.loadTransferable(type: Data.self) else {
-                authService.noteAvatarFailed("未能讀取頭像相片")
+                authService.noteAvatarFailed(AppText.value(zh: "未能讀取頭像相片", en: "Could not read avatar photo"))
                 return
             }
 
@@ -693,7 +741,7 @@ struct ProfileView: View {
             UserDefaults.standard.set(storedData, forKey: Self.avatarStorageKey)
             authService.noteAvatarUpdated()
         } catch {
-            authService.noteAvatarFailed("頭像更新失敗：\(error.localizedDescription)")
+            authService.noteAvatarFailed(AppText.value(zh: "頭像更新失敗：\(error.localizedDescription)", en: "Avatar update failed: \(error.localizedDescription)"))
         }
     }
 
@@ -738,17 +786,17 @@ private struct DisplayNameEditorSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("排行榜名稱")
+                    Text(AppText.value(zh: "排行榜名稱", en: "Leaderboard Name"))
                         .font(.frogEyebrow)
                         .tracking(1.1)
                         .textCase(.uppercase)
                         .foregroundStyle(FrogTheme.moss)
-                    Text("現在顯示：\(fallbackName)")
+                    Text(AppText.value(zh: "現在顯示：\(fallbackName)", en: "Currently shown as: \(fallbackName)"))
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                 }
 
-                TextField("輸入你的登山名", text: $name)
+                TextField(AppText.value(zh: "輸入你的登山名", en: "Enter your trail name"), text: $name)
                     .font(.system(size: 20, weight: .bold))
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
@@ -782,15 +830,15 @@ private struct DisplayNameEditorSheet: View {
             }
             .padding(FrogSpace.screenPadding)
             .appPageBackground(FrogTheme.warmPaper)
-            .navigationTitle("更改名稱")
+            .localizedNavigationTitle { AppText.value(zh: "更改名稱", en: "Edit Name") }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
+                    Button(AppText.value(zh: "取消", en: "Cancel")) { dismiss() }
                         .font(.frogCaption.weight(.semibold))
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("儲存") {
+                    Button(AppText.value(zh: "儲存", en: "Save")) {
                         Task {
                             await authService.updateDisplayName(trimmedName)
                             if authService.session?.displayName == trimmedName {
@@ -827,17 +875,17 @@ private struct TitlePickerSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 10) {
-                    row(id: "", title: "唔顯示稱號", subtitle: "排行榜唔顯示稱號", mountain: nil)
+                    row(id: "", title: AppText.value(zh: "唔顯示稱號", en: "No title"), subtitle: AppText.value(zh: "排行榜唔顯示稱號", en: "Hide title on leaderboard"), mountain: nil)
 
                     if conquered.isEmpty {
-                        Text("仲未征服任何山峰，征服一座就解鎖一個稱號。")
+                        Text(AppText.value(zh: "仲未征服任何山峰，征服一座就解鎖一個稱號。", en: "No peaks conquered yet. Each conquered peak unlocks one title."))
                             .font(.frogCaption)
                             .foregroundStyle(FrogTheme.muted)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 8)
                     } else {
                         ForEach(conquered) { m in
-                            row(id: m.id, title: m.unlockTitle, subtitle: "征服 \(m.nameZh) 解鎖", mountain: m)
+                            row(id: m.id, title: m.localizedUnlockTitle, subtitle: AppText.value(zh: "征服 \(m.nameZh) 解鎖", en: "Unlocked by conquering \(m.localizedName)"), mountain: m)
                         }
                     }
                 }
@@ -845,11 +893,11 @@ private struct TitlePickerSheet: View {
                 .padding(.bottom, 40)
             }
             .appPageBackground(FrogTheme.warmPaper)
-            .navigationTitle("選擇稱號")
+            .localizedNavigationTitle { AppText.value(zh: "選擇稱號", en: "Choose Title") }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") { dismiss() }
+                    Button(AppText.value(zh: "完成", en: "Done")) { dismiss() }
                         .font(.frogCaption.weight(.bold))
                         .foregroundStyle(FrogTheme.forest)
                 }
@@ -907,6 +955,7 @@ private struct TitlePickerSheet: View {
 
 private struct GuestOnboardingView: View {
     let onStart: () -> Void
+    @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
     @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
 
     var body: some View {
@@ -915,7 +964,7 @@ private struct GuestOnboardingView: View {
 
             ScrollView {
                 ZStack(alignment: .topLeading) {
-                    MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0, showsSourceBadge: true)
+                    MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0)
                         .frame(height: proxy.size.height * 0.62 + topInset)
 
                     LinearGradient(
@@ -939,21 +988,23 @@ private struct GuestOnboardingView: View {
 
     private func content(topInset: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                WildFrogBrandMark(size: 40, cornerRadius: 11)
-                Text("WILDFROG")
-                    .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+            HStack {
+                Spacer()
+                LanguageMenuButton(selection: $languageModeRaw)
             }
-            .padding(.bottom, 18)
+            .padding(.bottom, 14)
 
-            Text("記低你行過的\n每一座山")
+            WildFrogLoginPinLogo(width: 176)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.bottom, 20)
+
+            Text(AppText.value(zh: "記低你行過的\n每一座山", en: "Record every\npeak you climb"))
                 .font(.system(size: 34, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("香港 330 座山峰，等你逐個征服、逐個收藏。")
+            Text(AppText.value(zh: "香港 330 座山峰，等你逐個征服、逐個收藏。", en: "330 Hong Kong peaks to conquer, collect and remember."))
                 .font(.frogRow)
                 .foregroundStyle(.white.opacity(0.82))
                 .padding(.top, 10)
@@ -962,18 +1013,18 @@ private struct GuestOnboardingView: View {
             VStack(alignment: .leading, spacing: 16) {
                 ValuePropRow(
                     systemImage: "checkmark.icloud.fill",
-                    title: "雲端同步打卡紀錄",
-                    subtitle: "換機都唔會遺失你的山旅足跡"
+                    title: AppText.value(zh: "雲端同步打卡紀錄", en: "Cloud-synced check-ins"),
+                    subtitle: AppText.value(zh: "換機都唔會遺失你的山旅足跡", en: "Keep your mountain record across devices")
                 )
                 ValuePropRow(
                     systemImage: "rosette",
-                    title: "解鎖紀念證書",
-                    subtitle: "完成里程碑即可生成分享證書"
+                    title: AppText.value(zh: "解鎖紀念證書", en: "Unlock summit certificates"),
+                    subtitle: AppText.value(zh: "完成里程碑即可生成分享證書", en: "Generate shareable certificates after milestones")
                 )
                 ValuePropRow(
                     systemImage: "chart.bar.fill",
-                    title: "加入排行榜",
-                    subtitle: "同其他山友比拼打卡里程"
+                    title: AppText.value(zh: "加入排行榜", en: "Join the leaderboard"),
+                    subtitle: AppText.value(zh: "同其他山友比拼打卡里程", en: "Compare progress with other hikers")
                 )
             }
             .padding(.bottom, 28)
@@ -982,7 +1033,7 @@ private struct GuestOnboardingView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "figure.hiking")
                         .font(.system(size: 17, weight: .black))
-                    Text("登入 / 開始記錄")
+                    Text(AppText.value(zh: "登入 / 開始記錄", en: "Sign In / Start Recording"))
                         .font(.system(size: 18, weight: .black, design: .rounded))
                 }
                 .foregroundStyle(.white)
@@ -993,7 +1044,7 @@ private struct GuestOnboardingView: View {
             }
             .buttonStyle(.plain)
 
-            Text("免費 · 幾秒搞掂")
+            Text(AppText.value(zh: "免費 · 幾秒搞掂", en: "Free · Takes seconds"))
                 .font(.frogCaption.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.66))
                 .frame(maxWidth: .infinity)
@@ -1002,6 +1053,36 @@ private struct GuestOnboardingView: View {
         .padding(.horizontal, 24)
         .padding(.top, topInset + 36)
         .padding(.bottom, 130)
+    }
+}
+
+private struct LanguageMenuButton: View {
+    @Binding var selection: String
+
+    var body: some View {
+        Menu {
+            ForEach(AppLanguageMode.allCases) { mode in
+                Button {
+                    selection = mode.rawValue
+                } label: {
+                    Label(mode.title, systemImage: selection == mode.rawValue ? "checkmark" : "globe")
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                    .font(.system(size: 13, weight: .bold))
+                Text((AppLanguageMode(rawValue: selection) ?? .system).shortTitle)
+                    .font(.frogCaption.weight(.bold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(Color.white.opacity(0.16), in: Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppText.value(zh: "選擇語言", en: "Choose Language"))
     }
 }
 
@@ -1198,7 +1279,7 @@ struct FullPassportStampsView: View {
             .padding(.bottom, 40)
         }
         .appPageBackground(FrogTheme.warmPaper)
-        .navigationTitle("Peak Passport · \(unlockedCount)/\(MountainCatalog.catalogCount)")
+        .localizedNavigationTitle { "Peak Passport · \(unlockedCount)/\(MountainCatalog.catalogCount)" }
         .nativeInlineTitle()
     }
 }
