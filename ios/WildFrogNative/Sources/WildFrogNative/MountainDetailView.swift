@@ -44,16 +44,21 @@ struct MountainDetailView: View {
     private var distanceCaption: String {
         guard locationManager.authorizationStatus == .authorizedWhenInUse ||
               locationManager.authorizationStatus == .authorizedAlways else {
-            return "開啟定位睇距離"
+            return AppText.value(zh: "開啟定位睇距離", en: "Enable location for distance")
         }
         guard let d = locationManager.distance(to: mountain.coordinate) else {
-            return "定位中…"
+            return AppText.value(zh: "定位中…", en: "Locating...")
         }
         if d < 1000 {
-            return "距離 \(Int(d))m"
+            return AppText.value(zh: "距離 \(Int(d))m", en: "\(Int(d))m away")
         } else {
-            return String(format: "距離 %.1fkm", d / 1000)
+            return AppText.value(zh: String(format: "距離 %.1fkm", d / 1000), en: String(format: "%.1fkm away", d / 1000))
         }
+    }
+
+    private var locationFocusKey: String {
+        guard let coordinate = locationManager.resolvedLocation?.coordinate else { return "none" }
+        return String(format: "%.5f,%.5f", coordinate.latitude, coordinate.longitude)
     }
 
     var body: some View {
@@ -116,7 +121,7 @@ struct MountainDetailView: View {
                             .overlay(Circle().stroke(Color.white.opacity(0.26), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("返回")
+                    .accessibilityLabel(AppText.value(zh: "返回", en: "Back"))
 
                     Spacer()
 
@@ -141,10 +146,10 @@ struct MountainDetailView: View {
                         .background(FrogTheme.orange, in: Capsule())
 
                     (
-                        Text(mountain.nameZh)
+                        Text(mountain.localizedPrimaryName)
                             .font(.system(size: 34, weight: .black))
                             .foregroundStyle(.white)
-                        + Text(mountain.nameEn.isEmpty ? "" : "  \(mountain.nameEn)")
+                        + Text(mountain.localizedSecondaryName.isEmpty ? "" : "  \(mountain.localizedSecondaryName)")
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.78))
                     )
@@ -152,7 +157,7 @@ struct MountainDetailView: View {
                     .minimumScaleFactor(0.66)
                     .fixedSize(horizontal: false, vertical: true)
 
-                    Label("\(mountain.region) · \(mountain.height)m", systemImage: "mappin.and.ellipse")
+                    Label("\(mountain.localizedRegion) · \(mountain.height)m", systemImage: "mappin.and.ellipse")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.82))
                         .lineLimit(1)
@@ -161,9 +166,9 @@ struct MountainDetailView: View {
                 .shadow(color: Color.black.opacity(0.22), radius: 10, y: 4)
 
                 HStack(spacing: 8) {
-                    DetailStatusPill(value: mountain.region, label: "地區")
-                    DetailStatusPill(value: "\(myCheckIns)", label: "我的紀錄")
-                    DetailStatusPill(value: "\(mountain.height)m", label: "海拔")
+                    DetailStatusPill(value: mountain.localizedRegion, label: AppText.value(zh: "地區", en: "Region"))
+                    DetailStatusPill(value: "\(myCheckIns)", label: AppText.value(zh: "我的紀錄", en: "My Records"))
+                    DetailStatusPill(value: "\(mountain.height)m", label: AppText.value(zh: "海拔", en: "Elevation"))
                 }
                 .padding(.top, 18)
             }
@@ -177,9 +182,9 @@ struct MountainDetailView: View {
     /// 3-up stat cards (css .statcards) — hairline on surface, one trail-tinted.
     private var statCards: some View {
         HStack(spacing: 10) {
-            DetailStatCard(systemImage: "checkmark.shield.fill", value: "\(myCheckIns)", label: "我的打卡", tint: FrogTheme.moss)
-            DetailStatCard(systemImage: "trophy.fill", value: mountain.rankText, label: "300峰排名", tint: FrogTheme.gold)
-            DetailStatCard(systemImage: "rosette", value: mountain.unlockTitle, label: "解鎖稱號", tint: FrogTheme.gold)
+            DetailStatCard(systemImage: "checkmark.shield.fill", value: "\(myCheckIns)", label: AppText.value(zh: "我的打卡", en: "My Check-ins"), tint: FrogTheme.moss)
+            DetailStatCard(systemImage: "trophy.fill", value: mountain.localizedRankText, label: AppText.value(zh: "300峰排名", en: "300 Peaks Rank"), tint: FrogTheme.gold)
+            DetailStatCard(systemImage: "rosette", value: mountain.localizedUnlockTitle, label: AppText.value(zh: "解鎖稱號", en: "Unlocked Title"), tint: FrogTheme.gold)
         }
     }
 
@@ -191,11 +196,11 @@ struct MountainDetailView: View {
                         .font(.frogEyebrow)
                         .tracking(1.1)
                         .foregroundStyle(FrogTheme.gold)
-                    Text("登頂紀念證書")
+                    Text(AppText.value(zh: "登頂紀念證書", en: "Summit Certificate"))
                         .font(.headline.weight(.black))
                 }
                 Spacer()
-                Text(hasCheckedIn ? "山印已解鎖" : "完成打卡後解鎖")
+                Text(hasCheckedIn ? AppText.value(zh: "山印已解鎖", en: "Stamp Unlocked") : AppText.value(zh: "完成打卡後解鎖", en: "Unlock after check-in"))
                     .font(.frogMicro.weight(.black))
                     .foregroundStyle(hasCheckedIn ? FrogTheme.forest : FrogTheme.muted)
             }
@@ -203,13 +208,13 @@ struct MountainDetailView: View {
             VStack(spacing: 14) {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("WildFrog 山峰紀錄")
+                        Text(AppText.value(zh: "WildFrog 山峰紀錄", en: "WildFrog Peak Record"))
                             .font(.subheadline.weight(.heavy))
-                        Text(mountain.nameZh)
+                        Text(mountain.localizedPrimaryName)
                             .font(.system(size: 38, weight: .black))
                             .lineLimit(1)
                             .minimumScaleFactor(0.58)
-                        Text(mountain.nameEn)
+                        Text(mountain.localizedSecondaryName)
                             .font(.frogCaption.weight(.bold))
                             .foregroundStyle(FrogTheme.muted)
                             .lineLimit(1)
@@ -225,10 +230,10 @@ struct MountainDetailView: View {
                         .font(.system(size: 14, weight: .black))
                         .foregroundStyle(hasCheckedIn ? FrogTheme.gold : FrogTheme.muted)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(hasCheckedIn ? "稱號已解鎖" : "完成打卡解鎖稱號")
+                        Text(hasCheckedIn ? AppText.value(zh: "稱號已解鎖", en: "Title unlocked") : AppText.value(zh: "完成打卡解鎖稱號", en: "Check in to unlock"))
                             .font(.frogMicro.weight(.bold))
                             .foregroundStyle(FrogTheme.muted)
-                        Text(mountain.unlockTitle)
+                        Text(mountain.localizedUnlockTitle)
                             .font(.title3.weight(.black))
                             .foregroundStyle(hasCheckedIn ? FrogTheme.forest : FrogTheme.muted.opacity(0.55))
                     }
@@ -242,7 +247,7 @@ struct MountainDetailView: View {
                 )
 
                 // The mountain's story.
-                Text(mountain.blurb)
+                Text(mountain.localizedBlurb)
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.ink.opacity(0.82))
                     .lineSpacing(3)
@@ -251,10 +256,10 @@ struct MountainDetailView: View {
 
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("登頂次數")
+                        Text(AppText.value(zh: "登頂次數", en: "Summits"))
                             .font(.caption.weight(.bold))
                             .foregroundStyle(FrogTheme.muted)
-                        Text(hasCheckedIn ? "第 \(myCheckIns) 次登頂" : "未登頂")
+                        Text(hasCheckedIn ? AppText.value(zh: "第 \(myCheckIns) 次登頂", en: "Summit #\(myCheckIns)") : AppText.value(zh: "未登頂", en: "Not yet climbed"))
                             .font(.title3.weight(.black))
                             .foregroundStyle(hasCheckedIn ? FrogTheme.ink : FrogTheme.muted)
                     }
@@ -262,7 +267,7 @@ struct MountainDetailView: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("山峰海拔")
+                        Text(AppText.value(zh: "山峰海拔", en: "Elevation"))
                             .font(.caption.weight(.bold))
                             .foregroundStyle(FrogTheme.muted)
                         Text("\(mountain.height) m")
@@ -280,7 +285,7 @@ struct MountainDetailView: View {
 
                 if hasCheckedIn {
                     Button { showCertShare = true } label: {
-                        Label("分享證書", systemImage: "square.and.arrow.up")
+                        Label(AppText.value(zh: "分享證書", en: "Share Certificate"), systemImage: "square.and.arrow.up")
                             .font(.subheadline.weight(.black))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -289,7 +294,7 @@ struct MountainDetailView: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Text("愛自然 / 愛運動 / 愛香港")
+                    Text(AppText.value(zh: "愛自然 / 愛運動 / 愛香港", en: "Love nature / Love movement / Love Hong Kong"))
                         .font(.subheadline.weight(.black))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -311,7 +316,10 @@ struct MountainDetailView: View {
 
     private var checkInAction: some View {
         NavigationLink(value: NativeRoute.checkIn(mountain.id)) {
-            Label(hasCheckedIn ? "再次打卡" : "開始有效打卡", systemImage: "location.circle.fill")
+            Label(
+                hasCheckedIn ? AppText.value(zh: "再次記錄行程/打卡", en: "Record / Check In Again") : AppText.value(zh: "開始記錄行程/打卡", en: "Start Record / Check In"),
+                systemImage: "location.circle.fill"
+            )
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -325,7 +333,7 @@ struct MountainDetailView: View {
     private var trailFactsPanel: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("路線摘要", systemImage: "figure.hiking")
+                Label(AppText.value(zh: "路線摘要", en: "Route Summary"), systemImage: "figure.hiking")
                     .font(.headline.weight(.black))
                     .foregroundStyle(FrogTheme.ink)
                 Spacer()
@@ -335,9 +343,9 @@ struct MountainDetailView: View {
             }
 
             HStack(spacing: 10) {
-                DetailFact(value: mountain.rankText, label: "300峰排名", systemImage: "trophy.fill", tint: FrogTheme.gold)
-                DetailFact(value: "\(mountain.height)m", label: "山峰海拔", systemImage: "triangle.fill", tint: FrogTheme.moss)
-                DetailFact(value: "\(CheckInRules.radiusMeters)m", label: "有效半徑", systemImage: "scope", tint: FrogTheme.moss)
+                DetailFact(value: mountain.localizedRankText, label: AppText.value(zh: "300峰排名", en: "Peak Rank"), systemImage: "trophy.fill", tint: FrogTheme.gold)
+                DetailFact(value: "\(mountain.height)m", label: AppText.value(zh: "山峰海拔", en: "Elevation"), systemImage: "triangle.fill", tint: FrogTheme.moss)
+                DetailFact(value: "\(CheckInRules.radiusMeters)m", label: AppText.value(zh: "有效半徑", en: "Valid Radius"), systemImage: "scope", tint: FrogTheme.moss)
             }
         }
         .padding(FrogSpace.cardPadding)
@@ -354,7 +362,7 @@ struct MountainDetailView: View {
             let coords = track.coordinates.map(\.coordinate)
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
-                    Label("我的路線", systemImage: "point.topleft.down.curvedto.point.bottomright.up.fill")
+                    Label(AppText.value(zh: "我的路線", en: "My Route"), systemImage: "point.topleft.down.curvedto.point.bottomright.up.fill")
                         .font(.headline.weight(.black))
                         .foregroundStyle(FrogTheme.ink)
                     Spacer()
@@ -368,15 +376,16 @@ struct MountainDetailView: View {
                         MapPolyline(coordinates: coords)
                             .stroke(FrogTheme.orange, lineWidth: 4)
                         if let start = coords.first {
-                            Marker("起點", systemImage: "flag.fill", coordinate: start)
+                            Marker(AppText.value(zh: "起點", en: "Start"), systemImage: "flag.fill", coordinate: start)
                                 .tint(FrogTheme.moss)
                         }
                         if let end = coords.last {
-                            Marker("終點", systemImage: "flag.checkered", coordinate: end)
+                            Marker(AppText.value(zh: "終點", en: "Finish"), systemImage: "flag.checkered", coordinate: end)
                                 .tint(FrogTheme.orange)
                         }
                     } else {
-                        Marker(mountain.nameZh, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
+                        CheckInRadiusMapOverlay.circle(center: mountain.coordinate)
+                        Marker(mountain.localizedName, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
                             .tint(FrogTheme.orange)
                     }
                 }
@@ -404,11 +413,11 @@ struct MountainDetailView: View {
                 }
 
                 HStack(spacing: 10) {
-                    StatCard(value: TrackFormat.distance(track.distanceMeters), label: "距離", systemImage: "ruler", tint: FrogTheme.moss)
+                    StatCard(value: TrackFormat.distance(track.distanceMeters), label: AppText.value(zh: "距離", en: "Distance"), systemImage: "ruler", tint: FrogTheme.moss)
                         .frame(maxWidth: .infinity)
-                    StatCard(value: TrackFormat.duration(track.durationSeconds), label: "時間", systemImage: "clock", tint: FrogTheme.orange)
+                    StatCard(value: TrackFormat.duration(track.durationSeconds), label: AppText.value(zh: "時間", en: "Time"), systemImage: "clock", tint: FrogTheme.orange)
                         .frame(maxWidth: .infinity)
-                    StatCard(value: "\(Int(track.ascentMeters))m", label: "累積上升", systemImage: "arrow.up.forward", tint: FrogTheme.gold)
+                    StatCard(value: "\(Int(track.ascentMeters))m", label: AppText.value(zh: "累積上升", en: "Ascent"), systemImage: "arrow.up.forward", tint: FrogTheme.gold)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -419,11 +428,12 @@ struct MountainDetailView: View {
 
     private var checkpointMap: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("檢查點地圖")
+            Text(AppText.value(zh: "檢查點地圖", en: "Checkpoint Map"))
                 .font(.headline.weight(.black))
 
             Map(position: $mapCamera) {
-                Marker(mountain.nameZh, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
+                CheckInRadiusMapOverlay.circleWithLabel(center: mountain.coordinate)
+                Marker(mountain.localizedName, systemImage: "mappin.circle.fill", coordinate: mountain.coordinate)
                     .tint(FrogTheme.orange)
                 UserAnnotation()
             }
@@ -431,14 +441,14 @@ struct MountainDetailView: View {
             .frame(height: 180)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .onAppear {
-                mapCamera = .region(MKCoordinateRegion(
-                    center: mountain.coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                ))
+                fitCheckpointCamera()
+            }
+            .onChange(of: locationFocusKey) { _, _ in
+                fitCheckpointCamera()
             }
 
             HStack {
-                Label("有效半徑 \(CheckInRules.radiusMeters)m", systemImage: "scope")
+                Label(AppText.value(zh: "有效半徑 \(CheckInRules.radiusMeters)m", en: "\(CheckInRules.radiusMeters)m valid radius"), systemImage: "scope")
                 Spacer()
                 Label(distanceCaption, systemImage: "location.fill")
             }
@@ -446,7 +456,7 @@ struct MountainDetailView: View {
             .foregroundStyle(FrogTheme.muted)
 
             NavigationLink(value: NativeRoute.routeToCheckpoint(mountain.id)) {
-                Label("路線 / 導航去呢度", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                Label(AppText.value(zh: "路線 / 導航去呢度", en: "Route / Navigate Here"), systemImage: "arrow.triangle.turn.up.right.diamond.fill")
                     .font(.subheadline.weight(.black))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -457,6 +467,49 @@ struct MountainDetailView: View {
         }
         .padding(14)
         .cardStyle()
+    }
+
+    private func fitCheckpointCamera() {
+        var coordinates = [mountain.coordinate]
+        if let userCoordinate = locationManager.resolvedLocation?.coordinate {
+            coordinates.append(userCoordinate)
+        }
+        mapCamera = .region(regionIncluding(coordinates, minimumSpan: 0.012))
+    }
+
+    private func regionIncluding(
+        _ coordinates: [CLLocationCoordinate2D],
+        minimumSpan: CLLocationDegrees
+    ) -> MKCoordinateRegion {
+        guard let first = coordinates.first else {
+            return MKCoordinateRegion(
+                center: mountain.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
+        }
+
+        var minLat = first.latitude
+        var maxLat = first.latitude
+        var minLon = first.longitude
+        var maxLon = first.longitude
+
+        for coordinate in coordinates.dropFirst() {
+            minLat = min(minLat, coordinate.latitude)
+            maxLat = max(maxLat, coordinate.latitude)
+            minLon = min(minLon, coordinate.longitude)
+            maxLon = max(maxLon, coordinate.longitude)
+        }
+
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(
+                latitude: (minLat + maxLat) / 2,
+                longitude: (minLon + maxLon) / 2
+            ),
+            span: MKCoordinateSpan(
+                latitudeDelta: max((maxLat - minLat) * 1.7, minimumSpan),
+                longitudeDelta: max((maxLon - minLon) * 1.7, minimumSpan)
+            )
+        )
     }
 }
 

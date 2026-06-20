@@ -4,7 +4,7 @@ import Foundation
 /// Check-in gameplay rules shared between gating logic and UI copy.
 enum CheckInRules {
     /// Valid check-in radius around a summit checkpoint, in metres.
-    static let radiusMeters = 500
+    static let radiusMeters = 200
 }
 
 struct Mountain: Identifiable, Equatable {

@@ -53,7 +53,7 @@ final class TrackLiveActivityController {
     func start(mountainName: String, state: WildFrogTrackAttributes.ContentState) {
         guard activity == nil, ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         let attributes = WildFrogTrackAttributes(
-            mountainName: mountainName.isEmpty ? "行程記錄中" : mountainName
+            mountainName: mountainName.isEmpty ? "Recording Trip" : mountainName
         )
         activity = try? Activity.request(
             attributes: attributes,

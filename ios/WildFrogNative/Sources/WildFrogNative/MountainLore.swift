@@ -356,6 +356,8 @@ enum MountainLore {
 extension Mountain {
     /// Short collectible story blurb shown on the certificate.
     var blurb: String { MountainLore.entry(for: id).blurb }
+    var localizedBlurb: String { AppText.blurb(for: self) }
     /// The 稱號 unlocked by conquering this mountain.
     var unlockTitle: String { MountainLore.entry(for: id).title }
+    var localizedUnlockTitle: String { AppText.honorific(for: self) }
 }

@@ -16,6 +16,8 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
     @Published private(set) var points: [TrackPoint] = []
     /// Live distance from the latest fix to the summit checkpoint (nil before a fix).
     @Published private(set) var distanceToSummitMeters: Double?
+    @Published private(set) var activeMountainId: String?
+    @Published private(set) var activeMountainName = ""
 
     /// The one live instance (owned by the app as a `@StateObject`); lets the
     /// Live Activity pause/resume intent reach the recorder.
@@ -78,7 +80,11 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
 
     // MARK: - Control
 
-    func start(mountainName: String = "", summitCoordinate: CLLocationCoordinate2D? = nil) {
+    func start(
+        mountainId: String? = nil,
+        mountainName: String = "",
+        summitCoordinate: CLLocationCoordinate2D? = nil
+    ) {
         guard !isRecording else { return }
 
         if manager.authorizationStatus == .notDetermined {
@@ -106,13 +112,15 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         self.summitCoordinate = summitCoordinate
         initialSummitDistance = nil
         distanceToSummitMeters = nil
+        activeMountainId = mountainId
+        activeMountainName = mountainName.isEmpty ? "Recording Trip" : mountainName
         isPaused = false
         isRecording = true
 
         manager.startUpdatingLocation()
         startTimer()
         #if canImport(ActivityKit)
-        liveActivity.start(mountainName: mountainName, state: activityState())
+        liveActivity.start(mountainName: activeMountainName, state: activityState())
         #endif
     }
 
@@ -175,6 +183,7 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         }
 
         let track = Track(
+            mountainId: activeMountainId,
             name: defaultName(for: start),
             points: points,
             distanceMeters: distanceMeters,
@@ -221,6 +230,8 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         summitCoordinate = nil
         initialSummitDistance = nil
         distanceToSummitMeters = nil
+        activeMountainId = nil
+        activeMountainName = ""
     }
 
     private func startTimer() {

@@ -1,3 +1,4 @@
+import MapKit
 import SwiftUI
 
 /// "Field Survey" palette — paper + pine + restrained trail orange.
@@ -34,6 +35,58 @@ enum FrogTheme {
     static let gold = Color(red: 171 / 255, green: 132 / 255, blue: 60 / 255)    // #AB843C
     static let slate = Color(red: 95 / 255, green: 99 / 255, blue: 86 / 255)
     static let warmShadow = Color(red: 27 / 255, green: 32 / 255, blue: 24 / 255)
+}
+
+@MainActor
+enum CheckInRadiusMapOverlay {
+    private static var radius: CLLocationDistance {
+        CLLocationDistance(CheckInRules.radiusMeters)
+    }
+
+    @MapContentBuilder
+    static func circle(center: CLLocationCoordinate2D) -> some MapContent {
+        MapCircle(center: center, radius: radius)
+            .foregroundStyle(Color(red: 109 / 255, green: 162 / 255, blue: 196 / 255).opacity(0.24))
+        MapCircle(center: center, radius: radius)
+            .stroke(Color.black.opacity(0.72), lineWidth: 1.4)
+    }
+
+    @MapContentBuilder
+    static func circleWithLabel(center: CLLocationCoordinate2D) -> some MapContent {
+        circle(center: center)
+        Annotation("\(CheckInRules.radiusMeters)m", coordinate: labelCoordinate(from: center), anchor: .center) {
+            Text("\(CheckInRules.radiusMeters)m")
+                .font(.frogNum(26, weight: .heavy))
+                .foregroundStyle(.black)
+                .lineLimit(1)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .shadow(color: Color.black.opacity(0.12), radius: 5, y: 2)
+                .accessibilityLabel(AppText.value(zh: "打卡範圍 \(CheckInRules.radiusMeters) 米", en: "\(CheckInRules.radiusMeters)-metre check-in radius"))
+        }
+    }
+
+    private static func labelCoordinate(from center: CLLocationCoordinate2D) -> CLLocationCoordinate2D {
+        let bearing = 315.0 * .pi / 180.0
+        let angularDistance = (radius * 0.48) / 6_371_000.0
+        let latitude = center.latitude * .pi / 180.0
+        let longitude = center.longitude * .pi / 180.0
+
+        let labelLatitude = asin(
+            sin(latitude) * cos(angularDistance) +
+            cos(latitude) * sin(angularDistance) * cos(bearing)
+        )
+        let labelLongitude = longitude + atan2(
+            sin(bearing) * sin(angularDistance) * cos(latitude),
+            cos(angularDistance) - sin(latitude) * sin(labelLatitude)
+        )
+
+        return CLLocationCoordinate2D(
+            latitude: labelLatitude * 180.0 / .pi,
+            longitude: labelLongitude * 180.0 / .pi
+        )
+    }
 }
 
 extension Font {
