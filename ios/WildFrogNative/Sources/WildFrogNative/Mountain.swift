@@ -23,8 +23,32 @@ struct Mountain: Identifiable, Equatable {
         nameEn.isEmpty ? nameZh : "\(nameZh) \(nameEn)"
     }
 
+    var localizedName: String {
+        if AppText.isEnglish {
+            nameEn.isEmpty ? nameZh : nameEn
+        } else {
+            displayName
+        }
+    }
+
+    var localizedPrimaryName: String {
+        AppText.isEnglish && !nameEn.isEmpty ? nameEn : nameZh
+    }
+
+    var localizedSecondaryName: String {
+        AppText.isEnglish ? nameZh : nameEn
+    }
+
+    var localizedRegion: String {
+        AppText.region(region)
+    }
+
     var rankText: String {
         MountainCatalog.heightRank(for: id).map { "#\($0)" } ?? "未排名"
+    }
+
+    var localizedRankText: String {
+        MountainCatalog.heightRank(for: id).map { "#\($0)" } ?? AppText.value(zh: "未排名", en: "Unranked")
     }
 
     var stampImageName: String {

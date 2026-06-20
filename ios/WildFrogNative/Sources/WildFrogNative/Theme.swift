@@ -152,7 +152,10 @@ struct MountainStampSeal: View {
         }
         .frame(width: size, height: size)
         .rotationEffect(rotation)
-        .accessibilityLabel(isUnlocked ? "\(mountain.nameZh) 山印" : "\(mountain.nameZh) 未解鎖山印")
+        .accessibilityLabel(isUnlocked
+            ? AppText.value(zh: "\(mountain.nameZh) 山印", en: "\(mountain.localizedName) stamp")
+            : AppText.value(zh: "\(mountain.nameZh) 未解鎖山印", en: "\(mountain.localizedName) stamp locked")
+        )
     }
 }
 
@@ -225,6 +228,10 @@ extension View {
             .clipShape(Capsule())
     }
 
+    func localizedNavigationTitle(_ title: @escaping () -> String) -> some View {
+        modifier(LocalizedNavigationTitleModifier(title: title))
+    }
+
     @ViewBuilder
     func nativeInlineTitle() -> some View {
         #if os(iOS)
@@ -241,6 +248,16 @@ extension View {
         #else
         self
         #endif
+    }
+}
+
+private struct LocalizedNavigationTitleModifier: ViewModifier {
+    @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
+    let title: () -> String
+
+    func body(content: Content) -> some View {
+        let _ = languageModeRaw
+        return content.navigationTitle(title())
     }
 }
 

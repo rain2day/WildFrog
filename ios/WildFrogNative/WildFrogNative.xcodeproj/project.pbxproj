@@ -50,6 +50,7 @@
 		B6001A0000000051 /* SeedLeaderboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000050 /* SeedLeaderboard.swift */; };
 		B6001A0000000061 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B6001A0000000060 /* PrivacyInfo.xcprivacy */; };
 		B6001A0000000071 /* WildFrogLegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000070 /* WildFrogLegalLinks.swift */; };
+		B6001A0000000091 /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000090 /* AppText.swift */; };
 		CF001A0000000041 /* CheckInMapPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF001A0000000040 /* CheckInMapPickerView.swift */; };
 /* End PBXBuildFile section */
 
@@ -120,6 +121,7 @@
 		B6001A0000000050 /* SeedLeaderboard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeedLeaderboard.swift; sourceTree = "<group>"; };
 		B6001A0000000060 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B6001A0000000070 /* WildFrogLegalLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogLegalLinks.swift; sourceTree = "<group>"; };
+		B6001A0000000090 /* AppText.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,6 +179,7 @@
 				0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */,
 				C4B3001CB3001CB3001CB300 /* CameraPicker.swift */,
 				A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */,
+				B6001A0000000090 /* AppText.swift */,
 				A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */,
 				A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */,
 				B5A1000000000000000000A0 /* Track.swift */,
@@ -387,6 +390,7 @@
 				B6001A0000000011 /* AllAchievementsView.swift in Sources */,
 				B6001A0000000031 /* ProviderPickerSheet.swift in Sources */,
 				B6001A0000000071 /* WildFrogLegalLinks.swift in Sources */,
+				B6001A0000000091 /* AppText.swift in Sources */,
 				B6001A0000000051 /* SeedLeaderboard.swift in Sources */,
 				CF001A0000000041 /* CheckInMapPickerView.swift in Sources */,
 			);
