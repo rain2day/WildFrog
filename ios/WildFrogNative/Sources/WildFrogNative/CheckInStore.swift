@@ -50,6 +50,31 @@ struct CheckInRecord: Codable, Identifiable, Equatable {
     }
 }
 
+enum AccountPhotoDeletionPlan {
+    static func urlsToDelete(
+        from contents: [URL],
+        ownedFilenames: Set<String>
+    ) -> [URL] {
+        contents
+            .filter { url in
+                url.pathExtension.lowercased() == "jpg"
+                    && ownedFilenames.contains(url.lastPathComponent)
+            }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+}
+
+enum TemporaryPhotoFileCleanup {
+    static func remove(
+        filename: String,
+        documentsDirectory: URL,
+        fileManager: FileManager = .default
+    ) {
+        guard filename == URL(fileURLWithPath: filename).lastPathComponent else { return }
+        try? fileManager.removeItem(at: documentsDirectory.appendingPathComponent(filename))
+    }
+}
+
 @MainActor
 final class CheckInStore: ObservableObject {
     @Published private(set) var records: [CheckInRecord] = []
@@ -127,8 +152,14 @@ final class CheckInStore: ObservableObject {
     // MARK: - Mutations
 
     @discardableResult
-    func addCheckIn(mountainId: String, photoFilename: String? = nil, track: TrackSummary? = nil) -> CheckInRecord? {
-        guard let currentUserId else { return nil }
+    func addCheckIn(
+        mountainId: String,
+        photoFilename: String? = nil,
+        track: TrackSummary? = nil,
+        expectedOwnerUID: String? = nil
+    ) -> CheckInRecord? {
+        guard let currentUserId,
+              expectedOwnerUID == nil || expectedOwnerUID == currentUserId else { return nil }
         let record = CheckInRecord(
             mountainId: mountainId,
             date: Date(),
@@ -139,6 +170,26 @@ final class CheckInStore: ObservableObject {
         saveCache(for: currentUserId)
         captureWeather(for: record.id, mountainId: mountainId)
         return record
+    }
+
+    func removeAll(for uid: String) {
+        defaults.removeObject(forKey: cacheKey(for: uid))
+        guard currentUserId == uid else { return }
+        records = []
+        currentUserId = nil
+    }
+
+    func photoFilenamesOwned(by uid: String) -> Set<String> {
+        let ownedRecords = currentUserId == uid ? records : loadCache(for: uid)
+        return Set(ownedRecords.compactMap { record in
+            guard let filename = record.photoFilename,
+                  !filename.isEmpty,
+                  filename == URL(fileURLWithPath: filename).lastPathComponent,
+                  URL(fileURLWithPath: filename).pathExtension.lowercased() == "jpg" else {
+                return nil
+            }
+            return filename
+        })
     }
 
     /// Best-effort: fetch the summit's current weather and attach it to the record

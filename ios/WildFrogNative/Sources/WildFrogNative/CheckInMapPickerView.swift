@@ -25,6 +25,7 @@ struct CheckInPickerView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
 
     @State private var segment: CheckInPickerSegment = .map
+    @State private var locationConsumerID = UUID()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -54,8 +55,14 @@ struct CheckInPickerView: View {
         .hiddenNavigationBar()
         .withNativeRoutes()
         .onAppear {
+            #if DEBUG
+            guard !ProcessInfo.processInfo.arguments.contains("-qaFreePhoto") else { return }
+            #endif
             locationManager.requestAuthorization()
-            locationManager.startUpdating()
+            locationManager.startUpdating(for: locationConsumerID)
+        }
+        .onDisappear {
+            locationManager.stopUpdating(for: locationConsumerID)
         }
     }
 }

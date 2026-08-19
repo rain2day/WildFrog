@@ -11,6 +11,15 @@ enum SeedLeaderboardDelta {
     case flat
 }
 
+enum LeaderboardProfileDetailAvailability: Equatable {
+    case fullSeedDemo
+    case publicAggregatesOnly
+
+    static func forProfile(_ profile: SeedHikerProfile) -> Self {
+        profile.isServerDerived ? .publicAggregatesOnly : .fullSeedDemo
+    }
+}
+
 struct SeedHikerProfile: Identifiable, Hashable {
     let id: String
     let name: String
@@ -24,6 +33,40 @@ struct SeedHikerProfile: Identifiable, Hashable {
     let baseDistinctPeaks: Int
     let cadenceDays: Int
     let weekendCycle: Int
+    let isServerDerived: Bool
+    let isLegacyDummy: Bool
+
+    init(
+        id: String,
+        name: String,
+        homeRegion: String,
+        style: String,
+        titleMountainId: String?,
+        heroMountainId: String,
+        progressSeed: Int,
+        baseMonthCheckIns: Int,
+        baseTotalCheckIns: Int,
+        baseDistinctPeaks: Int,
+        cadenceDays: Int,
+        weekendCycle: Int,
+        isServerDerived: Bool = false,
+        isLegacyDummy: Bool = false
+    ) {
+        self.id = id
+        self.name = name
+        self.homeRegion = homeRegion
+        self.style = style
+        self.titleMountainId = titleMountainId
+        self.heroMountainId = heroMountainId
+        self.progressSeed = progressSeed
+        self.baseMonthCheckIns = baseMonthCheckIns
+        self.baseTotalCheckIns = baseTotalCheckIns
+        self.baseDistinctPeaks = baseDistinctPeaks
+        self.cadenceDays = cadenceDays
+        self.weekendCycle = weekendCycle
+        self.isServerDerived = isServerDerived
+        self.isLegacyDummy = isLegacyDummy
+    }
 
     var unlockedTitle: String? {
         guard let titleMountainId else { return nil }
@@ -40,6 +83,10 @@ struct SeedHikerProfile: Identifiable, Hashable {
         let assetIndex = ((suffix - 1) % 72) + 1
         return String(format: "SeedAvatar%03d", assetIndex)
     }
+
+    var usesSeedAvatarAsset: Bool {
+        !isServerDerived || isLegacyDummy
+    }
 }
 
 struct SeedLeaderboardEntry: Identifiable {
@@ -53,6 +100,12 @@ struct SeedLeaderboardEntry: Identifiable {
     var id: String { profile.id }
 
     func subtitle(scope: SeedLeaderboardScope) -> String {
+        if profile.isServerDerived {
+            return AppText.value(
+                zh: "公開統計 · \(distinctPeaks) 座山峰",
+                en: "Public totals · \(distinctPeaks) peaks"
+            )
+        }
         let title = profile.localizedUnlockedTitle ?? AppText.value(zh: "\(distinctPeaks)峰", en: "\(distinctPeaks) peaks")
         let home = AppText.seedRegion(profile.homeRegion)
         switch scope {
@@ -147,7 +200,8 @@ enum SeedLeaderboard {
     }
 
     static func entries(profiles: [SeedHikerProfile], scope: SeedLeaderboardScope, asOf date: Date) -> [SeedLeaderboardEntry] {
-        let current = rankedProfiles(profiles: profiles, scope: scope, asOf: date)
+        let projected = projectedProfiles(profiles, scope: scope, asOf: date)
+        let current = rankedProfiles(profiles: projected, scope: scope, asOf: date)
 
         return current.map { row in
             return SeedLeaderboardEntry(
@@ -166,16 +220,38 @@ enum SeedLeaderboard {
     }
 
     static func rank(for score: Int, among profiles: [SeedHikerProfile], scope: SeedLeaderboardScope, asOf date: Date) -> Int {
-        rankedProfiles(profiles: profiles, scope: scope, asOf: date).filter { $0.score > score }.count + 1
+        let projected = projectedProfiles(profiles, scope: scope, asOf: date)
+        return rankedProfiles(profiles: projected, scope: scope, asOf: date).filter { $0.score > score }.count + 1
+    }
+
+    static func projectedProfiles(
+        _ profiles: [SeedHikerProfile],
+        scope: SeedLeaderboardScope,
+        asOf date: Date
+    ) -> [SeedHikerProfile] {
+        let realProfiles = profiles.filter { !$0.isLegacyDummy }
+        let dummyProfiles = profiles.filter(\.isLegacyDummy)
+        let retainedDummyCount = max(0, dummyProfiles.count - realProfiles.count)
+        let retainedDummies = rankedProfiles(
+            profiles: dummyProfiles,
+            scope: scope,
+            asOf: date
+        )
+        .prefix(retainedDummyCount)
+        .map(\.profile)
+
+        return realProfiles + retainedDummies
     }
 
     static func checkedMountains(for profile: SeedHikerProfile, asOf date: Date) -> [Mountain] {
+        guard !profile.isServerDerived else { return [] }
         let targetCount = min(MountainCatalog.catalogCount, max(0, distinctPeakCount(for: profile, asOf: date)))
         guard targetCount > 0 else { return [] }
         return Array(seededMountainOrder(for: profile).prefix(targetCount))
     }
 
     static func recentVisits(for profile: SeedHikerProfile, asOf date: Date, limit: Int = 5) -> [SeedMountainVisit] {
+        guard !profile.isServerDerived else { return [] }
         let checked = checkedMountains(for: profile, asOf: date)
         guard !checked.isEmpty else { return [] }
 
@@ -197,6 +273,7 @@ enum SeedLeaderboard {
     }
 
     static func unlockedAchievements(for profile: SeedHikerProfile, asOf date: Date, limit: Int = 6) -> [SeedAchievementSummary] {
+        guard !profile.isServerDerived else { return [] }
         let checked = checkedMountains(for: profile, asOf: date)
         let total = score(for: profile, scope: .all, asOf: date)
         let activeDays = min(total, max(1, total / 2 + (profile.progressSeed % 21)))
@@ -242,7 +319,7 @@ enum SeedLeaderboard {
     }
 
     private static func rankedProfiles(profiles: [SeedHikerProfile], scope: SeedLeaderboardScope, asOf date: Date) -> [(rank: Int, profile: SeedHikerProfile, score: Int, distinctPeaks: Int)] {
-        profiles
+        let sorted = profiles
             .map { profile in
                 let score = score(for: profile, scope: scope, asOf: date)
                 let distinctPeaks = distinctPeakCount(for: profile, asOf: date)
@@ -252,13 +329,26 @@ enum SeedLeaderboard {
                 if $0.score != $1.score { return $0.score > $1.score }
                 return $0.profile.id < $1.profile.id
             }
-            .enumerated()
-            .map { index, row in
-                (rank: index + 1, profile: row.profile, score: row.score, distinctPeaks: row.distinctPeaks)
+        var previousScore: Int?
+        var competitionRank = 0
+        return sorted.enumerated().map { index, row in
+            if previousScore != row.score {
+                competitionRank = index + 1
+                previousScore = row.score
             }
+            return (
+                rank: competitionRank,
+                profile: row.profile,
+                score: row.score,
+                distinctPeaks: row.distinctPeaks
+            )
+        }
     }
 
     static func score(for profile: SeedHikerProfile, scope: SeedLeaderboardScope, asOf date: Date) -> Int {
+        if profile.isServerDerived {
+            return max(0, scope == .month ? profile.baseMonthCheckIns : profile.baseTotalCheckIns)
+        }
         switch scope {
         case .month:
             return max(0, profile.baseMonthCheckIns + rollingGain(for: profile, from: monthStart(for: date), to: date))
@@ -296,6 +386,9 @@ enum SeedLeaderboard {
     }
 
     private static func distinctPeakCount(for profile: SeedHikerProfile, asOf date: Date) -> Int {
+        if profile.isServerDerived {
+            return max(0, profile.baseDistinctPeaks)
+        }
         let totalScore = score(for: profile, scope: .all, asOf: date)
         return min(MountainCatalog.catalogCount, profile.baseDistinctPeaks + totalScore / 18 + rollingGain(for: profile, from: seedEpoch, to: date) / 3)
     }
@@ -329,13 +422,25 @@ struct SeedHikerAvatar: View {
     var size: CGFloat = 36
     var border: Color = .white
 
+    @ViewBuilder
     var body: some View {
-        Image(profile.avatarAssetName)
-            .resizable()
-            .scaledToFill()
+        if !profile.usesSeedAvatarAsset {
+            Image(systemName: "person.fill")
+                .font(.system(size: size * 0.42, weight: .bold))
+                .foregroundStyle(FrogTheme.forest)
+                .frame(width: size, height: size)
+                .background(FrogTheme.surface2)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(border, lineWidth: size > 42 ? 3 : 2))
+                .shadow(color: FrogTheme.warmShadow.opacity(0.14), radius: 4, y: 2)
+        } else {
+            Image(profile.avatarAssetName)
+                .resizable()
+                .scaledToFill()
             .frame(width: size, height: size)
             .clipShape(Circle())
             .overlay(Circle().stroke(border, lineWidth: size > 42 ? 3 : 2))
             .shadow(color: FrogTheme.warmShadow.opacity(0.14), radius: 4, y: 2)
+        }
     }
 }

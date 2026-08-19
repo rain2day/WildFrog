@@ -251,14 +251,37 @@ struct AllAchievementsView: View {
 struct AllLeaderboardView: View {
     let scope: SeedLeaderboardScope
     let profiles: [SeedHikerProfile]
+    let publicationState: LeaderboardPublicationState
+    let listRefresh: LeaderboardPublicationListRefresh.ListRefresh
+    let asOf: Date
+    let retryListRefresh: () -> Void
+    let retryPublication: () -> Void
 
     @State private var selectedUser: LeaderboardUserSelection?
     @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var checkInStore: CheckInStore
     @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
 
-    private var now: Date { Date() }
-    private var allUsers: [SeedLeaderboardEntry] { SeedLeaderboard.entries(profiles: profiles, scope: scope, asOf: now) }
+    private var allUsers: [SeedLeaderboardEntry] { SeedLeaderboard.entries(profiles: profiles, scope: scope, asOf: asOf) }
+    private var exactPublicEntry: SeedLeaderboardEntry? {
+        LeaderboardCurrentUserSnapshot.exactEntry(
+            publication: publicationState,
+            listRefresh: listRefresh,
+            entries: allUsers
+        )
+    }
+    private var listProjection: FullLeaderboardListProjection {
+        FullLeaderboardListProjection.resolve(
+            entries: allUsers,
+            exactPublicEntry: exactPublicEntry
+        )
+    }
+    private var sheetState: FullLeaderboardSheetState {
+        FullLeaderboardSheetState.resolve(
+            publication: publicationState,
+            listRefresh: listRefresh
+        )
+    }
     private var titleText: String {
         scope == .month
             ? AppText.value(zh: "本月公開全榜", en: "Monthly Public Ranking")
@@ -267,13 +290,11 @@ struct AllLeaderboardView: View {
     private var scoreLabel: String { scope == .month ? AppText.value(zh: "本月", en: "Month") : AppText.value(zh: "總計", en: "Total") }
 
     private var myScore: Int {
+        if let exactPublicEntry { return exactPublicEntry.score }
         switch scope {
         case .month:
-            let calendar = Calendar.current
-            let components = calendar.dateComponents([.year, .month], from: now)
             return checkInStore.records.filter {
-                let recordComponents = calendar.dateComponents([.year, .month], from: $0.date)
-                return recordComponents.year == components.year && recordComponents.month == components.month
+                LeaderboardMonth.contains($0.date, inMonthOf: asOf)
             }.count
         case .all:
             return checkInStore.totalCheckIns
@@ -281,8 +302,18 @@ struct AllLeaderboardView: View {
     }
 
     private var myRank: Int? {
-        guard !profiles.isEmpty else { return nil }
-        return SeedLeaderboard.rank(for: myScore, among: profiles, scope: scope, asOf: now)
+        exactPublicEntry?.rank
+    }
+
+    private var myDisplayName: String {
+        exactPublicEntry?.profile.name ?? authService.profileLine
+    }
+
+    private var mySubtitle: String {
+        if exactPublicEntry != nil {
+            return equippedTitle ?? AppText.value(zh: "已由伺服器確認", en: "Server-confirmed")
+        }
+        return AppText.value(zh: "私人紀錄 · 非精確排名", en: "Private record · no exact rank")
     }
 
     private var equippedTitle: String? {
@@ -306,16 +337,47 @@ struct AllLeaderboardView: View {
                 }
                 .padding(.top, 4)
 
+                if sheetState.showRetainedDisclosure {
+                    if sheetState.showListRetry {
+                        fullRankingStatusBanner(
+                            message: AppText.value(
+                                zh: "目前顯示保留的舊排行榜資料，名次並非最新。",
+                                en: "Showing retained leaderboard rows; ranks are not current."
+                            ),
+                            button: AppText.value(zh: "重試排行", en: "Retry Ranking"),
+                            action: retryListRefresh
+                        )
+                    } else {
+                        fullRankingUpdatingBanner(
+                            message: AppText.value(
+                                zh: "排行榜更新中；暫時顯示上次結果。",
+                                en: "Updating leaderboard; showing last results."
+                            )
+                        )
+                    }
+                }
+
+                if sheetState.showPublicationRetry {
+                    fullRankingStatusBanner(
+                        message: AppText.value(
+                            zh: "你的排行榜公開設定仍待伺服器確認。",
+                            en: "Your leaderboard publication still needs server confirmation."
+                        ),
+                        button: AppText.value(zh: "重試同步", en: "Retry Sync"),
+                        action: retryPublication
+                    )
+                }
+
                 VStack(spacing: 0) {
                     Button {
-                        selectedUser = .current
+                        selectedUser = exactPublicEntry.map(LeaderboardUserSelection.seed) ?? .current
                     } label: {
                         AllCurrentUserLeaderboardRow(
                             rank: myRank,
                             score: myScore,
                             scoreLabel: scoreLabel,
-                            displayName: authService.profileLine,
-                            subtitle: equippedTitle ?? AppText.value(zh: "你的紀錄", en: "Your record"),
+                            displayName: myDisplayName,
+                            subtitle: mySubtitle,
                             avatarMountainId: myAvatarId
                         )
                     }
@@ -328,7 +390,7 @@ struct AllLeaderboardView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(14)
                     } else {
-                        ForEach(allUsers) { user in
+                        ForEach(listProjection.publicEntries) { user in
                             Button {
                                 selectedUser = .seed(user)
                             } label: {
@@ -351,7 +413,7 @@ struct AllLeaderboardView: View {
                 LeaderboardUserDetailView(
                     selection: selection,
                     scope: scope,
-                    asOf: now,
+                    asOf: asOf,
                     currentDisplayName: authService.profileLine,
                     currentTitle: equippedTitle
                 )
@@ -367,6 +429,39 @@ struct AllLeaderboardView: View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
+    }
+
+    private func fullRankingStatusBanner(
+        message: String,
+        button: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.arrow.triangle.2.circlepath")
+                .foregroundStyle(FrogTheme.orange)
+            Text(message)
+                .font(.frogMicro.weight(.semibold))
+                .foregroundStyle(FrogTheme.ink)
+            Spacer(minLength: 4)
+            Button(button, action: action)
+                .font(.frogCaption.weight(.black))
+                .foregroundStyle(FrogTheme.moss)
+        }
+        .padding(12)
+        .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func fullRankingUpdatingBanner(message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .foregroundStyle(FrogTheme.moss)
+            Text(message)
+                .font(.frogMicro.weight(.semibold))
+                .foregroundStyle(FrogTheme.ink)
+            Spacer(minLength: 4)
+        }
+        .padding(12)
+        .background(FrogTheme.mossSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 

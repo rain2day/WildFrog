@@ -8,49 +8,62 @@
 
 /* Begin PBXBuildFile section */
 		0E00D28CB7BC9BE04BE1A582 /* RecordsCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20B579DFF0F858858406436 /* RecordsCalendarView.swift */; };
+		16BCCC08E4F5B99CA7AF45A3 /* FreePhotoRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DC031D424303972109B8B3 /* FreePhotoRoutingTests.swift */; };
 		16F867A7AFB70C1DA8B771A1 /* MountainDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */; };
+		2FD3AF22E77779AA391410F4 /* FreePhotoIsolationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBDD6E916D3B7FA06350C6B /* FreePhotoIsolationTests.swift */; };
 		3806A07E31B047FB446ED6FB /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50BC49F234A7FC776EB856B4 /* ProfileView.swift */; };
+		467B69A9EB7AD4FB65936F64 /* LeaderboardParticipationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64E1DC3C543E263D57BBEBE3 /* LeaderboardParticipationTests.swift */; };
+		49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 52847F8A6EBB329550A69056 /* Assets.xcassets */; };
+		5E2AF80BA3159AB3BF3821B8 /* FreePhotoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26BFA2A247A88A20180710D2 /* FreePhotoView.swift */; };
+		6FB23C4B0982417F8A3BD701 /* CheckInTypeChooserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB23C4B0982417F8A3BD700 /* CheckInTypeChooserView.swift */; };
+		5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */; };
+		5FA58A3C2E152D0C0D96D2D9 /* PhotoLibrarySaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6316026AF31D24C25106FD7 /* PhotoLibrarySaver.swift */; };
+		665B2CB3494988CC0259CF7E /* MountainPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093DD82643FC8812EB3E887B /* MountainPhoto.swift */; };
+		71E83E3CD4A758FC3ACFDB91 /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */; };
 		833EEC77112F9C18DA7386DE /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 84C53A24FFE544CAB9AE5EE3 /* FirebaseCore */; };
+		961F1344C500C4EF6641E735 /* FreePhotoFrameContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A6AFA486EFE6D1E0F13F82B /* FreePhotoFrameContentTests.swift */; };
+		9AAAEB97519E926DF44E6BA9 /* LeaderboardFlowContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FA0F50B52A307C6F85559E9 /* LeaderboardFlowContractTests.swift */; };
+		A18AAA85EBE65F04DE3A8860 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */; };
 		A1F0E5C2D3B41A0792C5B011 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A1F0E5C2D3B41A0792C5B010 /* FirebaseFirestore */; };
 		A1F0E5C2D3B41A0792C5B021 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */; };
 		A1F0E5C2D3B41A0792C5B031 /* CheckInStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */; };
 		A1F0E5C2D3B41A0792C5B041 /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */; };
+		A39697D84939F8CF817011F4 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C9A208A94DEEB854D6CFF2AE /* FirebaseAuth */; };
+		B540CE4DD26C65E9B3819386 /* WildFrogRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */; };
 		B5A1000000000000000000A1 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000A0 /* Track.swift */; };
 		B5A1000000000000000000B1 /* TrackRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000B0 /* TrackRecorder.swift */; };
 		B5A1000000000000000000C1 /* WildFrogTrackActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */; };
-		DF10A0FE00000000017E7701 /* TrackActivityIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE00000000017E7700 /* TrackActivityIntents.swift */; };
-		B5A100000000000000000101 /* RouteToCheckpointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A100000000000000000100 /* RouteToCheckpointView.swift */; };
 		B5A1000000000000000000E1 /* TripDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000E0 /* TripDetailView.swift */; };
-		5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */; };
-		49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 52847F8A6EBB329550A69056 /* Assets.xcassets */; };
-		665B2CB3494988CC0259CF7E /* MountainPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093DD82643FC8812EB3E887B /* MountainPhoto.swift */; };
-		71E83E3CD4A758FC3ACFDB91 /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */; };
-		A18AAA85EBE65F04DE3A8860 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */; };
-		A39697D84939F8CF817011F4 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C9A208A94DEEB854D6CFF2AE /* FirebaseAuth */; };
-		BABD5E28BE6553575EB54020 /* ProfileAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */; };
-		B540CE4DD26C65E9B3819386 /* WildFrogRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */; };
+		B5A100000000000000000101 /* RouteToCheckpointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A100000000000000000100 /* RouteToCheckpointView.swift */; };
 		B5A24300016C74DBF86696E7 /* CheckInCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */; };
-		C4B3001CB3001CB3001CB301 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B3001CB3001CB3001CB300 /* CameraPicker.swift */; };
-		F10000000000000000000001 /* WildFrogTrackLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* WildFrogTrackLiveActivity.swift */; };
-		F10000000000000000000002 /* WildFrogTrackActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */; };
-		DF10A0FE00000000017E7702 /* TrackActivityIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE00000000017E7700 /* TrackActivityIntents.swift */; };
-		F10000000000000000000003 /* WildFrogLiveActivityWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		BF8E87849CA3D87AD857D148 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F03F5A280CF251A80908152 /* Foundation.framework */; };
-		DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6441CFCB65614B5EB60E9C /* Mountain.swift */; };
-		DF10A0FE00000000007EA7E1 /* WeatherFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE00000000007EA7E0 /* WeatherFetcher.swift */; };
-		DF10A0FE0000000000A7E501 /* WeatherSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE0000000000A7E500 /* WeatherSnapshot.swift */; };
-		DF10A0FE0000000000CE7101 /* MountainCertificate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE0000000000CE7100 /* MountainCertificate.swift */; };
-		DF10A0FE000000000000B11D /* MountainLore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE000000000000C0DE /* MountainLore.swift */; };
-		E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */; };
-		ED0FE6ACC5ECB5340D0482A9 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B042D4E250FA2146378FC0 /* Theme.swift */; };
-		F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */; };
 		B6001A0000000011 /* AllAchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000010 /* AllAchievementsView.swift */; };
 		B6001A0000000031 /* ProviderPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000030 /* ProviderPickerSheet.swift */; };
 		B6001A0000000051 /* SeedLeaderboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000050 /* SeedLeaderboard.swift */; };
 		B6001A0000000061 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B6001A0000000060 /* PrivacyInfo.xcprivacy */; };
 		B6001A0000000071 /* WildFrogLegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000070 /* WildFrogLegalLinks.swift */; };
 		B6001A0000000091 /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6001A0000000090 /* AppText.swift */; };
+		B9999C4C2DEA46544314AAC7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F03F5A280CF251A80908152 /* Foundation.framework */; };
+		BABD5E28BE6553575EB54020 /* ProfileAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */; };
+		BF8E87849CA3D87AD857D148 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F03F5A280CF251A80908152 /* Foundation.framework */; };
+		C4B3001CB3001CB3001CB301 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B3001CB3001CB3001CB300 /* CameraPicker.swift */; };
+		C7000A739B87D724086E8C81 /* FreePhotoFrameViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E042684A872AD95C45317D4 /* FreePhotoFrameViews.swift */; };
+		CE852047184E50643AF81DFD /* FreePhotoDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003D8D71F930179F2AA39419 /* FreePhotoDraftTests.swift */; };
 		CF001A0000000041 /* CheckInMapPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF001A0000000040 /* CheckInMapPickerView.swift */; };
+		D9F8FDCFF3DD40803D5D983A /* FreePhotoDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = F190DC0E0F98F30D53CA0862 /* FreePhotoDraft.swift */; };
+		DF10A0FE000000000000B11D /* MountainLore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE000000000000C0DE /* MountainLore.swift */; };
+		DF10A0FE00000000007EA7E1 /* WeatherFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE00000000007EA7E0 /* WeatherFetcher.swift */; };
+		DF10A0FE0000000000A7E501 /* WeatherSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE0000000000A7E500 /* WeatherSnapshot.swift */; };
+		DF10A0FE0000000000CE7101 /* MountainCertificate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE0000000000CE7100 /* MountainCertificate.swift */; };
+		DF10A0FE00000000017E7701 /* TrackActivityIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE00000000017E7700 /* TrackActivityIntents.swift */; };
+		DF10A0FE00000000017E7702 /* TrackActivityIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10A0FE00000000017E7700 /* TrackActivityIntents.swift */; };
+		DFF3647E9D98B962E6C8C250 /* Mountain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6441CFCB65614B5EB60E9C /* Mountain.swift */; };
+		E5AD7D2B181DC2D794455E26 /* WildFrogNativeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */; };
+		ED0FE6ACC5ECB5340D0482A9 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B042D4E250FA2146378FC0 /* Theme.swift */; };
+		EE25DB87382C8A7730969F2E /* LeaderboardParticipation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54CE8F7FE108C443A4DC0B07 /* LeaderboardParticipation.swift */; };
+		F10000000000000000000001 /* WildFrogTrackLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* WildFrogTrackLiveActivity.swift */; };
+		F10000000000000000000002 /* WildFrogTrackActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */; };
+		F10000000000000000000003 /* WildFrogLiveActivityWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F1B6E2FC8C83710B31487DB4 /* HomeMapListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +73,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = F1000000000000000000000A;
 			remoteInfo = WildFrogLiveActivityWidgetExtension;
+		};
+		FE17AD788201A915F114392C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 888FCF4DC7670D318E2ABAB9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E274215E7C1F68276494571D;
+			remoteInfo = WildFrogNative;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -78,48 +98,61 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		003D8D71F930179F2AA39419 /* FreePhotoDraftTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoDraftTests.swift; sourceTree = "<group>"; };
 		093DD82643FC8812EB3E887B /* MountainPhoto.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainPhoto.swift; sourceTree = "<group>"; };
-		A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInStore.swift; sourceTree = "<group>"; };
-		A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
-		B5A1000000000000000000A0 /* Track.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
-		B5A1000000000000000000B0 /* TrackRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackRecorder.swift; sourceTree = "<group>"; };
-		B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogTrackActivity.swift; sourceTree = "<group>"; };
-		DF10A0FE00000000017E7700 /* TrackActivityIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackActivityIntents.swift; sourceTree = "<group>"; };
-		B5A1000000000000000000E0 /* TripDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripDetailView.swift; sourceTree = "<group>"; };
-		B5A100000000000000000100 /* RouteToCheckpointView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RouteToCheckpointView.swift; sourceTree = "<group>"; };
 		0ADEF8F9C167B7099B7F7016 /* CheckInCameraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInCameraView.swift; sourceTree = "<group>"; };
-		C4B3001CB3001CB3001CB300 /* CameraPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		26BFA2A247A88A20180710D2 /* FreePhotoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoView.swift; sourceTree = "<group>"; };
 		3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileAuthService.swift; sourceTree = "<group>"; };
 		3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HomeMapListView.swift; sourceTree = "<group>"; };
 		4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainDetailView.swift; sourceTree = "<group>"; };
 		4CE39EE12F9218B47E286134 /* WildFrogNative.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WildFrogNative.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		50BC49F234A7FC776EB856B4 /* ProfileView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		52847F8A6EBB329550A69056 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		54CE8F7FE108C443A4DC0B07 /* LeaderboardParticipation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardParticipation.swift; sourceTree = "<group>"; };
+		5E042684A872AD95C45317D4 /* FreePhotoFrameViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoFrameViews.swift; sourceTree = "<group>"; };
+		6FB23C4B0982417F8A3BD700 /* CheckInTypeChooserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInTypeChooserView.swift; sourceTree = "<group>"; };
 		620FCCB58FE2D490FDAE6185 /* WildFrogNativeApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogNativeApp.swift; sourceTree = "<group>"; };
-		84A431EB3110467D0BCDBA30 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		64E1DC3C543E263D57BBEBE3 /* LeaderboardParticipationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardParticipationTests.swift; sourceTree = "<group>"; };
+		6A6AFA486EFE6D1E0F13F82B /* FreePhotoFrameContentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoFrameContentTests.swift; sourceTree = "<group>"; };
+		7FA0F50B52A307C6F85559E9 /* LeaderboardFlowContractTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardFlowContractTests.swift; sourceTree = "<group>"; };
 		838A0AFA57A805770BAAF979 /* WildFrogRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogRootView.swift; sourceTree = "<group>"; };
-		FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = WildFrogNative.entitlements; sourceTree = "<group>"; };
+		84A431EB3110467D0BCDBA30 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8F03F5A280CF251A80908152 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		A1F0E5C2D3B41A0792C5B020 /* LocationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		A1F0E5C2D3B41A0792C5B030 /* CheckInStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInStore.swift; sourceTree = "<group>"; };
+		A1F0E5C2D3B41A0792C5B040 /* FirestoreService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 		A20B579DFF0F858858406436 /* RecordsCalendarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RecordsCalendarView.swift; sourceTree = "<group>"; };
-		F10000000000000000000004 /* WildFrogTrackLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogTrackLiveActivity.swift; sourceTree = "<group>"; };
-		F10000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildFrogLiveActivityWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		B8B042D4E250FA2146378FC0 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		DF6441CFCB65614B5EB60E9C /* Mountain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mountain.swift; sourceTree = "<group>"; };
-		DF10A0FE00000000007EA7E0 /* WeatherFetcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeatherFetcher.swift; sourceTree = "<group>"; };
-		DF10A0FE0000000000A7E500 /* WeatherSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeatherSnapshot.swift; sourceTree = "<group>"; };
-		DF10A0FE0000000000CE7100 /* MountainCertificate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainCertificate.swift; sourceTree = "<group>"; };
-		DF10A0FE000000000000C0DE /* MountainLore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainLore.swift; sourceTree = "<group>"; };
-		CF001A0000000040 /* CheckInMapPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInMapPickerView.swift; sourceTree = "<group>"; };
+		A5DC031D424303972109B8B3 /* FreePhotoRoutingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoRoutingTests.swift; sourceTree = "<group>"; };
+		A6316026AF31D24C25106FD7 /* PhotoLibrarySaver.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PhotoLibrarySaver.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000A0 /* Track.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000B0 /* TrackRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackRecorder.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000C0 /* WildFrogTrackActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogTrackActivity.swift; sourceTree = "<group>"; };
+		B5A1000000000000000000E0 /* TripDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripDetailView.swift; sourceTree = "<group>"; };
+		B5A100000000000000000100 /* RouteToCheckpointView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RouteToCheckpointView.swift; sourceTree = "<group>"; };
 		B6001A0000000010 /* AllAchievementsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AllAchievementsView.swift; sourceTree = "<group>"; };
 		B6001A0000000030 /* ProviderPickerSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProviderPickerSheet.swift; sourceTree = "<group>"; };
 		B6001A0000000050 /* SeedLeaderboard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SeedLeaderboard.swift; sourceTree = "<group>"; };
 		B6001A0000000060 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B6001A0000000070 /* WildFrogLegalLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogLegalLinks.swift; sourceTree = "<group>"; };
 		B6001A0000000090 /* AppText.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
+		B8B042D4E250FA2146378FC0 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		BEBDD6E916D3B7FA06350C6B /* FreePhotoIsolationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoIsolationTests.swift; sourceTree = "<group>"; };
+		C4B3001CB3001CB3001CB300 /* CameraPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
+		CF001A0000000040 /* CheckInMapPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CheckInMapPickerView.swift; sourceTree = "<group>"; };
+		DF10A0FE000000000000C0DE /* MountainLore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainLore.swift; sourceTree = "<group>"; };
+		DF10A0FE00000000007EA7E0 /* WeatherFetcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeatherFetcher.swift; sourceTree = "<group>"; };
+		DF10A0FE0000000000A7E500 /* WeatherSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeatherSnapshot.swift; sourceTree = "<group>"; };
+		DF10A0FE0000000000CE7100 /* MountainCertificate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainCertificate.swift; sourceTree = "<group>"; };
+		DF10A0FE00000000017E7700 /* TrackActivityIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrackActivityIntents.swift; sourceTree = "<group>"; };
+		DF6441CFCB65614B5EB60E9C /* Mountain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mountain.swift; sourceTree = "<group>"; };
+		E60A6EF1869BBDB4D45A57AF /* WildFrogNativeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WildFrogNativeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F10000000000000000000004 /* WildFrogTrackLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WildFrogTrackLiveActivity.swift; sourceTree = "<group>"; };
+		F10000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildFrogLiveActivityWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F190DC0E0F98F30D53CA0862 /* FreePhotoDraft.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoDraft.swift; sourceTree = "<group>"; };
+		FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = WildFrogNative.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +165,14 @@
 				A1F0E5C2D3B41A0792C5B011 /* FirebaseFirestore in Frameworks */,
 				A39697D84939F8CF817011F4 /* FirebaseAuth in Frameworks */,
 				5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E5B83BF6C47FFF693ECC2FF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B9999C4C2DEA46544314AAC7 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,6 +201,7 @@
 				3AB8056BBC21B5F4E74DB598 /* Frameworks */,
 				C03E06C409DD5430D0F57BF7 /* WildFrogNative */,
 				F10000000000000000000009 /* LiveActivityWidget */,
+				D533A2AC058D10C3771097ED /* Tests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -169,6 +211,20 @@
 				8F03F5A280CF251A80908152 /* Foundation.framework */,
 			);
 			name = iOS;
+			sourceTree = "<group>";
+		};
+		ADADAA3951A90C8CD576A953 /* WildFrogNativeTests */ = {
+			isa = PBXGroup;
+			children = (
+				003D8D71F930179F2AA39419 /* FreePhotoDraftTests.swift */,
+				6A6AFA486EFE6D1E0F13F82B /* FreePhotoFrameContentTests.swift */,
+				BEBDD6E916D3B7FA06350C6B /* FreePhotoIsolationTests.swift */,
+				A5DC031D424303972109B8B3 /* FreePhotoRoutingTests.swift */,
+				64E1DC3C543E263D57BBEBE3 /* LeaderboardParticipationTests.swift */,
+				7FA0F50B52A307C6F85559E9 /* LeaderboardFlowContractTests.swift */,
+			);
+			name = WildFrogNativeTests;
+			path = WildFrogNativeTests;
 			sourceTree = "<group>";
 		};
 		C03E06C409DD5430D0F57BF7 /* WildFrogNative */ = {
@@ -207,13 +263,28 @@
 				B6001A0000000070 /* WildFrogLegalLinks.swift */,
 				B6001A0000000050 /* SeedLeaderboard.swift */,
 				CF001A0000000040 /* CheckInMapPickerView.swift */,
+				6FB23C4B0982417F8A3BD700 /* CheckInTypeChooserView.swift */,
 				84A431EB3110467D0BCDBA30 /* Info.plist */,
 				B6001A0000000060 /* PrivacyInfo.xcprivacy */,
 				FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */,
 				1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */,
+				F190DC0E0F98F30D53CA0862 /* FreePhotoDraft.swift */,
+				5E042684A872AD95C45317D4 /* FreePhotoFrameViews.swift */,
+				A6316026AF31D24C25106FD7 /* PhotoLibrarySaver.swift */,
+				26BFA2A247A88A20180710D2 /* FreePhotoView.swift */,
+				54CE8F7FE108C443A4DC0B07 /* LeaderboardParticipation.swift */,
 			);
 			name = WildFrogNative;
 			path = Sources/WildFrogNative;
+			sourceTree = "<group>";
+		};
+		D533A2AC058D10C3771097ED /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				ADADAA3951A90C8CD576A953 /* WildFrogNativeTests */,
+			);
+			name = Tests;
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		EE05A65EB6E233A3FCC8399F /* Products */ = {
@@ -221,6 +292,7 @@
 			children = (
 				4CE39EE12F9218B47E286134 /* WildFrogNative.app */,
 				F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */,
+				E60A6EF1869BBDB4D45A57AF /* WildFrogNativeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -238,22 +310,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		F1000000000000000000000A /* WildFrogLiveActivityWidgetExtension */ = {
+		B0064F638B293C2C1522F29E /* WildFrogNativeTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F10000000000000000000011 /* Build configuration list for PBXNativeTarget "WildFrogLiveActivityWidgetExtension" */;
+			buildConfigurationList = 8342D00F6FF07759EE8A4E12 /* Build configuration list for PBXNativeTarget "WildFrogNativeTests" */;
 			buildPhases = (
-				F1000000000000000000000D /* Sources */,
-				F10000000000000000000007 /* Frameworks */,
-				F10000000000000000000008 /* Resources */,
+				80539C6125796FC01B201807 /* Sources */,
+				E5B83BF6C47FFF693ECC2FF1 /* Frameworks */,
+				E9FBD883A21A7C2C8881D94A /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				062F11CACD0DE6B32043B973 /* PBXTargetDependency */,
 			);
-			name = WildFrogLiveActivityWidgetExtension;
-			productName = WildFrogLiveActivityWidgetExtension;
-			productReference = F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
+			name = WildFrogNativeTests;
+			productName = WildFrogNativeTests;
+			productReference = E60A6EF1869BBDB4D45A57AF /* WildFrogNativeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		E274215E7C1F68276494571D /* WildFrogNative */ = {
 			isa = PBXNativeTarget;
@@ -279,6 +352,23 @@
 			productName = WildFrogNative;
 			productReference = 4CE39EE12F9218B47E286134 /* WildFrogNative.app */;
 			productType = "com.apple.product-type.application";
+		};
+		F1000000000000000000000A /* WildFrogLiveActivityWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000000000000000000011 /* Build configuration list for PBXNativeTarget "WildFrogLiveActivityWidgetExtension" */;
+			buildPhases = (
+				F1000000000000000000000D /* Sources */,
+				F10000000000000000000007 /* Frameworks */,
+				F10000000000000000000008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WildFrogLiveActivityWidgetExtension;
+			productName = WildFrogLiveActivityWidgetExtension;
+			productReference = F10000000000000000000006 /* WildFrogLiveActivityWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -317,17 +407,18 @@
 			);
 			mainGroup = 7E507AE904A6AFFBA2758324;
 			minimizedProjectReferenceProxies = 0;
-			preferredProjectObjectVersion = 77;
-			productRefGroup = EE05A65EB6E233A3FCC8399F /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
 			packageReferences = (
 				DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				5387444EE3BA9289EA43C9A9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = EE05A65EB6E233A3FCC8399F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				E274215E7C1F68276494571D /* WildFrogNative */,
 				F1000000000000000000000A /* WildFrogLiveActivityWidgetExtension */,
+				B0064F638B293C2C1522F29E /* WildFrogNativeTests */,
 			);
 		};
 /* End PBXProject section */
@@ -340,6 +431,13 @@
 				49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */,
 				A18AAA85EBE65F04DE3A8860 /* GoogleService-Info.plist in Resources */,
 				B6001A0000000061 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E9FBD883A21A7C2C8881D94A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,6 +487,25 @@
 				B6001A0000000091 /* AppText.swift in Sources */,
 				B6001A0000000051 /* SeedLeaderboard.swift in Sources */,
 				CF001A0000000041 /* CheckInMapPickerView.swift in Sources */,
+				6FB23C4B0982417F8A3BD701 /* CheckInTypeChooserView.swift in Sources */,
+				D9F8FDCFF3DD40803D5D983A /* FreePhotoDraft.swift in Sources */,
+				C7000A739B87D724086E8C81 /* FreePhotoFrameViews.swift in Sources */,
+				5FA58A3C2E152D0C0D96D2D9 /* PhotoLibrarySaver.swift in Sources */,
+				5E2AF80BA3159AB3BF3821B8 /* FreePhotoView.swift in Sources */,
+				EE25DB87382C8A7730969F2E /* LeaderboardParticipation.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		80539C6125796FC01B201807 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CE852047184E50643AF81DFD /* FreePhotoDraftTests.swift in Sources */,
+				961F1344C500C4EF6641E735 /* FreePhotoFrameContentTests.swift in Sources */,
+				2FD3AF22E77779AA391410F4 /* FreePhotoIsolationTests.swift in Sources */,
+				16BCCC08E4F5B99CA7AF45A3 /* FreePhotoRoutingTests.swift in Sources */,
+				467B69A9EB7AD4FB65936F64 /* LeaderboardParticipationTests.swift in Sources */,
+				9AAAEB97519E926DF44E6BA9 /* LeaderboardFlowContractTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,6 +522,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		062F11CACD0DE6B32043B973 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = WildFrogNative;
+			target = E274215E7C1F68276494571D /* WildFrogNative */;
+			targetProxy = FE17AD788201A915F114392C /* PBXContainerItemProxy */;
+		};
 		F1000000000000000000000E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = WildFrogLiveActivityWidgetExtension;
@@ -417,20 +540,23 @@
 		0AD2A1D9AA3EB7E627994A2E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = Sources/WildFrogNative/WildFrogNative.entitlements;
-				CURRENT_PROJECT_VERSION = 8;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.0.2;
-				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				MARKETING_VERSION = 1.0.3;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -442,6 +568,23 @@
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
+		};
+		40726CBD0D8715B51934C9DD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNativeTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WildFrogNative.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WildFrogNative";
+			};
+			name = Debug;
 		};
 		4210CF5CB031B7B9195CF883 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -561,20 +704,23 @@
 		A27995D7604A8994A2448B8F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = Sources/WildFrogNative/WildFrogNative.entitlements;
-				CURRENT_PROJECT_VERSION = 8;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.0.2;
-				OTHER_LDFLAGS = "$(inherited) -ObjC";
+				MARKETING_VERSION = 1.0.3;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -586,6 +732,24 @@
 			};
 			name = Debug;
 		};
+		DBDE0E8F87DECB5B416D933B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNativeTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WildFrogNative.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WildFrogNative";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		F1000000000000000000000F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -593,18 +757,14 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LiveActivityWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -625,18 +785,14 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LiveActivityWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -670,6 +826,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		8342D00F6FF07759EE8A4E12 /* Build configuration list for PBXNativeTarget "WildFrogNativeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DBDE0E8F87DECB5B416D933B /* Release */,
+				40726CBD0D8715B51934C9DD /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F10000000000000000000011 /* Build configuration list for PBXNativeTarget "WildFrogLiveActivityWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -682,20 +847,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.0.0;
-			};
-		};
 		5387444EE3BA9289EA43C9A9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 9.0.0;
+			};
+		};
+		DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -711,15 +876,15 @@
 			package = DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
 		};
-		C9A208A94DEEB854D6CFF2AE /* FirebaseAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAuth;
-		};
 		B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5387444EE3BA9289EA43C9A9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignIn;
+		};
+		C9A208A94DEEB854D6CFF2AE /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DD5CDE84DA8480A9A35015C5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

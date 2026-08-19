@@ -12,6 +12,7 @@ struct ProfileView: View {
 
     @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var checkInStore: CheckInStore
+    @EnvironmentObject private var cloudOutbox: CheckInCloudOutboxStore
     @EnvironmentObject private var locationManager: LocationManager
     @State private var selectedAvatar: PhotosPickerItem?
     @State private var showMockPicker = false
@@ -22,6 +23,13 @@ struct ProfileView: View {
     @State private var showDeleteAccount = false
     @State private var showNameEditor = false
     @State private var heroMountainId = MountainCatalog.randomCinematicHeroMountainId()
+    @State private var leaderboardPublication = UIDBoundLeaderboardPublication()
+    @State private var showLeaderboardVisibilityConsent = false
+    @State private var isUpdatingLeaderboardVisibility = false
+    @State private var publicAliasDraft = ""
+    @State private var leaderboardErrorMessage: String?
+    @State private var showPublicAliasEditor = false
+    @State private var publicAliasRenameError: String?
 
     init() {
         let storedAvatar = UserDefaults.standard.data(forKey: Self.avatarStorageKey) ?? Data()
@@ -31,6 +39,10 @@ struct ProfileView: View {
     @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
     @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
     @State private var showTitlePicker = false
+
+    private var leaderboardPublicationState: LeaderboardPublicationState {
+        leaderboardPublication.publication
+    }
 
     /// The 稱號 the user has equipped — only valid while it's still a peak they've
     /// conquered (guards against an equipped title from data that was since reset).
@@ -103,10 +115,18 @@ struct ProfileView: View {
                 await loadAvatar(from: item)
             }
         }
-        .onChange(of: authService.session?.uid) { _, _ in
+        .onChange(of: authService.session?.uid) { _, newUID in
             // Reload avatar from UserDefaults so a newly signed-in account
             // doesn't display the previous account's in-memory avatar.
             avatarData = UserDefaults.standard.data(forKey: Self.avatarStorageKey) ?? Data()
+            leaderboardPublication.reset(for: newUID)
+            isUpdatingLeaderboardVisibility = false
+            showLeaderboardVisibilityConsent = false
+            showPublicAliasEditor = false
+        }
+        .task(id: authService.session?.uid) {
+            leaderboardPublication.reset(for: authService.session?.uid)
+            await loadLeaderboardParticipation()
         }
         #if DEBUG
         .onAppear {
@@ -120,11 +140,45 @@ struct ProfileView: View {
         #endif
         .alert(AppText.value(zh: "刪除帳戶？", en: "Delete account?"), isPresented: $showDeleteAccount) {
             Button(AppText.value(zh: "永久刪除", en: "Delete Permanently"), role: .destructive) {
-                Task { await authService.deleteAccount() }
+                Task {
+                    guard let deletingUID = authService.session?.uid else { return }
+                    let ownedPhotoFilenames = checkInStore.photoFilenamesOwned(by: deletingUID)
+                    if let deletedUID = await authService.deleteAccount(
+                        expectedUID: deletingUID,
+                        ownedPhotoFilenames: ownedPhotoFilenames
+                    ) {
+                        cloudOutbox.removeAll(for: deletedUID)
+                        checkInStore.removeAll(for: deletedUID)
+                    }
+                }
             }
             Button(AppText.value(zh: "取消", en: "Cancel"), role: .cancel) {}
         } message: {
             Text(AppText.value(zh: "此動作無法復原。你的帳戶同雲端打卡紀錄會被永久刪除。", en: "This cannot be undone. Your account and cloud check-in records will be permanently deleted."))
+        }
+        .alert(AppText.value(zh: "加入公開排行榜？", en: "Join the Public Leaderboard?"), isPresented: $showLeaderboardVisibilityConsent) {
+            TextField(AppText.value(zh: "公開顯示名稱", en: "Public alias"), text: $publicAliasDraft)
+            Button(AppText.value(zh: "同意並公開", en: "Agree and Publish")) {
+                joinPublicLeaderboard()
+            }
+            Button(AppText.value(zh: "取消", en: "Cancel"), role: .cancel) {}
+        } message: {
+            Text(AppText.value(
+                zh: leaderboardErrorMessage ?? "請輸入不含電郵、電話或帳戶 ID 的專用公開別名。別名、每月／總打卡數及不同山峰數會公開顯示。",
+                en: leaderboardErrorMessage ?? "Enter a dedicated alias that is not an email, phone number, or account ID. Your alias and server-calculated counts will be public."
+            ))
+        }
+        .alert(AppText.value(zh: "更改公開別名", en: "Edit Public Alias"), isPresented: $showPublicAliasEditor) {
+            TextField(AppText.value(zh: "公開別名", en: "Public alias"), text: $publicAliasDraft)
+            Button(AppText.value(zh: "儲存並同步", en: "Save and Sync")) {
+                renamePublicAlias()
+            }
+            Button(AppText.value(zh: "取消", en: "Cancel"), role: .cancel) {}
+        } message: {
+            Text(publicAliasRenameError ?? AppText.value(
+                zh: "只會更新公開排行榜別名；不會公開私人帳戶名稱、電郵、電話或 UID。",
+                en: "This updates only your public leaderboard alias. Your private account name, email, phone number, and UID stay private."
+            ))
         }
         .overlay(alignment: .bottomTrailing) {
             if shouldShowMockControls {
@@ -149,6 +203,7 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
                         peakPassportCard
                         languageCard
+                        publicLeaderboardCard
                         titleCard
                         recentCheckInCard
                         certificateCard
@@ -343,7 +398,7 @@ struct ProfileView: View {
                                     .shadow(color: Color.black.opacity(0.22), radius: 3, y: 1)
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel(AppText.value(zh: "更改名稱", en: "Edit Name"))
+                            .accessibilityLabel(AppText.value(zh: "更改私人帳戶名稱", en: "Edit private account name"))
                         }
 
                         if let providerLabel = authService.session?.providerLabel {
@@ -415,7 +470,7 @@ struct ProfileView: View {
             Button {
                 showNameEditor = true
             } label: {
-                Label(AppText.value(zh: "更改名稱", en: "Edit Name"), systemImage: "pencil")
+                Label(AppText.value(zh: "更改私人帳戶名稱", en: "Edit Private Account Name"), systemImage: "pencil")
             }
             Link(destination: WildFrogLegalLinks.privacy) {
                 Label(AppText.value(zh: "私隱政策", en: "Privacy Policy"), systemImage: "hand.raised.fill")
@@ -474,6 +529,434 @@ struct ProfileView: View {
 
     private var currentLanguageTitle: String {
         (AppLanguageMode(rawValue: languageModeRaw) ?? .system).title
+    }
+
+    private var publicLeaderboardCard: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 12) {
+                Text(AppText.value(zh: "公開排行榜 · PRIVACY", en: "PUBLIC LEADERBOARD · PRIVACY"))
+                    .font(.frogEyebrow)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(FrogTheme.moss)
+                Rectangle().fill(FrogTheme.line).frame(height: 1)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: leaderboardIsPublic ? "person.2.fill" : "lock.fill")
+                    .font(.system(size: 21, weight: .black))
+                    .foregroundStyle(leaderboardIsPublic ? FrogTheme.moss : FrogTheme.muted)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(leaderboardStatusTitle)
+                        .font(.frogRow.weight(.black))
+                        .foregroundStyle(FrogTheme.ink)
+                    Text(leaderboardStatusDetail)
+                    .font(.frogMicro)
+                    .foregroundStyle(leaderboardPublicationState == .failed ? Color.red : FrogTheme.muted)
+                }
+
+                Spacer(minLength: 0)
+
+                Button {
+                    switch leaderboardPublicationState {
+                    case .completed:
+                        makeLeaderboardPrivate()
+                    case .pending:
+                        Task { await retryLeaderboardPublication() }
+                    case .failed:
+                        Task { await retryLeaderboardPublication() }
+                    case .missing, .declined:
+                        publicAliasDraft = ""
+                        leaderboardErrorMessage = nil
+                        showLeaderboardVisibilityConsent = true
+                    case .unknown:
+                        break
+                    }
+                } label: {
+                    Text(leaderboardButtonTitle)
+                        .font(.frogCaption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(height: 38)
+                        .background(leaderboardIsPublic ? FrogTheme.slate : FrogTheme.moss, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(isUpdatingLeaderboardVisibility)
+
+                if case .pending = leaderboardPublicationState {
+                    Button {
+                        makeLeaderboardPrivate()
+                    } label: {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(FrogTheme.slate)
+                            .frame(width: 38, height: 38)
+                            .background(FrogTheme.slate.opacity(0.12), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isUpdatingLeaderboardVisibility)
+                    .accessibilityLabel(AppText.value(zh: "轉為私人", en: "Make private"))
+                }
+
+                if case .completed = leaderboardPublicationState {
+                    Button {
+                        publicAliasDraft = leaderboardParticipation?.publicAlias ?? ""
+                        publicAliasRenameError = nil
+                        showPublicAliasEditor = true
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(FrogTheme.moss)
+                            .frame(width: 38, height: 38)
+                            .background(FrogTheme.moss.opacity(0.12), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isUpdatingLeaderboardVisibility)
+                    .accessibilityLabel(AppText.value(zh: "更改公開別名", en: "Edit public alias"))
+                }
+            }
+
+            if cloudOutboxStatus.hasOutstandingWork {
+                HStack(spacing: 9) {
+                    Image(systemName: cloudOutboxStatus.failedCount > 0
+                          ? "exclamationmark.icloud.fill"
+                          : "arrow.triangle.2.circlepath.icloud.fill")
+                        .foregroundStyle(cloudOutboxStatus.failedCount > 0 ? Color.red : FrogTheme.orange)
+                    Text(cloudOutboxMessage)
+                        .font(.frogMicro.weight(.semibold))
+                        .foregroundStyle(FrogTheme.muted)
+                    Spacer(minLength: 4)
+                    Button(AppText.value(zh: "重試上傳", en: "Retry Upload")) {
+                        Task {
+                            if let uid = authService.session?.uid {
+                                cloudOutbox.retryAll(for: uid)
+                            }
+                            await cloudOutbox.reconcile(authService: authService)
+                        }
+                    }
+                    .font(.frogCaption.weight(.black))
+                    .foregroundStyle(FrogTheme.moss)
+                }
+            }
+        }
+        .padding(FrogSpace.cardPadding)
+        .cardStyle()
+    }
+
+    @MainActor
+    private func loadLeaderboardParticipation() async {
+        guard let uid = authService.session?.uid else {
+            leaderboardPublication.reset(for: nil)
+            return
+        }
+        let serverRead = await FirestoreService().fetchLeaderboardPublicationState(
+            userId: uid,
+            hasLocalHistoricalCheckIns: !checkInStore.records.isEmpty
+        )
+        leaderboardPublication.applyServerRead(
+            serverRead,
+            originatingUID: uid,
+            currentUID: authService.session?.uid
+        )
+    }
+
+    private var leaderboardParticipation: LeaderboardParticipation? {
+        switch leaderboardPublicationState {
+        case .pending(let participation), .completed(let participation), .declined(let participation):
+            participation
+        case .unknown, .missing, .failed:
+            nil
+        }
+    }
+
+    private var leaderboardIsPublic: Bool {
+        leaderboardPublication.authorizesVisibleMutation(currentUID: authService.session?.uid)
+    }
+
+    private var leaderboardStatusTitle: String {
+        switch leaderboardPublicationState {
+        case .unknown: AppText.value(zh: "正在讀取私隱設定", en: "Loading privacy setting")
+        case .missing: AppText.value(zh: "尚未決定", en: "No decision yet")
+        case .failed: AppText.value(zh: "無法讀取伺服器設定", en: "Server setting unavailable")
+        case .pending: AppText.value(zh: "排行榜同步等待中", en: "Leaderboard sync pending")
+        case .completed: AppText.value(zh: "公開顯示", en: "Visible")
+        case .declined: AppText.value(zh: "私人紀錄", en: "Private record")
+        }
+    }
+
+    private var leaderboardStatusDetail: String {
+        switch leaderboardPublicationState {
+        case .failed:
+            publicAliasRenameError ?? AppText.value(
+                zh: "未作公開變更；請重試讀取。",
+                en: "No public change was made. Retry the server read."
+            )
+        case .pending:
+            AppText.value(zh: "公開別名或統計仍在等待伺服器確認及回讀，可安全重試。", en: "Your alias or totals are awaiting server acknowledgement and readback. It is safe to retry.")
+        case .completed(let participation):
+            AppText.value(
+                zh: "公開別名：\(participation.publicAlias ?? "—")；私人帳戶資料不會公開",
+                en: "Public alias: \(participation.publicAlias ?? "—"). Private account details stay private."
+            )
+        default:
+            AppText.value(zh: "只公開別名及伺服器計算的打卡統計", en: "Only your alias and server-calculated check-in stats are public")
+        }
+    }
+
+    private var cloudOutboxStatus: CheckInCloudOutboxStatus {
+        guard let uid = authService.session?.uid else {
+            return CheckInCloudOutboxStatus(pendingCount: 0, failedCount: 0, lastError: nil)
+        }
+        return cloudOutbox.status(for: uid)
+    }
+
+    private var cloudOutboxMessage: String {
+        if cloudOutboxStatus.failedCount > 0 {
+            return AppText.value(
+                zh: "有 \(cloudOutboxStatus.failedCount) 個本機打卡等待重試上傳。",
+                en: "\(cloudOutboxStatus.failedCount) local check-in upload(s) need retry."
+            )
+        }
+        return AppText.value(
+            zh: "有 \(cloudOutboxStatus.pendingCount) 個本機打卡等待上傳。",
+            en: "\(cloudOutboxStatus.pendingCount) local check-in upload(s) pending."
+        )
+    }
+
+    private var leaderboardButtonTitle: String {
+        switch leaderboardPublicationState {
+        case .completed: AppText.value(zh: "轉私人", en: "Make Private")
+        case .pending: AppText.value(zh: "重試同步", en: "Retry Sync")
+        case .failed: AppText.value(zh: "重試", en: "Retry")
+        case .unknown: AppText.value(zh: "讀取中", en: "Loading")
+        case .missing, .declined: AppText.value(zh: "加入", en: "Join")
+        }
+    }
+
+    private func joinPublicLeaderboard() {
+        guard let session = authService.session else { return }
+        switch LeaderboardPublicAlias.validate(
+            publicAliasDraft,
+            uid: session.uid,
+            email: session.email,
+            phoneNumber: session.phoneNumber
+        ) {
+        case .failure:
+            leaderboardErrorMessage = AppText.value(
+                zh: "別名不可留空、超過 24 字，亦不可是電郵、電話或帳戶 ID。",
+                en: "The alias must be 1–24 characters and cannot be an email, phone number, or account ID."
+            )
+            DispatchQueue.main.async { showLeaderboardVisibilityConsent = true }
+        case .success(let alias):
+            updateLeaderboardVisibility(publicAlias: alias, isVisible: true)
+        }
+    }
+
+    private func makeLeaderboardPrivate() {
+        guard leaderboardPublication.authorizesVisibleMutation(
+            currentUID: authService.session?.uid
+        ) else { return }
+        updateLeaderboardVisibility(publicAlias: leaderboardParticipation?.publicAlias, isVisible: false)
+    }
+
+    private func renamePublicAlias() {
+        guard let session = authService.session,
+              leaderboardPublication.authorizesVisibleMutation(currentUID: session.uid),
+              case .completed(let participation) = leaderboardPublicationState,
+              let previousRequestID = participation.syncRequestId else { return }
+        switch LeaderboardPublicAlias.validate(
+            publicAliasDraft,
+            uid: session.uid,
+            email: session.email,
+            phoneNumber: session.phoneNumber
+        ) {
+        case .failure:
+            publicAliasRenameError = AppText.value(
+                zh: "別名需為 1–24 字，並不可是電郵、電話或帳戶 ID。",
+                en: "The alias must be 1–24 characters and cannot be an email, phone number, or account ID."
+            )
+            DispatchQueue.main.async { showPublicAliasEditor = true }
+        case .success(let alias):
+            let ticket = LeaderboardSyncTicket(
+                ownerUID: session.uid,
+                syncRequestID: UUID().uuidString,
+                expectedPreviousSyncRequestID: previousRequestID
+            )
+            isUpdatingLeaderboardVisibility = true
+            publicAliasRenameError = nil
+            Task {
+                do {
+                    try await FirestoreService().renameLeaderboardPublicAlias(
+                        ticket: ticket,
+                        publicAlias: alias
+                    )
+                    guard authService.session?.uid == session.uid else {
+                        throw FirestoreService.FirestoreServiceError.accountMismatch
+                    }
+                    var pending = participation
+                    pending.publicAlias = alias
+                    pending.syncRequestId = ticket.syncRequestID
+                    leaderboardPublication.applyLocal(
+                        .pending(pending),
+                        originatingUID: session.uid,
+                        currentUID: authService.session?.uid
+                    )
+                    await loadLeaderboardParticipation()
+                } catch {
+                    guard leaderboardPublication.canApplyLocal(
+                        originatingUID: session.uid,
+                        currentUID: authService.session?.uid
+                    ) else { return }
+                    publicAliasRenameError = error.localizedDescription
+                    leaderboardPublication.applyLocal(
+                        .failed,
+                        originatingUID: session.uid,
+                        currentUID: authService.session?.uid
+                    )
+                }
+                if leaderboardPublication.canApplyLocal(
+                    originatingUID: session.uid,
+                    currentUID: authService.session?.uid
+                ) {
+                    isUpdatingLeaderboardVisibility = false
+                }
+            }
+        }
+    }
+
+    private func updateLeaderboardVisibility(publicAlias: String?, isVisible: Bool) {
+        guard let uid = authService.session?.uid else { return }
+        let expectedRequestID = leaderboardParticipation?.syncRequestId
+        let ticket = LeaderboardSyncTicket(
+            ownerUID: uid,
+            syncRequestID: UUID().uuidString,
+            expectedPreviousSyncRequestID: expectedRequestID
+        )
+        isUpdatingLeaderboardVisibility = true
+        guard leaderboardPublication.applyLocal(
+            .unknown,
+            originatingUID: uid,
+            currentUID: authService.session?.uid
+        ) else {
+            isUpdatingLeaderboardVisibility = false
+            return
+        }
+
+        Task {
+            do {
+                if isVisible {
+                    guard let publicAlias else {
+                        throw FirestoreService.FirestoreServiceError.invalidPublicAlias
+                    }
+                    // Persist a server-scoped pending decision first. It remains
+                    // non-visible until every private history write has committed.
+                    try await FirestoreService().beginLeaderboardPublication(
+                        ticket: ticket,
+                        publicAlias: publicAlias
+                    )
+                    guard authService.session?.uid == uid else {
+                        throw FirestoreService.FirestoreServiceError.accountMismatch
+                    }
+                    try await FirestoreService().syncOfficialCheckIns(checkInStore.records, userId: uid)
+                    guard authService.session?.uid == uid else {
+                        throw FirestoreService.FirestoreServiceError.accountMismatch
+                    }
+                    try await FirestoreService().finalizeLeaderboardPublication(
+                        ticket: ticket,
+                        publicAlias: publicAlias
+                    )
+                } else {
+                    try await FirestoreService().setLeaderboardParticipation(
+                        userId: uid,
+                        publicAlias: publicAlias,
+                        isVisible: false
+                    )
+                }
+                guard authService.session?.uid == uid else {
+                    throw FirestoreService.FirestoreServiceError.accountMismatch
+                }
+                await loadLeaderboardParticipation()
+            } catch {
+                guard leaderboardPublication.canApplyLocal(
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                ) else { return }
+                leaderboardPublication.applyLocal(
+                    .failed,
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                )
+            }
+            await MainActor.run {
+                if leaderboardPublication.canApplyLocal(
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                ) {
+                    isUpdatingLeaderboardVisibility = false
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func retryLeaderboardPublication() async {
+        guard let uid = authService.session?.uid else { return }
+        isUpdatingLeaderboardVisibility = true
+        defer {
+            if leaderboardPublication.canApplyLocal(
+                originatingUID: uid,
+                currentUID: authService.session?.uid
+            ) {
+                isUpdatingLeaderboardVisibility = false
+            }
+        }
+
+        do {
+            await loadLeaderboardParticipation()
+            guard leaderboardPublication.canApplyLocal(
+                originatingUID: uid,
+                currentUID: authService.session?.uid
+            ) else { return }
+            if case .pending(let participation) = leaderboardPublicationState {
+                try await FirestoreService().syncOfficialCheckIns(checkInStore.records, userId: uid)
+                guard authService.session?.uid == uid else {
+                    throw FirestoreService.FirestoreServiceError.accountMismatch
+                }
+                if participation.isVisible {
+                    guard let requestID = participation.syncRequestId else {
+                        throw FirestoreService.FirestoreServiceError.staleSyncRequest
+                    }
+                    try await FirestoreService().requestLeaderboardRebuild(
+                        userId: uid,
+                        expectedSyncRequestID: requestID
+                    )
+                } else if let publicAlias = participation.publicAlias,
+                          let requestID = participation.syncRequestId {
+                    try await FirestoreService().finalizeLeaderboardPublication(
+                        ticket: LeaderboardSyncTicket(
+                            ownerUID: uid,
+                            syncRequestID: requestID,
+                            expectedPreviousSyncRequestID: nil
+                        ),
+                        publicAlias: publicAlias
+                    )
+                } else {
+                    throw FirestoreService.FirestoreServiceError.invalidPublicAlias
+                }
+                await loadLeaderboardParticipation()
+            }
+        } catch {
+            guard leaderboardPublication.canApplyLocal(
+                originatingUID: uid,
+                currentUID: authService.session?.uid
+            ) else { return }
+            leaderboardPublication.applyLocal(
+                .failed,
+                originatingUID: uid,
+                currentUID: authService.session?.uid
+            )
+        }
     }
 
     /// 稱號: the title equipped for the leaderboard, chosen from conquered peaks.
@@ -786,12 +1269,12 @@ private struct DisplayNameEditorSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(AppText.value(zh: "排行榜名稱", en: "Leaderboard Name"))
+                    Text(AppText.value(zh: "私人帳戶名稱", en: "Private Account Name"))
                         .font(.frogEyebrow)
                         .tracking(1.1)
                         .textCase(.uppercase)
                         .foregroundStyle(FrogTheme.moss)
-                    Text(AppText.value(zh: "現在顯示：\(fallbackName)", en: "Currently shown as: \(fallbackName)"))
+                    Text(AppText.value(zh: "只用於你的帳戶及個人頁：\(fallbackName)", en: "Used only for your account and private profile: \(fallbackName)"))
                         .font(.frogCaption)
                         .foregroundStyle(FrogTheme.muted)
                 }
@@ -830,7 +1313,7 @@ private struct DisplayNameEditorSheet: View {
             }
             .padding(FrogSpace.screenPadding)
             .appPageBackground(FrogTheme.warmPaper)
-            .localizedNavigationTitle { AppText.value(zh: "更改名稱", en: "Edit Name") }
+            .localizedNavigationTitle { AppText.value(zh: "更改私人帳戶名稱", en: "Edit Private Account Name") }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -1343,4 +1826,7 @@ private extension UIImage {
         ProfileView()
     }
     .environment(ProfileAuthService(activateFirebase: false))
+    .environmentObject(CheckInStore())
+    .environmentObject(LocationManager())
+    .environmentObject(CheckInCloudOutboxStore())
 }

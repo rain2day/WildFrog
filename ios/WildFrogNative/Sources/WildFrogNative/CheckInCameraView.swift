@@ -27,11 +27,22 @@ private enum ShareCardStyle: String, CaseIterable, Identifiable {
     }
 }
 
+enum CheckInCloudSyncState: Equatable {
+    case idle
+    case pending
+    case synced
+    case deviceOnly
+    case failed
+
+    var isRetryable: Bool { self == .failed }
+}
+
 struct CheckInCameraView: View {
     let mountain: Mountain
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ProfileAuthService.self) private var authService
+    @EnvironmentObject private var cloudOutbox: CheckInCloudOutboxStore
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var checkInStore: CheckInStore
     @EnvironmentObject private var recorder: TrackRecorder
@@ -45,6 +56,8 @@ struct CheckInCameraView: View {
     // MARK: - Photo state
     @State private var capturedImage: UIImage?
     @State private var selectedPhoto: PhotosPickerItem?
+    @State private var photoSelectionState = PhotoSelectionRequestState()
+    @State private var photoLoadTask: Task<Void, Never>?
     @State private var showCamera = false
 
     // MARK: - Save state
@@ -59,7 +72,15 @@ struct CheckInCameraView: View {
     @State private var weatherChip: WeatherSnapshot?
     @State private var showCancelRecording = false
     @State private var showLeaderboardConsentAlert = false
-    @AppStorage("wildfrog.privacy.leaderboardUploadConsentAccepted") private var leaderboardUploadConsentAccepted = false
+    @State private var publicAliasDraft = ""
+    @State private var publicAliasError: String?
+    @State private var isResolvingLeaderboardConsent = false
+    @State private var pendingCloudRecordID: UUID?
+    @State private var pendingCloudOwnerUID: String?
+    @State private var expectedConsentSyncRequestID: String?
+    @State private var pendingConsentOwnerUID: String?
+    @State private var cloudSyncState: CheckInCloudSyncState = .idle
+    @State private var locationConsumerID = UUID()
 
     // MARK: - GPS gating helpers
 
@@ -200,7 +221,7 @@ struct CheckInCameraView: View {
             // the permission dialog never covers the preview screenshot.
             if !qaRender {
                 locationManager.requestAuthorization()
-                locationManager.startUpdating()
+                locationManager.startUpdating(for: locationConsumerID)
             }
             if isRecordingThisMountain {
                 mode = .recording
@@ -226,7 +247,10 @@ struct CheckInCameraView: View {
             #endif
         }
         .onDisappear {
-            locationManager.stopUpdating()
+            photoLoadTask?.cancel()
+            photoLoadTask = nil
+            photoSelectionState.invalidateForDismissal()
+            locationManager.stopUpdating(for: locationConsumerID)
         }
         .fullScreenCover(isPresented: $showCamera) {
             #if canImport(UIKit)
@@ -236,13 +260,15 @@ struct CheckInCameraView: View {
         }
         .onChange(of: selectedPhoto) { _, newItem in
             guard let newItem else { return }
-            Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    await MainActor.run {
-                        capturedImage = uiImage
-                    }
-                }
+            photoLoadTask?.cancel()
+            let requestRevision = photoSelectionState.beginPhotosLoad()
+            photoLoadTask = Task {
+                guard let data = try? await newItem.loadTransferable(type: Data.self),
+                      !Task.isCancelled,
+                      let uiImage = UIImage(data: data),
+                      photoSelectionState.acceptPhotosResult(requestRevision) else { return }
+                capturedImage = uiImage
+                photoLoadTask = nil
             }
         }
         .onChange(of: capturedImage) { _, newImage in
@@ -597,6 +623,9 @@ struct CheckInCameraView: View {
             Button {
                 #if canImport(UIKit)
                 if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    photoLoadTask?.cancel()
+                    photoLoadTask = nil
+                    photoSelectionState.invalidateForNewChoice()
                     showCamera = true
                 }
                 #endif
@@ -797,10 +826,8 @@ struct CheckInCameraView: View {
             Button {
                 if !authService.isSignedIn {
                     showSignInAlert = true
-                } else if leaderboardUploadConsentAccepted {
-                    performCheckIn(syncToCloud: true)
                 } else {
-                    showLeaderboardConsentAlert = true
+                    resolveLeaderboardConsentAndCheckIn()
                 }
             } label: {
                 HStack(spacing: 14) {
@@ -817,24 +844,25 @@ struct CheckInCameraView: View {
                 .opacity(canCheckIn ? 1 : 0.4)
             }
             .buttonStyle(.plain)
-            .disabled(isSavingWatermark || didCompleteCheckIn || (!canCheckIn && authService.isSignedIn))
+            .disabled(isSavingWatermark || isResolvingLeaderboardConsent || didCompleteCheckIn || (!canCheckIn && authService.isSignedIn))
             .alert(AppText.value(zh: "請先登入", en: "Sign in required"), isPresented: $showSignInAlert) {
                 Button(AppText.value(zh: "好", en: "OK"), role: .cancel) {}
             } message: {
                 Text(AppText.value(zh: "打卡前請先登入（我的）", en: "Please sign in from Profile before checking in."))
             }
-            .alert(AppText.value(zh: "同意上傳排行榜資料？", en: "Upload leaderboard data?"), isPresented: $showLeaderboardConsentAlert) {
+            .alert(AppText.value(zh: "設定公開排行榜別名", en: "Set a Public Leaderboard Alias"), isPresented: $showLeaderboardConsentAlert) {
+                TextField(AppText.value(zh: "公開顯示名稱", en: "Public alias"), text: $publicAliasDraft)
                 Button(AppText.value(zh: "同意並上傳", en: "Agree and Upload")) {
-                    leaderboardUploadConsentAccepted = true
-                    performCheckIn(syncToCloud: true)
+                    beginExplicitLeaderboardOptIn()
                 }
                 Button(AppText.value(zh: "只儲存在裝置", en: "Device Only"), role: .cancel) {
-                    performCheckIn(syncToCloud: false)
+                    guard let expectedUID = pendingConsentOwnerUID else { return }
+                    performCheckIn(cloudIntent: .persistDecline, expectedUID: expectedUID)
                 }
             } message: {
-                Text(AppText.value(
-                    zh: "WildFrog 會將你的帳戶 ID、打卡山峰、打卡日期、同步紀錄 ID 同伺服器時間同步到伺服器，用於雲端同步及公開排行榜。你亦可以選擇只儲存在此裝置。",
-                    en: "WildFrog will upload your account ID, checked-in mountain, check-in date, sync record ID, and server timestamp to its server for cloud sync and the public leaderboard. You can also choose to save only on this device."
+                Text(publicAliasError ?? AppText.value(
+                    zh: "請輸入不含電郵、電話或帳戶 ID 的專用公開別名。公開後會顯示別名、每月／總打卡數及不同山峰數。",
+                    en: "Enter a dedicated public alias that is not an email, phone number, or account ID. Your alias and server-calculated check-in counts will be public."
                 ))
             }
 
@@ -871,10 +899,10 @@ struct CheckInCameraView: View {
         } else if !isInRange {
             return gpsChipTitle
         }
-        if leaderboardUploadConsentAccepted {
-            return AppText.value(zh: "打卡會同步到雲端排行榜，並將卡儲存到相簿", en: "Check-in will sync to the cloud leaderboard and save the card to Photos")
-        }
-        return AppText.value(zh: "打卡卡會儲存到相簿；上傳排行榜前會先問你同意", en: "Your card will be saved to Photos; leaderboard upload asks for consent first")
+        return AppText.value(
+            zh: "打卡會先儲存在裝置；雲端同步只依照此帳戶的伺服器私隱設定",
+            en: "The check-in saves on this device first; cloud sync follows this account's server privacy setting"
+        )
     }
 
     // MARK: - Enlarged watermark preview
@@ -991,6 +1019,9 @@ struct CheckInCameraView: View {
                     .background(FrogTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.top, 26)
 
+                    cloudSyncStatusCard
+                        .padding(.top, 12)
+
                     // actions follow the card (.succ .actions padding-top:26)
                     VStack(spacing: 10) {
                         if let wm = watermarkPreviewImage {
@@ -1056,17 +1087,164 @@ struct CheckInCameraView: View {
             .frame(width: 1, height: 28)
     }
 
+    @ViewBuilder
+    private var cloudSyncStatusCard: some View {
+        HStack(spacing: 10) {
+            switch cloudSyncState {
+            case .idle, .deviceOnly:
+                Image(systemName: "lock.fill")
+                    .foregroundStyle(.white.opacity(0.76))
+                Text(AppText.value(zh: "排行榜：只儲存在裝置", en: "Leaderboard: device only"))
+            case .pending:
+                ProgressView()
+                    .tint(.white)
+                Text(AppText.value(zh: "排行榜同步等待中…", en: "Leaderboard sync pending..."))
+            case .synced:
+                Image(systemName: "checkmark.icloud.fill")
+                    .foregroundStyle(FrogTheme.leaf)
+                Text(AppText.value(zh: "雲端打卡已同步", en: "Cloud check-in synced"))
+            case .failed:
+                Image(systemName: "exclamationmark.icloud.fill")
+                    .foregroundStyle(FrogTheme.gold)
+                Text(AppText.value(
+                    zh: "本機打卡已完成，但雲端同步失敗。",
+                    en: "Local check-in succeeded, but cloud sync failed."
+                ))
+                Spacer(minLength: 4)
+                Button(AppText.value(zh: "重試", en: "Retry")) {
+                    Task { await syncPendingCloudCheckIn() }
+                }
+                .font(.frogCaption.weight(.black))
+                .foregroundStyle(.white)
+                .disabled(cloudSyncState == .pending)
+            }
+        }
+        .font(.frogCaption.weight(.semibold))
+        .foregroundStyle(.white.opacity(0.84))
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+        .background(Color.black.opacity(0.34), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
     // MARK: - Perform check-in (write store + Firestore + save watermark)
 
     @MainActor
-    private func performCheckIn(syncToCloud: Bool) {
+    private func resolveLeaderboardConsentAndCheckIn() {
+        guard let session = authService.session else {
+            showSignInAlert = true
+            return
+        }
+        let expectedUID = session.uid
+        pendingConsentOwnerUID = nil
+
+        isResolvingLeaderboardConsent = true
+        Task {
+            let serverRead = await FirestoreService().fetchLeaderboardServerRead(userId: session.uid)
+            isResolvingLeaderboardConsent = false
+            guard CheckInAccountBinding.canContinue(
+                expectedUID: expectedUID,
+                currentUID: authService.session?.uid
+            ) else {
+                failCheckInForAccountChange()
+                return
+            }
+
+            switch serverRead {
+            case .failed, .unknown:
+                // Fail closed for publication while preserving the official local record.
+                performCheckIn(cloudIntent: .resolveServerAuthority, expectedUID: expectedUID)
+            case .missing:
+                pendingConsentOwnerUID = expectedUID
+                expectedConsentSyncRequestID = nil
+                publicAliasDraft = ""
+                publicAliasError = nil
+                showLeaderboardConsentAlert = true
+            case .loaded(let participation):
+                guard participation.isVisible else {
+                    if participation.publicationRequested {
+                        // A durable migration is still pending; keep the local
+                        // record retryable without treating it as consent.
+                        performCheckIn(cloudIntent: .resolveServerAuthority, expectedUID: expectedUID)
+                    } else {
+                        // A server opt-out is authoritative and must never be overwritten here.
+                        performCheckIn(cloudIntent: .deviceOnly, expectedUID: expectedUID)
+                    }
+                    return
+                }
+                guard let alias = participation.publicAlias,
+                      case .success = LeaderboardPublicAlias.validate(
+                        alias,
+                        uid: session.uid,
+                        email: session.email,
+                        phoneNumber: session.phoneNumber
+                      ) else {
+                    publicAliasDraft = ""
+                    pendingConsentOwnerUID = expectedUID
+                    expectedConsentSyncRequestID = participation.syncRequestId
+                    publicAliasError = AppText.value(
+                        zh: "現有公開別名無效，請設定新的非聯絡資料別名。",
+                        en: "Your existing public alias is invalid. Set a new alias that is not contact information."
+                    )
+                    showLeaderboardConsentAlert = true
+                    return
+                }
+                performCheckIn(cloudIntent: .publishWithExistingConsent, expectedUID: expectedUID)
+            }
+        }
+    }
+
+    @MainActor
+    private func beginExplicitLeaderboardOptIn() {
+        guard let expectedUID = pendingConsentOwnerUID,
+              let session = authService.session,
+              CheckInAccountBinding.canContinue(
+                expectedUID: expectedUID,
+                currentUID: session.uid
+              ) else {
+            failCheckInForAccountChange()
+            return
+        }
+        switch LeaderboardPublicAlias.validate(
+            publicAliasDraft,
+            uid: session.uid,
+            email: session.email,
+            phoneNumber: session.phoneNumber
+        ) {
+        case .success(let alias):
+            publicAliasError = nil
+            performCheckIn(cloudIntent: .optIn(publicAlias: alias), expectedUID: expectedUID)
+        case .failure(let error):
+            publicAliasError = publicAliasValidationMessage(error)
+            DispatchQueue.main.async { showLeaderboardConsentAlert = true }
+        }
+    }
+
+    private func publicAliasValidationMessage(_ error: LeaderboardPublicAliasError) -> String {
+        switch error {
+        case .empty:
+            AppText.value(zh: "請輸入公開別名。", en: "Enter a public alias.")
+        case .tooLong:
+            AppText.value(zh: "公開別名最多 24 個字。", en: "Public aliases can contain up to 24 characters.")
+        case .contactInformation:
+            AppText.value(zh: "公開別名不可使用電郵或電話號碼。", en: "A public alias cannot be an email address or phone number.")
+        case .firebaseIdentifier:
+            AppText.value(zh: "公開別名不可使用帳戶 ID。", en: "A public alias cannot be your account ID.")
+        }
+    }
+
+    @MainActor
+    private func performCheckIn(cloudIntent: CheckInCloudIntent, expectedUID: String) {
         #if canImport(UIKit)
         guard let capturedImage else {
             saveMessage = AppText.value(zh: "請先影相或揀相。", en: "Take or choose a photo first.")
             return
         }
-        guard let uid = authService.session?.uid else {
-            saveMessage = AppText.value(zh: "請先登入再打卡。", en: "Please sign in before checking in.")
+        guard let originatingSession = authService.session,
+              CheckInAccountBinding.canContinue(
+                expectedUID: expectedUID,
+                currentUID: originatingSession.uid
+              ) else {
+            failCheckInForAccountChange()
             return
         }
         guard let watermarkImage = renderCard(cardStyle, userPhoto: capturedImage) else {
@@ -1085,19 +1263,33 @@ struct CheckInCameraView: View {
         let trackSummary: TrackSummary? = isRecordingThisMountain
             ? recorder.stop().map(TrackSummary.init(track:))
             : nil
-
         Task {
             // 1. Save original photo to Documents and get filename
             let filename = await savePhotoToDocuments(capturedImage)
 
             // 2. Write to local CheckInStore (account-bound), binding the track
             let newRecord = await MainActor.run { () -> CheckInRecord? in
-                let record = checkInStore.addCheckIn(mountainId: mountain.id, photoFilename: filename, track: trackSummary)
+                guard CheckInAccountBinding.canContinue(
+                    expectedUID: expectedUID,
+                    currentUID: authService.session?.uid
+                ) else {
+                    isSavingWatermark = false
+                    didCompleteCheckIn = false
+                    saveMessage = AppText.value(
+                        zh: "登入帳戶已變更，這次打卡未有儲存。請在目前帳戶重試。",
+                        en: "The signed-in account changed, so this check-in was not saved. Retry with the current account."
+                    )
+                    return nil
+                }
+                let record = checkInStore.addCheckIn(
+                    mountainId: mountain.id,
+                    photoFilename: filename,
+                    track: trackSummary,
+                    expectedOwnerUID: originatingSession.uid
+                )
                 isSavingWatermark = false
                 if record != nil {
-                    saveMessage = syncToCloud
-                        ? AppText.value(zh: "打卡成功！", en: "Check-in saved!")
-                        : AppText.value(zh: "已儲存在此裝置。", en: "Saved on this device.")
+                    saveMessage = AppText.value(zh: "打卡成功！", en: "Check-in saved!")
                     withAnimation(.easeInOut(duration: 0.3)) { showSuccess = true }
                 } else {
                     // Account wasn't ready — never fake success; let the user retry.
@@ -1107,17 +1299,43 @@ struct CheckInCameraView: View {
                 return record
             }
 
-            // 3. Best-effort Firestore write — failure does not block local success.
-            // Pass the record's stable id + date so the cloud echo reconciles back
-            // onto the local record (which holds the photo + track) on the next sync.
-            if syncToCloud, let newRecord {
-                Task {
-                    try? await FirestoreService().recordCheckIn(
-                        id: newRecord.id,
-                        userId: uid,
-                        mountainId: mountain.id,
-                        date: newRecord.date
-                    )
+            let photoDisposition = await MainActor.run {
+                CheckInTemporaryPhotoDisposition.resolve(
+                    expectedUID: expectedUID,
+                    currentUID: authService.session?.uid,
+                    recordCreated: newRecord != nil
+                )
+            }
+            if photoDisposition == .discard, let filename {
+                await removePhotoFromDocuments(filename)
+            }
+
+            // 3. Cloud work is independent from the local success above. Keep the
+            // stable record and intent so every remote failure remains retryable.
+            if let newRecord {
+                await MainActor.run {
+                    pendingCloudRecordID = newRecord.id
+                    pendingCloudOwnerUID = originatingSession.uid
+                    if cloudIntent == .deviceOnly {
+                        cloudSyncState = .deviceOnly
+                    } else {
+                        cloudOutbox.enqueue(CheckInCloudOutboxItem(
+                            ownerUID: originatingSession.uid,
+                            record: newRecord,
+                            intent: cloudIntent,
+                            officialRecordsSnapshot: {
+                                if case .optIn = cloudIntent {
+                                    return checkInStore.records
+                                }
+                                return [newRecord]
+                            }(),
+                            expectedPreviousSyncRequestID: expectedConsentSyncRequestID
+                        ))
+                        cloudSyncState = .pending
+                    }
+                }
+                if cloudIntent != .deviceOnly {
+                    await syncPendingCloudCheckIn()
                 }
             }
 
@@ -1132,6 +1350,46 @@ struct CheckInCameraView: View {
         #else
         saveMessage = AppText.value(zh: "此平台暫不支援儲存到相簿。", en: "Saving to Photos is not supported on this platform.")
         #endif
+    }
+
+    @MainActor
+    private func failCheckInForAccountChange() {
+        isResolvingLeaderboardConsent = false
+        isSavingWatermark = false
+        didCompleteCheckIn = false
+        pendingConsentOwnerUID = nil
+        saveMessage = AppText.value(
+            zh: "登入帳戶已變更，這次打卡已安全停止。請在目前帳戶重試。",
+            en: "The signed-in account changed, so this check-in stopped safely. Retry with the current account."
+        )
+    }
+
+    @MainActor
+    private func syncPendingCloudCheckIn() async {
+        guard let recordID = pendingCloudRecordID,
+              let ownerUID = pendingCloudOwnerUID,
+              authService.session?.uid == ownerUID else {
+            cloudSyncState = .failed
+            return
+        }
+
+        cloudOutbox.retry(ownerUID: ownerUID, recordID: recordID)
+        cloudSyncState = .pending
+        await cloudOutbox.reconcile(authService: authService)
+
+        if let outstanding = cloudOutbox.item(ownerUID: ownerUID, recordID: recordID) {
+            cloudSyncState = outstanding.state == .pending ? .pending : .failed
+            return
+        }
+
+        switch cloudOutbox.completion(ownerUID: ownerUID, recordID: recordID) {
+        case .synced:
+            cloudSyncState = .synced
+        case .deviceOnly, .superseded:
+            cloudSyncState = .deviceOnly
+        case nil:
+            cloudSyncState = .failed
+        }
     }
 
     /// Saves the original (unwatermarked) photo to the app's Documents directory and returns the filename.
@@ -1152,6 +1410,18 @@ struct CheckInCameraView: View {
         #else
         return nil
         #endif
+    }
+
+    private func removePhotoFromDocuments(_ filename: String) async {
+        await Task.detached(priority: .utility) {
+            guard let directory = FileManager.default
+                    .urls(for: .documentDirectory, in: .userDomainMask)
+                    .first else { return }
+            TemporaryPhotoFileCleanup.remove(
+                filename: filename,
+                documentsDirectory: directory
+            )
+        }.value
     }
 
     #if canImport(UIKit)

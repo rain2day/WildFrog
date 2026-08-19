@@ -8,6 +8,7 @@ enum NativeRoute: Hashable {
     case allMountains
     case allTrips
     case allStamps
+    case freePhoto
 }
 
 enum AppTab: String, CaseIterable, Identifiable {
@@ -44,6 +45,8 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 struct WildFrogRootView: View {
     @State private var selectedTab: AppTab = .home
+    @State private var checkInTypeChooserState = CheckInTypeChooserState()
+    @State private var showFreePhoto = false
     @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
     // One navigation path per tab so the root can tell when a detail is pushed.
     @State private var homePath = NavigationPath()
@@ -59,6 +62,11 @@ struct WildFrogRootView: View {
     init() {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-qaCheckInChooser") {
+            var chooserState = CheckInTypeChooserState()
+            chooserState.present()
+            _checkInTypeChooserState = State(initialValue: chooserState)
+        }
         if let tabFlagIndex = arguments.firstIndex(of: "-qaTab"),
            arguments.indices.contains(arguments.index(after: tabFlagIndex)),
            let qaTab = AppTab(rawValue: arguments[arguments.index(after: tabFlagIndex)]) {
@@ -90,6 +98,12 @@ struct WildFrogRootView: View {
             path.append(NativeRoute.checkIn(arguments[arguments.index(after: cIndex)]))
             _homePath = State(initialValue: path)
             _selectedTab = State(initialValue: .home)
+        }
+        if arguments.contains("-qaFreePhoto") {
+            var path = NavigationPath()
+            path.append(NativeRoute.freePhoto)
+            _checkInPath = State(initialValue: path)
+            _selectedTab = State(initialValue: .checkIn)
         }
         #endif
     }
@@ -143,8 +157,30 @@ struct WildFrogRootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if isAtTabRoot {
-                FrogTabBar(selectedTab: $selectedTab)
+                FrogTabBar(selectedTab: $selectedTab) {
+                    checkInTypeChooserState.present(from: selectedTab)
+                }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            if checkInTypeChooserState.isPresented {
+                Button(action: dismissCheckInTypeChooser) {
+                    Color.black.opacity(0.38)
+                        .ignoresSafeArea()
+                        .contentShape(Rectangle())
+                }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(AppText.value(zh: "關閉打卡方式選單", en: "Dismiss check-in chooser backdrop"))
+                    .transition(.opacity)
+                    .zIndex(10)
+
+                CheckInTypeChooserView(
+                    onSelect: handleCheckInTypeChoice,
+                    onDismiss: dismissCheckInTypeChooser,
+                    onCancel: dismissCheckInTypeChooser
+                )
+                .zIndex(11)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .overlay(alignment: .top) {
@@ -164,8 +200,35 @@ struct WildFrogRootView: View {
         }
         .animation(.easeInOut(duration: 0.22), value: isAtTabRoot)
         .animation(.spring(response: 0.28, dampingFraction: 0.82), value: recorder.isRecording)
+        .animation(.spring(response: 0.3, dampingFraction: 0.86), value: checkInTypeChooserState.isPresented)
         .preferredColorScheme(.light)
         .background(FrogTheme.paper.ignoresSafeArea())
+        .fullScreenCover(isPresented: $showFreePhoto) {
+            FreePhotoView()
+        }
+    }
+
+    private func handleCheckInTypeChoice(_ choice: CheckInTypeChoice) {
+        checkInTypeChooserState.select(choice)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            completePendingCheckInTypeChoice()
+        }
+    }
+
+    private func dismissCheckInTypeChooser() {
+        checkInTypeChooserState.dismissWithoutSelection()
+    }
+
+    private func completePendingCheckInTypeChoice() {
+        guard let choice = checkInTypeChooserState.consumePendingChoice() else { return }
+
+        switch choice {
+        case .ranked:
+            selectedTab = .checkIn
+            checkInPath = NavigationPath()
+        case .freePhoto:
+            showFreePhoto = true
+        }
     }
 
     private func openActiveRecording(_ mountainId: String) {
@@ -237,13 +300,18 @@ private struct GlobalRecordingIsland: View {
 
 private struct FrogTabBar: View {
     @Binding var selectedTab: AppTab
+    let onCheckInTap: () -> Void
     @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
             ForEach(AppTab.allCases) { tab in
                 Button {
-                    selectedTab = tab
+                    if tab.isCenterCTA {
+                        onCheckInTap()
+                    } else {
+                        selectedTab = tab
+                    }
                 } label: {
                     if tab.isCenterCTA {
                         centerItem(tab)
@@ -324,6 +392,8 @@ extension View {
                 AllTripsView()
             case .allStamps:
                 FullPassportStampsView()
+            case .freePhoto:
+                FreePhotoView()
             }
         }
     }

@@ -5,6 +5,7 @@ struct RouteToCheckpointView: View {
     let mountain: Mountain
 
     @EnvironmentObject private var locationManager: LocationManager
+    @State private var locationConsumerID = UUID()
     @EnvironmentObject private var recorder: TrackRecorder
 
     @State private var cameraPosition: MapCameraPosition = .automatic
@@ -33,8 +34,11 @@ struct RouteToCheckpointView: View {
         .background(FrogTheme.paper)
         .onAppear {
             locationManager.requestAuthorization()
-            locationManager.startUpdating()
+            locationManager.startUpdating(for: locationConsumerID)
             recomputeIfNeeded()
+        }
+        .onDisappear {
+            locationManager.stopUpdating(for: locationConsumerID)
         }
         .onChange(of: locationManager.currentLocation) { _, _ in
             recomputeIfNeeded()

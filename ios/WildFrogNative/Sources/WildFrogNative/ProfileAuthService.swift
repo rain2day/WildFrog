@@ -151,6 +151,52 @@ enum WildFrogReviewerAccess {
 }
 
 @MainActor
+struct AccountDeletionCloudWorkflow {
+    private let establishTombstone: () async throws -> Void
+    private let awaitPublicCleanup: () async throws -> Void
+    private let finalCheckInSweep: () async throws -> Void
+
+    init(
+        establishTombstone: @escaping () async throws -> Void,
+        awaitPublicCleanup: @escaping () async throws -> Void,
+        finalCheckInSweep: @escaping () async throws -> Void
+    ) {
+        self.establishTombstone = establishTombstone
+        self.awaitPublicCleanup = awaitPublicCleanup
+        self.finalCheckInSweep = finalCheckInSweep
+    }
+
+    func run() async throws {
+        try await establishTombstone()
+        try await awaitPublicCleanup()
+        try await finalCheckInSweep()
+    }
+}
+
+enum AccountDeletionCleanupAcknowledgement {
+    static let legacyRequestID = "legacy-tombstone-v1"
+
+    static func matches(requestID: String, completedRequestID: String?) -> Bool {
+        !requestID.isEmpty && completedRequestID == requestID
+    }
+}
+
+struct AccountDeletionRequestPlan: Equatable {
+    let requestID: String
+    let mustWriteCleanupRequest: Bool
+
+    static func resolve(
+        tombstoneRequestID: String?,
+        proposedRequestID: String
+    ) -> Self {
+        Self(
+            requestID: tombstoneRequestID ?? proposedRequestID,
+            mustWriteCleanupRequest: true
+        )
+    }
+}
+
+@MainActor
 @Observable
 final class ProfileAuthService {
     private(set) var session: ProfileAuthSession?
@@ -376,23 +422,34 @@ final class ProfileAuthService {
             try Auth.auth().signOut()
             session = nil
             statusMessage = AppText.value(zh: "已登出", en: "Signed out")
-            clearLocalAccountData(removePhotos: false)
+            clearLocalAccountData(photoFilenamesToRemove: [])
         } catch {
             statusMessage = Self.readableAuthError(error)
         }
         #else
         session = nil
         statusMessage = AppText.value(zh: "已回到訪客模式", en: "Back to guest mode")
-        clearLocalAccountData(removePhotos: false)
+        clearLocalAccountData(photoFilenamesToRemove: [])
         #endif
     }
 
-    func deleteAccount() async {
+    @discardableResult
+    func deleteAccount(
+        expectedUID: String,
+        ownedPhotoFilenames: Set<String>
+    ) async -> String? {
         #if canImport(FirebaseAuth)
         guard let user = Auth.auth().currentUser else {
             session = nil
             statusMessage = AppText.value(zh: "已回到訪客模式", en: "Back to guest mode")
-            return
+            return nil
+        }
+        guard user.uid == expectedUID else {
+            statusMessage = AppText.value(
+                zh: "登入帳戶已變更，刪除已安全停止。",
+                en: "The signed-in account changed, so deletion stopped safely."
+            )
+            return nil
         }
         let uid = user.uid
         isBusy = true
@@ -400,18 +457,45 @@ final class ProfileAuthService {
 
         do {
             try await prepareForAccountDeletion(user)
-            try await FirestoreService().deleteUserCheckIns(userId: uid)
+            let firestoreService = FirestoreService()
+            var deletionRequestID: String?
+            try await AccountDeletionCloudWorkflow(
+                establishTombstone: {
+                    deletionRequestID = try await firestoreService.deleteLeaderboardParticipation(
+                        userId: uid,
+                        proposedDeletionRequestID: UUID().uuidString
+                    )
+                },
+                awaitPublicCleanup: {
+                    guard let deletionRequestID else {
+                        throw FirestoreService.FirestoreServiceError.deletionCleanupUnconfirmed
+                    }
+                    try await firestoreService.waitForLeaderboardDeletionCleanup(
+                        userId: uid,
+                        deletionRequestID: deletionRequestID
+                    )
+                },
+                finalCheckInSweep: {
+                    try await firestoreService.deleteUserCheckIns(userId: uid)
+                }
+            ).run()
             try await user.delete()
 
             session = nil
             statusMessage = AppText.value(zh: "帳戶已刪除", en: "Account deleted")
-            clearLocalAccountData(removePhotos: true)
+            clearLocalAccountData(photoFilenamesToRemove: ownedPhotoFilenames)
+            return uid
         } catch {
             statusMessage = Self.readableAuthError(error)
+            return nil
         }
         #else
+        guard session?.uid == expectedUID else { return nil }
+        let uid = session?.uid
         session = nil
         statusMessage = AppText.value(zh: "帳戶已刪除（示範）", en: "Account deleted (demo)")
+        clearLocalAccountData(photoFilenamesToRemove: ownedPhotoFilenames)
+        return uid
         #endif
     }
 
@@ -659,7 +743,7 @@ final class ProfileAuthService {
         statusMessage = AppText.value(zh: "Firebase Auth SDK 未連入此 build，Email 登入未能執行。", en: "Firebase Auth SDK is not linked in this build, so Email sign-in cannot run.")
     }
 
-    private func clearLocalAccountData(removePhotos: Bool) {
+    private func clearLocalAccountData(photoFilenamesToRemove: Set<String>) {
         #if canImport(GoogleSignIn)
         GIDSignIn.sharedInstance.signOut()
         #endif
@@ -667,7 +751,7 @@ final class ProfileAuthService {
         UserDefaults.standard.removeObject(forKey: "wildfrog.profile.avatar.thumbnail")
         UserDefaults.standard.removeObject(forKey: "wildfrog.profile.equippedTitleId")
 
-        guard removePhotos else { return }
+        guard !photoFilenamesToRemove.isEmpty else { return }
 
         let fm = FileManager.default
         guard let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first,
@@ -675,7 +759,10 @@ final class ProfileAuthService {
             return
         }
 
-        for file in contents where file.pathExtension.lowercased() == "jpg" {
+        for file in AccountPhotoDeletionPlan.urlsToDelete(
+            from: contents,
+            ownedFilenames: photoFilenamesToRemove
+        ) {
             try? fm.removeItem(at: file)
         }
     }

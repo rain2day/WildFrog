@@ -10,6 +10,11 @@ final class WildFrogAppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         WildFrogFirebaseBootstrap.configureIfNeeded()
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-qaFreePhoto") {
+            return true
+        }
+        #endif
         application.registerForRemoteNotifications()
         return true
     }
@@ -52,6 +57,7 @@ struct WildFrogNativeApp: App {
     @State private var authService: ProfileAuthService
     @StateObject private var locationManager = LocationManager()
     @StateObject private var checkInStore = CheckInStore()
+    @StateObject private var cloudOutbox = CheckInCloudOutboxStore()
     @StateObject private var trackRecorder = TrackRecorder()
 
     init() {
@@ -64,6 +70,7 @@ struct WildFrogNativeApp: App {
                 .environment(authService)
                 .environmentObject(locationManager)
                 .environmentObject(checkInStore)
+                .environmentObject(cloudOutbox)
                 .environmentObject(trackRecorder)
                 .task { @MainActor in
                     authService.activate()
@@ -73,6 +80,7 @@ struct WildFrogNativeApp: App {
                     if !authService.canUseReviewerTools {
                         locationManager.mockCoordinate = nil
                     }
+                    await cloudOutbox.reconcile(authService: authService)
                 }
                 #if DEBUG
                 .task {

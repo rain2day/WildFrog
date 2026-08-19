@@ -2,8 +2,92 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function hasAccountDeletionTombstone(userId) {
+      return exists(/databases/$(database)/documents/leaderboardDeletionTombstones/$(userId));
+    }
+
+    function validPublicAlias(alias) {
+      return alias is string
+        && alias.matches('^.{1,24}$')
+        && !alias.matches('.*@.*')
+        && !alias.matches('^[+() .-]*[0-9][0-9+() .-]{6,}$')
+        && alias != request.auth.uid;
+    }
+
+    function validLeaderboardPreference(data) {
+      return data.keys().hasAll(['isVisible', 'publicationRequested', 'migrationVersion', 'syncRequestId'])
+        && data.isVisible is bool
+        && data.publicationRequested is bool
+        && data.migrationVersion is int
+        && data.migrationVersion == 1
+        && data.syncRequestId is string
+        && data.syncRequestId.size() >= 1
+        && data.syncRequestId.size() <= 64
+        && (!data.keys().hasAll(['publicAlias']) || validPublicAlias(data.publicAlias))
+        && (data.publicationRequested == true || data.isVisible == false)
+        && (data.publicationRequested == false || data.keys().hasAll(['publicAlias']));
+    }
+
+    function validCurrentCheckIn(data, checkInId) {
+      return data.keys().hasAll([
+          'clientId',
+          'userId',
+          'mountainId',
+          'dayKey',
+          'checkInAt',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'clientId',
+          'userId',
+          'mountainId',
+          'dayKey',
+          'checkInAt',
+          'createdAt'
+        ])
+        && data.clientId == checkInId
+        && data.clientId is string
+        && data.mountainId is string
+        && data.mountainId.size() > 0
+        && data.dayKey is string
+        && data.checkInAt is timestamp
+        && data.checkInAt <= request.time
+        && data.createdAt == request.time;
+    }
+
+    function validLegacyCheckIn(data) {
+      return data.keys().hasAll([
+          'clientId',
+          'userId',
+          'mountainId',
+          'dayKey',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'clientId',
+          'userId',
+          'mountainId',
+          'dayKey',
+          'createdAt'
+        ])
+        && data.clientId is string
+        && data.clientId.size() > 0
+        && data.mountainId is string
+        && data.mountainId.size() > 0
+        && data.dayKey is string
+        && data.createdAt == request.time;
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
 
     match /mountains/{mountainId} {
@@ -12,15 +96,91 @@ service cloud.firestore {
     }
 
     match /leaderboardProfiles/{profileId} {
-      allow read: if resource.data.isVisible == true;
+      allow get: if !exists(/databases/$(database)/documents/leaderboardProfiles/$(profileId))
+        || resource.data.isVisible == true;
+      allow list: if resource.data.isVisible == true;
       allow write: if false;
     }
 
+    match /leaderboardOptIns/{userId} {
+      allow read, delete: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'isVisible',
+          'publicationRequested',
+          'publicAlias',
+          'consentedAt',
+          'updatedAt',
+          'syncRequestId',
+          'migrationVersion'
+        ])
+        && validLeaderboardPreference(request.resource.data);
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'isVisible',
+          'publicationRequested',
+          'publicAlias',
+          'consentedAt',
+          'updatedAt',
+          'syncRequestId',
+          'migrationVersion'
+        ])
+        && validLeaderboardPreference(request.resource.data);
+    }
+
+    match /leaderboardDeletionTombstones/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'deletionRequested',
+          'deletionRequestId',
+          'deletedAt'
+        ])
+        && request.resource.data.deletionRequested == true
+        && request.resource.data.deletionRequestId is string
+        && request.resource.data.deletionRequestId.size() >= 1
+        && request.resource.data.deletionRequestId.size() <= 64
+        && request.resource.data.deletedAt == request.time;
+      allow list, update, delete: if false;
+    }
+
+    match /leaderboardDeletionCleanupRequests/{userId} {
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && existsAfter(/databases/$(database)/documents/leaderboardDeletionTombstones/$(userId))
+        && request.resource.data.keys().hasOnly([
+          'deletionRequestId',
+          'requestedAt'
+        ])
+        && request.resource.data.deletionRequestId is string
+        && request.resource.data.deletionRequestId.size() >= 1
+        && request.resource.data.deletionRequestId.size() <= 64
+        && request.resource.data.requestedAt == request.time;
+      allow list, delete: if false;
+    }
+
+    match /leaderboardProfileLinks/{userId} {
+      allow read, write: if false;
+    }
+
     match /checkIns/{checkInId} {
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null
+      allow create: if isSignedIn()
+        && !hasAccountDeletionTombstone(request.auth.uid)
+        && request.resource.data.userId == request.auth.uid
+        && (validCurrentCheckIn(request.resource.data, checkInId)
+          || validLegacyCheckIn(request.resource.data));
+      allow read, delete: if isSignedIn()
         && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && !hasAccountDeletionTombstone(request.auth.uid)
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.clientId == resource.data.clientId
+        && request.resource.data.mountainId == resource.data.mountainId
+        && request.resource.data.dayKey == resource.data.dayKey
+        && request.resource.data.checkInAt == resource.data.checkInAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['createdAt'])
+        && request.resource.data.createdAt == request.time;
     }
   }
 }

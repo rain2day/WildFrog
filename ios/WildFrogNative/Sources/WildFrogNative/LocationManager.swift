@@ -1,6 +1,27 @@
 import CoreLocation
 import Foundation
 
+struct LocationAcquisitionState: Equatable {
+    private var consumers: Set<UUID> = []
+
+    var activeCount: Int { consumers.count }
+    var isActive: Bool { !consumers.isEmpty }
+
+    /// Returns true only when this acquisition transitions the shared manager
+    /// from zero active consumers to one.
+    mutating func acquire(_ consumerID: UUID) -> Bool {
+        let wasEmpty = consumers.isEmpty
+        guard consumers.insert(consumerID).inserted else { return false }
+        return wasEmpty
+    }
+
+    /// Returns true only when this release removes the final active consumer.
+    mutating func release(_ consumerID: UUID) -> Bool {
+        guard consumers.remove(consumerID) != nil else { return false }
+        return consumers.isEmpty
+    }
+}
+
 @MainActor
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published private(set) var systemAuthorizationStatus: CLAuthorizationStatus
@@ -10,13 +31,21 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     /// accounts. The UI decides who can set this; when set, distance and auth
     /// gating behave as if the user is standing at this coordinate.
     @Published var mockCoordinate: CLLocationCoordinate2D? {
-        didSet { persistMock() }
+        didSet {
+            persistMock()
+            if mockCoordinate != nil {
+                manager.stopUpdatingLocation()
+            } else if acquisitions.isActive {
+                manager.startUpdatingLocation()
+            }
+        }
     }
     private static let mockOnKey = "wildfrog.location.simulator.on"
     private static let mockLatKey = "wildfrog.location.simulator.lat"
     private static let mockLonKey = "wildfrog.location.simulator.lon"
 
     private let manager = CLLocationManager()
+    private var acquisitions = LocationAcquisitionState()
 
     override init() {
         systemAuthorizationStatus = manager.authorizationStatus
@@ -47,12 +76,14 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         manager.requestWhenInUseAuthorization()
     }
 
-    func startUpdating() {
-        guard mockCoordinate == nil else { return }
+    func startUpdating(for consumerID: UUID) {
+        let shouldStart = acquisitions.acquire(consumerID)
+        guard shouldStart, mockCoordinate == nil else { return }
         manager.startUpdatingLocation()
     }
 
-    func stopUpdating() {
+    func stopUpdating(for consumerID: UUID) {
+        guard acquisitions.release(consumerID) else { return }
         manager.stopUpdatingLocation()
     }
 

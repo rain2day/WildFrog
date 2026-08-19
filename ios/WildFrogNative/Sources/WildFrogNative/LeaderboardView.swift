@@ -12,6 +12,11 @@ struct LeaderboardView: View {
     @Binding private var leaderboardProfiles: [SeedHikerProfile]
     @Binding private var hasLoadedLeaderboardProfiles: Bool
     @State private var leaderboardLoadState: LeaderboardLoadState = .idle
+    @State private var leaderboardPublication = UIDBoundLeaderboardPublication()
+    @State private var leaderboardListRefreshRequest = LeaderboardListRefreshRequestState()
+    @State private var showLeaderboardMigrationPrompt = false
+    @State private var publicAliasDraft = ""
+    @State private var leaderboardMigrationError: String?
     @Environment(ProfileAuthService.self) private var authService
     @EnvironmentObject private var checkInStore: CheckInStore
     @AppStorage("wildfrog.profile.equippedTitleId") private var equippedTitleId = ""
@@ -19,10 +24,31 @@ struct LeaderboardView: View {
     private enum Scope { case month, all }
     private enum LeaderboardLoadState { case idle, loading, loaded, failed }
 
+    private var leaderboardPublicationState: LeaderboardPublicationState {
+        leaderboardPublication.publication
+    }
+
     private var seedScope: SeedLeaderboardScope { scope == .month ? .month : .all }
     private var currentEntries: [SeedLeaderboardEntry] { SeedLeaderboard.entries(profiles: leaderboardProfiles, scope: seedScope, asOf: leaderboardDate) }
     private var currentLeader: SeedLeaderboardEntry? { currentEntries.first }
     private var currentRows: [SeedLeaderboardEntry] { Array(currentEntries.dropFirst().prefix(8)) }
+    private var myPublicEntry: SeedLeaderboardEntry? {
+        guard leaderboardListRefreshRequest.listRefresh == .current,
+              leaderboardPublication.authorizesVisibleMutation(currentUID: authService.session?.uid),
+              case .completed(let participation) = leaderboardPublicationState else { return nil }
+        return LeaderboardPublicRank.entry(
+            publicProfileId: participation.publicProfileId,
+            in: currentEntries
+        )
+    }
+    private var leaderboardParticipation: LeaderboardParticipation? {
+        switch leaderboardPublicationState {
+        case .pending(let participation), .completed(let participation), .declined(let participation):
+            participation
+        case .unknown, .missing, .failed:
+            nil
+        }
+    }
     private var isWaitingForFirstLeaderboardLoad: Bool {
         !hasLoadedLeaderboardProfiles && (leaderboardLoadState == .idle || leaderboardLoadState == .loading)
     }
@@ -39,18 +65,30 @@ struct LeaderboardView: View {
     private var myTotalCheckIns: Int { checkInStore.totalCheckIns }
     private var myDistinctMountains: Int { checkInStore.distinctMountainCount }
     private var myMonthlyCheckIns: Int {
-        let calendar = Calendar.current
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Hong_Kong") ?? .current
         let components = calendar.dateComponents([.year, .month], from: leaderboardDate)
         return checkInStore.records.filter {
             let recordComponents = calendar.dateComponents([.year, .month], from: $0.date)
             return recordComponents.year == components.year && recordComponents.month == components.month
         }.count
     }
-    private var myScopeCount: Int { scope == .month ? myMonthlyCheckIns : myTotalCheckIns }
+    private var myScopeCount: Int {
+        myPublicEntry?.score ?? (scope == .month ? myMonthlyCheckIns : myTotalCheckIns)
+    }
 
     private var myRank: Int? {
-        guard !leaderboardProfiles.isEmpty else { return nil }
-        return SeedLeaderboard.rank(for: myScopeCount, among: leaderboardProfiles, scope: seedScope, asOf: leaderboardDate)
+        myPublicEntry?.rank
+    }
+
+    private var myRecordLabel: String {
+        if myPublicEntry != nil {
+            return equippedTitle ?? AppText.value(zh: "公開排行榜", en: "Public leaderboard")
+        }
+        if leaderboardParticipation?.isVisible == true {
+            return AppText.value(zh: "排行榜同步中", en: "Leaderboard sync pending")
+        }
+        return AppText.value(zh: "私人紀錄", en: "Private record")
     }
 
     /// The equipped 稱號 (only while it's still a conquered peak); shown on my row.
@@ -84,6 +122,7 @@ struct LeaderboardView: View {
                         scopeSegment
                         leaderboardContent
                         myRankBar
+                        leaderboardPublicationStatusBanner
                     }
                     .padding(.horizontal, FrogSpace.screenPadding)
                     .padding(.top, FrogSpace.cardGap)
@@ -96,7 +135,15 @@ struct LeaderboardView: View {
         .appPageBackground(FrogTheme.warmPaper)
         .sheet(isPresented: $showAllLeaderboard) {
             NavigationStack {
-                AllLeaderboardView(scope: seedScope, profiles: leaderboardProfiles)
+                AllLeaderboardView(
+                    scope: seedScope,
+                    profiles: leaderboardProfiles,
+                    publicationState: leaderboardPublicationState,
+                    listRefresh: leaderboardListRefreshRequest.listRefresh,
+                    asOf: leaderboardDate,
+                    retryListRefresh: { retryLeaderboardListRefresh() },
+                    retryPublication: { retryLeaderboardMigration() }
+                )
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
                             Button(AppText.value(zh: "完成", en: "Done")) { showAllLeaderboard = false }
@@ -128,7 +175,28 @@ struct LeaderboardView: View {
             .presentationDragIndicator(.visible)
         }
         .onAppear { leaderboardDate = Date() }
-        .task { await loadLeaderboardProfiles() }
+        .onChange(of: authService.session?.uid) { _, newUID in
+            leaderboardPublication.reset(for: newUID)
+            leaderboardListRefreshRequest.invalidate(currentUID: newUID)
+            showLeaderboardMigrationPrompt = false
+        }
+        .task(id: authService.session?.uid) {
+            await loadLeaderboardContext(for: authService.session?.uid)
+        }
+        .alert(AppText.value(zh: "將已有打卡加入排行榜？", en: "Add Existing Check-ins to the Leaderboard?"), isPresented: $showLeaderboardMigrationPrompt) {
+            TextField(AppText.value(zh: "公開顯示名稱", en: "Public alias"), text: $publicAliasDraft)
+            Button(AppText.value(zh: "加入並同步", en: "Join and Sync")) {
+                joinAndMigrateCheckIns()
+            }
+            Button(AppText.value(zh: "暫時不加入", en: "Not Now"), role: .cancel) {
+                updateMigrationParticipation(publicAlias: nil, isVisible: false)
+            }
+        } message: {
+            Text(leaderboardMigrationError ?? AppText.value(
+                zh: "現有正式打卡保持私人，除非你選擇加入並輸入不含電郵、電話或帳戶 ID 的專用公開別名。",
+                en: "Existing official check-ins stay private unless you join with a dedicated alias that is not an email, phone number, or account ID."
+            ))
+        }
     }
 
     // MARK: - Hero (full-bleed image, matches the other pages)
@@ -429,11 +497,11 @@ struct LeaderboardView: View {
                 HStack(spacing: 11) {
                     LbAvatar(mountainId: myAvatarId, border: FrogTheme.leaf)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(authService.profileLine)
+                        Text(myPublicEntry?.profile.name ?? authService.profileLine)
                             .font(.system(size: 14.5, weight: .bold))
                             .foregroundStyle(.white)
                             .lineLimit(1)
-                        Text(equippedTitle ?? AppText.value(zh: "你的紀錄", en: "Your record"))
+                        Text(myRecordLabel)
                             .font(.system(size: 10.5))
                             .foregroundStyle(.white.opacity(0.66))
                             .lineLimit(1)
@@ -454,22 +522,336 @@ struct LeaderboardView: View {
     }
 
     @MainActor
-    private func loadLeaderboardProfiles() async {
-        guard leaderboardLoadState != .loading else {
-            return
-        }
+    private func loadLeaderboardContext(for expectedUID: String?) async {
+        leaderboardPublication.reset(for: expectedUID)
+        await loadLeaderboardProfiles(expectedUID: expectedUID)
+        guard !Task.isCancelled,
+              authService.session?.uid == expectedUID else { return }
+        await loadLeaderboardPublicationState()
+    }
 
+    @MainActor
+    private func loadLeaderboardProfiles(expectedUID: String?) async {
+        guard let request = leaderboardListRefreshRequest.begin(
+            expectedUID: expectedUID,
+            currentUID: authService.session?.uid
+        ) else { return }
         leaderboardLoadState = .loading
         do {
-            leaderboardProfiles = try await FirestoreService().fetchLeaderboardProfiles()
+            let refreshedProfiles = try await FirestoreService().fetchLeaderboardProfiles()
+            guard leaderboardListRefreshRequest.succeed(
+                request,
+                currentUID: authService.session?.uid
+            ) else { return }
+            leaderboardProfiles = refreshedProfiles
             hasLoadedLeaderboardProfiles = true
             leaderboardLoadState = .loaded
         } catch is CancellationError {
+            guard leaderboardListRefreshRequest.acceptCancellation(
+                request,
+                currentUID: authService.session?.uid
+            ) else { return }
             if leaderboardProfiles.isEmpty {
                 leaderboardLoadState = .idle
             }
             return
         } catch {
+            guard leaderboardListRefreshRequest.fail(
+                request,
+                currentUID: authService.session?.uid
+            ) else { return }
+            leaderboardLoadState = .failed
+        }
+    }
+
+    @MainActor
+    private func loadLeaderboardPublicationState() async {
+        guard let uid = authService.session?.uid else {
+            leaderboardPublication.reset(for: nil)
+            showLeaderboardMigrationPrompt = false
+            return
+        }
+        let exactReadback = await FirestoreService().fetchLeaderboardPublicationState(
+            userId: uid,
+            hasLocalHistoricalCheckIns: !checkInStore.records.isEmpty
+        )
+        let refreshedState = LeaderboardPublicationListRefresh.resolve(
+            exactReadback: exactReadback,
+            listRefresh: leaderboardListRefreshRequest.listRefresh
+        )
+        guard leaderboardPublication.applyServerRead(
+            refreshedState.publication,
+            originatingUID: uid,
+            currentUID: authService.session?.uid
+        ) else { return }
+        showLeaderboardMigrationPrompt = LeaderboardMigrationDecision.shouldPrompt(
+            state: leaderboardPublicationState
+        )
+        if showLeaderboardMigrationPrompt {
+            publicAliasDraft = ""
+            leaderboardMigrationError = nil
+        }
+    }
+
+    private func joinAndMigrateCheckIns() {
+        guard let session = authService.session else { return }
+        switch LeaderboardPublicAlias.validate(
+            publicAliasDraft,
+            uid: session.uid,
+            email: session.email,
+            phoneNumber: session.phoneNumber
+        ) {
+        case .success(let alias):
+            leaderboardMigrationError = nil
+            updateMigrationParticipation(publicAlias: alias, isVisible: true)
+        case .failure:
+            leaderboardMigrationError = AppText.value(
+                zh: "別名需為 1–24 字，並不可是電郵、電話或帳戶 ID。",
+                en: "The alias must be 1–24 characters and cannot be an email, phone number, or account ID."
+            )
+            DispatchQueue.main.async { showLeaderboardMigrationPrompt = true }
+        }
+    }
+
+    private func updateMigrationParticipation(publicAlias: String?, isVisible: Bool) {
+        guard let uid = authService.session?.uid else { return }
+        let records = checkInStore.records
+        let expectedRequestID = leaderboardParticipation?.syncRequestId
+        let ticket = LeaderboardSyncTicket(
+            ownerUID: uid,
+            syncRequestID: UUID().uuidString,
+            expectedPreviousSyncRequestID: expectedRequestID
+        )
+        guard leaderboardPublication.applyLocal(
+            .unknown,
+            originatingUID: uid,
+            currentUID: authService.session?.uid
+        ) else { return }
+
+        Task {
+            do {
+                if isVisible {
+                    guard let publicAlias else {
+                        throw FirestoreService.FirestoreServiceError.invalidPublicAlias
+                    }
+                    // Durable pending is server-scoped but non-visible. Only the
+                    // final write below can publish the fully backfilled history.
+                    try await FirestoreService().beginLeaderboardPublication(
+                        ticket: ticket,
+                        publicAlias: publicAlias
+                    )
+                    guard authService.session?.uid == uid else {
+                        throw FirestoreService.FirestoreServiceError.accountMismatch
+                    }
+                    try await FirestoreService().syncOfficialCheckIns(records, userId: uid)
+                    guard authService.session?.uid == uid else {
+                        throw FirestoreService.FirestoreServiceError.accountMismatch
+                    }
+                    try await FirestoreService().finalizeLeaderboardPublication(
+                        ticket: ticket,
+                        publicAlias: publicAlias
+                    )
+                } else {
+                    try await FirestoreService().setLeaderboardParticipation(
+                        userId: uid,
+                        publicAlias: publicAlias,
+                        isVisible: false
+                    )
+                }
+                guard authService.session?.uid == uid else {
+                    throw FirestoreService.FirestoreServiceError.accountMismatch
+                }
+                await loadLeaderboardPublicationState()
+                await refreshLeaderboardProfilesAfterExactReadback(for: uid)
+            } catch {
+                guard leaderboardPublication.canApplyLocal(
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                ) else { return }
+                leaderboardPublication.applyLocal(
+                    .failed,
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var leaderboardPublicationStatusBanner: some View {
+        let actions = LeaderboardRecoveryActions.resolve(
+            publication: leaderboardPublicationState,
+            listRefresh: leaderboardListRefreshRequest.listRefresh
+        )
+        if actions.showRetainedDisclosure {
+            if actions.showListRetry {
+                leaderboardStatusBanner(
+                    message: AppText.value(
+                        zh: "目前顯示的是舊排行榜資料；未能更新最新全域名次。",
+                        en: "Showing retained leaderboard results because the latest global rank could not be refreshed."
+                    ),
+                    button: AppText.value(zh: "重試", en: "Retry")
+                ) {
+                    retryLeaderboardListRefresh()
+                }
+            } else {
+                leaderboardUpdatingBanner(
+                    message: AppText.value(
+                        zh: "排行榜更新中；暫時顯示上次結果。",
+                        en: "Updating leaderboard; showing last results."
+                    )
+                )
+            }
+        }
+        if actions.showPublicationRetry {
+            switch leaderboardPublicationState {
+        case .failed:
+            leaderboardStatusBanner(
+                message: AppText.value(
+                    zh: "未能讀取或更新伺服器排行榜設定；沒有當作同意公開。",
+                    en: "Could not read or update the server leaderboard setting. This was not treated as consent."
+                ),
+                button: AppText.value(zh: "重試", en: "Retry")
+            ) {
+                retryLeaderboardMigration()
+            }
+        case .pending:
+            leaderboardStatusBanner(
+                message: AppText.value(
+                    zh: "已有伺服器選擇，但公開資料尚未回讀完成。",
+                    en: "Your server choice is saved, but public readback is still pending."
+                ),
+                button: AppText.value(zh: "重試同步", en: "Retry Sync")
+            ) {
+                retryLeaderboardMigration()
+            }
+        case .unknown, .missing, .completed, .declined:
+            EmptyView()
+            }
+        }
+    }
+
+    private func leaderboardStatusBanner(
+        message: String,
+        button: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.arrow.triangle.2.circlepath")
+                .foregroundStyle(FrogTheme.orange)
+            Text(message)
+                .font(.frogMicro.weight(.semibold))
+                .foregroundStyle(FrogTheme.ink)
+            Spacer(minLength: 4)
+            Button(button, action: action)
+                .font(.frogCaption.weight(.black))
+                .foregroundStyle(FrogTheme.moss)
+        }
+        .padding(12)
+        .background(FrogTheme.orangeSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func leaderboardUpdatingBanner(message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .foregroundStyle(FrogTheme.moss)
+            Text(message)
+                .font(.frogMicro.weight(.semibold))
+                .foregroundStyle(FrogTheme.ink)
+            Spacer(minLength: 4)
+        }
+        .padding(12)
+        .background(FrogTheme.mossSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func retryLeaderboardMigration() {
+        guard let uid = authService.session?.uid else { return }
+        Task {
+            do {
+                await loadLeaderboardPublicationState()
+                guard leaderboardPublication.canApplyLocal(
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                ) else { return }
+                if case .completed = leaderboardPublicationState {
+                    await refreshLeaderboardProfilesAfterExactReadback(for: uid)
+                    return
+                }
+                guard case .pending(let participation) = leaderboardPublicationState else { return }
+                try await FirestoreService().syncOfficialCheckIns(checkInStore.records, userId: uid)
+                guard authService.session?.uid == uid else {
+                    throw FirestoreService.FirestoreServiceError.accountMismatch
+                }
+                if participation.isVisible {
+                    guard let requestID = participation.syncRequestId else {
+                        throw FirestoreService.FirestoreServiceError.staleSyncRequest
+                    }
+                    try await FirestoreService().requestLeaderboardRebuild(
+                        userId: uid,
+                        expectedSyncRequestID: requestID
+                    )
+                } else if let publicAlias = participation.publicAlias,
+                          let requestID = participation.syncRequestId {
+                    try await FirestoreService().finalizeLeaderboardPublication(
+                        ticket: LeaderboardSyncTicket(
+                            ownerUID: uid,
+                            syncRequestID: requestID,
+                            expectedPreviousSyncRequestID: nil
+                        ),
+                        publicAlias: publicAlias
+                    )
+                } else {
+                    throw FirestoreService.FirestoreServiceError.invalidPublicAlias
+                }
+                await loadLeaderboardPublicationState()
+                await refreshLeaderboardProfilesAfterExactReadback(for: uid)
+            } catch {
+                guard leaderboardPublication.canApplyLocal(
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                ) else { return }
+                leaderboardPublication.applyLocal(
+                    .failed,
+                    originatingUID: uid,
+                    currentUID: authService.session?.uid
+                )
+            }
+        }
+    }
+
+    private func retryLeaderboardListRefresh() {
+        let expectedUID = authService.session?.uid
+        Task {
+            await loadLeaderboardProfiles(expectedUID: expectedUID)
+        }
+    }
+
+    @MainActor
+    private func refreshLeaderboardProfilesAfterExactReadback(for uid: String) async {
+        guard case .completed = leaderboardPublicationState else { return }
+        guard let request = leaderboardListRefreshRequest.begin(
+            expectedUID: uid,
+            currentUID: authService.session?.uid
+        ) else { return }
+        leaderboardLoadState = .loading
+        do {
+            let refreshedProfiles = try await FirestoreService().fetchLeaderboardProfiles()
+            guard leaderboardListRefreshRequest.succeed(
+                request,
+                currentUID: authService.session?.uid
+            ) else { return }
+            leaderboardProfiles = LeaderboardMigrationProfileRefresh.replacingProfiles(
+                leaderboardProfiles,
+                with: refreshedProfiles,
+                after: leaderboardPublicationState
+            )
+            hasLoadedLeaderboardProfiles = true
+            leaderboardLoadState = .loaded
+        } catch {
+            guard leaderboardListRefreshRequest.fail(
+                request,
+                currentUID: authService.session?.uid
+            ) else { return }
             leaderboardLoadState = .failed
         }
     }
@@ -499,6 +881,11 @@ struct LeaderboardUserDetailView: View {
     private let stampColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 4)
     private let achievementColumns = [GridItem(.flexible()), GridItem(.flexible())]
 
+    private var showsPublicAggregatesOnly: Bool {
+        guard case .seed(let entry) = selection else { return false }
+        return LeaderboardProfileDetailAvailability.forProfile(entry.profile) == .publicAggregatesOnly
+    }
+
     private var displayName: String {
         switch selection {
         case .seed(let entry): entry.profile.name
@@ -518,6 +905,12 @@ struct LeaderboardUserDetailView: View {
     private var profileSubtitle: String {
         switch selection {
         case .seed(let entry):
+            if entry.profile.isServerDerived {
+                return AppText.value(
+                    zh: "只顯示已公開的統計；山峰及日期保持私人",
+                    en: "Only public totals are shown; peaks and dates stay private"
+                )
+            }
             return "\(AppText.seedRegion(entry.profile.homeRegion)) · \(AppText.hikerStyle(entry.profile.style))"
         case .current:
             return currentTitle ?? AppText.value(zh: "你的真實打卡紀錄", en: "Your real check-in record")
@@ -526,7 +919,7 @@ struct LeaderboardUserDetailView: View {
 
     private var titleText: String? {
         switch selection {
-        case .seed(let entry): entry.profile.localizedUnlockedTitle
+        case .seed(let entry): entry.profile.isServerDerived ? nil : entry.profile.localizedUnlockedTitle
         case .current: currentTitle
         }
     }
@@ -553,7 +946,12 @@ struct LeaderboardUserDetailView: View {
     }
 
     private var distinctPeakCount: Int {
-        checkedMountains.count
+        switch selection {
+        case .seed(let entry) where entry.profile.isServerDerived:
+            entry.distinctPeaks
+        default:
+            checkedMountains.count
+        }
     }
 
     private var checkedMountains: [Mountain] {
@@ -606,11 +1004,8 @@ struct LeaderboardUserDetailView: View {
     }
 
     private var currentMonthCheckIns: Int {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month], from: asOf)
         return checkInStore.records.filter {
-            let recordComponents = calendar.dateComponents([.year, .month], from: $0.date)
-            return recordComponents.year == components.year && recordComponents.month == components.month
+            LeaderboardMonth.contains($0.date, inMonthOf: asOf)
         }.count
     }
 
@@ -637,8 +1032,22 @@ struct LeaderboardUserDetailView: View {
 
     private var hero: some View {
         ZStack(alignment: .bottomLeading) {
-            MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0)
+            if showsPublicAggregatesOnly {
+                LinearGradient(
+                    colors: [FrogTheme.moss, FrogTheme.forest],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .overlay {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 72, weight: .black))
+                        .foregroundStyle(.white.opacity(0.16))
+                }
                 .frame(height: 220)
+            } else {
+                MountainPhoto(mountain: MountainCatalog.mountain(id: heroMountainId), dimming: 0)
+                    .frame(height: 220)
+            }
 
             LinearGradient(
                 colors: [.clear, FrogTheme.forest.opacity(0.88)],
@@ -687,7 +1096,16 @@ struct LeaderboardUserDetailView: View {
     private var avatar: some View {
         switch selection {
         case .seed(let entry):
-            SeedHikerAvatar(profile: entry.profile, size: 72, border: FrogTheme.gold)
+            if entry.profile.isServerDerived {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(FrogTheme.forest)
+                    .frame(width: 72, height: 72)
+                    .background(.white, in: Circle())
+                    .overlay(Circle().stroke(FrogTheme.gold, lineWidth: 4))
+            } else {
+                SeedHikerAvatar(profile: entry.profile, size: 72, border: FrogTheme.gold)
+            }
         case .current:
             LbAvatar(mountainId: heroMountainId, size: 72, border: FrogTheme.leaf)
         }
@@ -706,7 +1124,9 @@ struct LeaderboardUserDetailView: View {
             sectionHeader(AppText.value(zh: "最近打卡", en: "Recent Check-ins"), trailing: recentVisits.isEmpty ? nil : AppText.times(recentVisits.count))
 
             if recentVisits.isEmpty {
-                emptyState(AppText.value(zh: "未有打卡紀錄", en: "No check-in records yet"))
+                emptyState(showsPublicAggregatesOnly
+                    ? AppText.value(zh: "最近打卡日期保持私人", en: "Recent check-in dates are private")
+                    : AppText.value(zh: "未有打卡紀錄", en: "No check-in records yet"))
             } else {
                 VStack(spacing: 0) {
                     ForEach(recentVisits) { visit in
@@ -723,7 +1143,9 @@ struct LeaderboardUserDetailView: View {
             sectionHeader(AppText.value(zh: "打過卡的山", en: "Visited Peaks"), trailing: AppText.peaks(distinctPeakCount))
 
             if checkedMountains.isEmpty {
-                emptyState(AppText.value(zh: "未有已打卡山峰", en: "No visited peaks yet"))
+                emptyState(showsPublicAggregatesOnly
+                    ? AppText.value(zh: "山峰名單保持私人，只公開數量", en: "Peak names are private; only the total is public")
+                    : AppText.value(zh: "未有已打卡山峰", en: "No visited peaks yet"))
             } else {
                 LazyVGrid(columns: stampColumns, spacing: 13) {
                     ForEach(Array(checkedMountains.prefix(16))) { mountain in
@@ -752,7 +1174,9 @@ struct LeaderboardUserDetailView: View {
             sectionHeader(AppText.value(zh: "已解鎖成就", en: "Unlocked Achievements"), trailing: achievements.isEmpty ? nil : "\(achievements.count)")
 
             if achievements.isEmpty {
-                emptyState(AppText.value(zh: "完成首次打卡後會解鎖成就", en: "Achievements unlock after your first check-in"))
+                emptyState(showsPublicAggregatesOnly
+                    ? AppText.value(zh: "成就資料未有公開", en: "Achievement details are not public")
+                    : AppText.value(zh: "完成首次打卡後會解鎖成就", en: "Achievements unlock after your first check-in"))
             } else {
                 LazyVGrid(columns: achievementColumns, spacing: 12) {
                     ForEach(achievements) { badge in

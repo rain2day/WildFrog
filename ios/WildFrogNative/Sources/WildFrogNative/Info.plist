@@ -19,7 +19,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>11</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -39,15 +39,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>用於拍攝登頂打卡相、製作水印卡，以及把示意山圖換成你的實拍紀錄。</string>
+	<string>用於拍攝正式登頂打卡或自由拍照相片，並製作相框／水印圖片。 Used to capture official check-in or Free Photo images and create framed or watermarked photos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>用於確認你是否接近山頂檢查點、計算路線距離，並在你主動開始行程記錄時持續記錄軌跡。</string>
+	<string>用於確認正式打卡位置、計算路線及記錄你主動開始的行程；自由拍照亦可選擇用新定位約數預填海拔。 Used for official check-in proximity, routes and started trip tracking, and optionally to prefill approximate altitude in Free Photo.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>用於將打卡水印圖儲存到相簿。</string>
+	<string>用於將正式打卡水印圖或自由拍照相框圖儲存到相簿。 Used to save official check-in watermarks or Free Photo framed images to Photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>用於選擇登頂相或頭像，並製作打卡水印圖。</string>
+	<string>用於選擇正式登頂相、自由拍照相片或頭像，並製作相框／水印圖片。 Used to select official check-in, Free Photo, or avatar images and create framed or watermarked photos.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIBackgroundModes</key>

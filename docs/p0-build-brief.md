@@ -19,6 +19,12 @@ Working name: `WildFrog`
 
 Optional product name direction: `PeakStamp` / `山印`.
 
+## Approved MVP Trust Boundary — 2026-08-18
+
+The current iOS/Firebase leaderboard is intentionally an **honor-system MVP**. An authenticated owner may create a schema-valid official `checkIns` row after the app's ranked check-in flow; Firebase Functions derives public aggregate counts from those private rows. Firestore rules enforce ownership, schema shape, private preference access, and backend-only public score writes. They do **not** attest GPS position, GPS accuracy, checkpoint distance, photo provenance, suspicious attempts, App Check, or one-per-mountain/HKT-day uniqueness.
+
+This limitation is approved and is not a current merge blocker. Do not call the current rules or leaderboard anti-forgery, server-attested, or cheat-proof. Server-owned check-in validation and evidence attestation remain explicit deferred hardening if the product later needs a higher-trust competition model. The deferred design sections below are retained as that future target and do not override this approved MVP boundary.
+
 ## P0 Scope
 
 P0 must ship a small, working loop:
@@ -27,12 +33,12 @@ P0 must ship a small, working loop:
 2. User sees a list of mountains.
 3. User opens a mountain detail page.
 4. User requests a GPS check-in.
-5. Server validates that the user is inside the mountain check-in area.
-6. If the user is inside the valid area, the app unlocks photo proof.
-7. User takes an on-site photo or uploads a photo.
-8. Server creates the check-in attempt.
-9. A valid check-in increases that user's count for that mountain.
-10. User sees the mountain's total leaderboard and their own rank.
+5. The app applies its current client-side proximity and photo gates.
+6. User takes an on-site photo or chooses a photo.
+7. The authenticated owner creates a schema-valid official check-in row.
+8. Firebase Functions derives leaderboard aggregates from that private row.
+9. The check-in increases that user's honor-system leaderboard count.
+10. User sees the public leaderboard and their own rank after backend acknowledgement/readback.
 
 ## P0 Must Have
 
@@ -40,12 +46,12 @@ P0 must ship a small, working loop:
 - Mountain list.
 - Mountain detail page.
 - GPS permission and current location request.
-- Server-side distance validation for check-ins.
-- Photo proof after location validation:
+- Client-side distance gating for the ranked check-in experience.
+- A photo in the ranked check-in flow:
   - take an on-site photo,
   - or upload a photo.
-- One valid leaderboard check-in per user per mountain per HKT day.
-- Storage of valid and invalid check-in attempts.
+- Stable owner-bound check-in IDs and a durable, UID-bound upload outbox.
+- Conditional publication finalization so a later opt-out or account deletion wins.
 - Total leaderboard per mountain.
 - User's own rank and count, even when outside the visible top 10.
 - Basic safety and privacy copy.
@@ -53,6 +59,9 @@ P0 must ship a small, working loop:
 ## P0 Explicitly Deferred
 
 Do not build these in P0:
+
+- Server-attested GPS accuracy, checkpoint-distance, and photo provenance.
+- Server-owned suspicious-attempt handling, App Check enforcement, and one-per-mountain/HKT-day uniqueness.
 
 - Friend system.
 - Friend leaderboard.
@@ -140,7 +149,7 @@ States:
 - Uploaded photo selected.
 - Suspicious or invalid attempt stored but not counted.
 
-Photo proof behavior:
+Deferred server-attested photo-proof behavior (not part of the approved honor-system MVP):
 
 - The photo controls are locked until server-side location validation says the user is inside the valid radius.
 - On-site camera and upload are both allowed after the user has reached the valid area.
@@ -225,7 +234,7 @@ Stores every check-in attempt.
 - `stamped_photo_url` text nullable.
 - `stamp_payload` jsonb nullable, stores the server-rendered watermark text such as mountain name, height, region, check-in count, and coarse date.
 
-Important:
+Deferred server-attested design (not current MVP behavior):
 
 - Never trust client-side distance validation.
 - Server calculates distance from `mountains.checkpoint`.
@@ -252,7 +261,7 @@ Unique constraint:
 
 Do not store `monthly_valid_checkins` in this table for P0. Monthly stats should be calculated from `mountain_checkins` or added later as a separate period table.
 
-### `anti_cheat_flags`
+### `anti_cheat_flags` — deferred hardening
 
 P0 stores simple flags only.
 
@@ -266,7 +275,9 @@ P0 stores simple flags only.
 - `created_at` timestamptz not null.
 - `resolved_at` timestamptz nullable.
 
-## Check-in Validation Rules
+## Deferred Server-Attested Check-in Validation Rules
+
+The rules in this section describe optional future hardening. They are not enforced or claimed by the current honor-system MVP.
 
 A check-in counts for leaderboard only when all conditions pass:
 
@@ -307,8 +318,8 @@ ORDER BY
 Tie breakers:
 
 1. Higher valid check-in count wins.
-2. If tied, earlier latest valid check-in wins.
-3. If still tied, earlier first valid check-in wins.
+2. Equal public scores share the same competition rank; the next lower score skips the occupied positions (for example `1, 1, 3`).
+3. Anonymous `publicProfileId` may provide stable display ordering inside a tie, but it must not create a different numeric rank. First/latest check-in timestamps remain private and are not published as tie-break fields.
 
 P0 can calculate rank on demand with SQL window functions. Avoid snapshot tables until performance requires caching.
 
@@ -428,7 +439,7 @@ P0 should include a static safety reminder on check-in-related screens:
 - Respect restricted areas and private land.
 - Do not check in while moving through unsafe terrain.
 
-## P0 Build Order
+## Current Honor-System MVP Build Order
 
 1. Scaffold Expo TypeScript app and Supabase config.
 2. Create database schema and seed mountains.
@@ -436,28 +447,28 @@ P0 should include a static safety reminder on check-in-related screens:
 4. Build mountain list.
 5. Build mountain detail.
 6. Implement GPS permission and current location request.
-7. Implement server-side check-in validation.
-8. Unlock camera/upload photo proof only when current location is valid.
-9. Store check-in attempts with photo proof metadata.
-10. Update total stats after valid check-in.
-11. Build total leaderboard and current user rank.
+7. Persist official check-ins under the authenticated owner's UID with stable record IDs and durable retry.
+8. Derive public aggregates in Firebase Functions without accepting client-written scores.
+9. Make consent, public alias, opt-out, deletion, and final visibility request-conditional.
+10. Build the complete public leaderboard and exact current-user rank beyond 100 users.
+11. Document the honor-system limitation without claiming GPS/photo attestation.
 12. Add basic empty, loading, and error states.
 13. Add minimal safety and privacy copy.
 
-## Acceptance Criteria
+## Current Honor-System MVP Acceptance Criteria
 
 P0 is done when:
 
 - A signed-in user can open a mountain detail screen.
 - The app can request GPS permission and read current location.
-- Photo proof controls are locked until the user is inside the valid checkpoint area.
-- A user inside the valid area can take an on-site photo or upload a photo before submitting.
-- A valid nearby check-in is stored and counted.
-- An invalid far-away check-in is stored but not counted.
-- A second valid check-in on the same mountain in the same HKT day is rejected for leaderboard counting.
+- The ranked flow applies its existing client-side GPS/photo gates, without presenting them as server attestation.
+- An authenticated owner's schema-valid official check-in is stored and counted by backend aggregation.
+- Pending upload/publication work survives view dismissal and relaunch, remains bound to its originating UID and stable record ID, and exposes retry/error state.
+- A stale opt-in cannot overwrite a later opt-out or account-deletion tombstone.
 - The mountain leaderboard updates from server-side data.
-- The user can see their own rank and count.
+- The user can see their exact rank and count from the complete visible result set, including beyond 100 users.
 - Public leaderboard does not expose exact coordinates or exact private timestamps.
+- Public alias rename remains non-contact/non-UID and completes only after backend acknowledgement and matching public readback.
 - No coupon, merchant, sponsor, shopping, payment, or reward-shop feature exists.
 
 ## Open Decisions Before Production
@@ -469,3 +480,4 @@ P0 is done when:
 - Whether private users appear as anonymous rows or are removed from public leaderboards.
 - Whether monthly leaderboard belongs in P1 or P2.
 - Whether the product name is `WildFrog`, `PeakStamp`, `山印`, or another name.
+- Whether a later competitive version needs server-owned GPS/photo/App Check attestation and daily uniqueness. This is deferred hardening, not a current merge blocker.

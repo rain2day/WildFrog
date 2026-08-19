@@ -7,3 +7,7 @@ prototype/qa/
 **/*.xcodeproj/project.xcworkspace/xcuserdata/
 **/*.xcworkspace/xcuserdata/
 ios/WildFrogNative/Sources/WildFrogNative/GoogleService-Info.plist
+functions/lib/
+functions/node_modules/
+firestore-debug.log
+firebase-debug.log
