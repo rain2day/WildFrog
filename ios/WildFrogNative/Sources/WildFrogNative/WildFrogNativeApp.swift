@@ -59,6 +59,7 @@ struct WildFrogNativeApp: App {
     @StateObject private var checkInStore = CheckInStore()
     @StateObject private var cloudOutbox = CheckInCloudOutboxStore()
     @StateObject private var trackRecorder = TrackRecorder()
+    @StateObject private var freePhotoStore = FreePhotoStore()
 
     init() {
         _authService = State(initialValue: ProfileAuthService(activateFirebase: false))
@@ -72,6 +73,7 @@ struct WildFrogNativeApp: App {
                 .environmentObject(checkInStore)
                 .environmentObject(cloudOutbox)
                 .environmentObject(trackRecorder)
+                .environmentObject(freePhotoStore)
                 .task { @MainActor in
                     authService.activate()
                 }
@@ -87,6 +89,7 @@ struct WildFrogNativeApp: App {
                     if ProcessInfo.processInfo.arguments.contains("-qaDemoData") {
                         checkInStore.seedDemoData()
                     }
+                    freePhotoStore.seedQARecordsIfRequested()
                 }
                 #endif
                 .onOpenURL { url in

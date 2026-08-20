@@ -1,6 +1,6 @@
 import Foundation
 
-enum FreePhotoAltitudeSource: Equatable {
+enum FreePhotoAltitudeSource: String, Codable, Equatable {
     case none
     case gpsApproximate
     case manual

@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-enum FreePhotoCardStyle: String, CaseIterable, Identifiable {
+enum FreePhotoCardStyle: String, Codable, CaseIterable, Identifiable {
     case polaroid
     case passport
 

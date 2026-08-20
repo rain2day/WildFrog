@@ -3,6 +3,7 @@ import SwiftUI
 
 struct HomeMapListView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
+    @EnvironmentObject private var freePhotoStore: FreePhotoStore
 
     @State private var searchText = ""
     @State private var selectedRegion = "全部"
@@ -16,6 +17,20 @@ struct HomeMapListView: View {
         )
     )
     @State private var selectedMarkerID: String?
+    @State private var homeMapLayerState = HomeMapLayerState()
+    @State private var selectedFreePhotoRecords: [FreePhotoRecord] = []
+    @State private var editingFreePhotoRecord: FreePhotoRecord?
+    @State private var showNeedsLocation = false
+
+    init() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-qaFreePhotoMap") {
+            var state = HomeMapLayerState()
+            state.select(.freePhotos)
+            _homeMapLayerState = State(initialValue: state)
+        }
+        #endif
+    }
 
     private enum SortMode: String, CaseIterable, Identifiable {
         case rank = "300峰"
@@ -120,6 +135,28 @@ struct HomeMapListView: View {
         }
         .hiddenNavigationBar()
         .appPageBackground(FrogTheme.warmPaper)
+        .sheet(isPresented: Binding(
+            get: { !selectedFreePhotoRecords.isEmpty },
+            set: { if !$0 { selectedFreePhotoRecords = [] } }
+        )) {
+            FreePhotoMapDetailView(records: selectedFreePhotoRecords) { record in
+                selectedFreePhotoRecords = []
+                DispatchQueue.main.async { editingFreePhotoRecord = record }
+            }
+        }
+        .sheet(isPresented: $showNeedsLocation) {
+            FreePhotoMapDetailView(
+                records: FreePhotoMapProjection(records: freePhotoStore.records).needsLocation
+            ) { record in
+                showNeedsLocation = false
+                DispatchQueue.main.async { editingFreePhotoRecord = record }
+            }
+        }
+        .sheet(item: $editingFreePhotoRecord) { record in
+            FreePhotoManualLocationPicker(record: record) { coordinate in
+                try? freePhotoStore.setManualLocation(recordID: record.id, coordinate: coordinate)
+            }
+        }
     }
 
     private func heroBanner(topInset: CGFloat) -> some View {
@@ -233,99 +270,138 @@ struct HomeMapListView: View {
     }
 
     private func mapOverview(scrollProxy: ScrollViewProxy) -> some View {
-        ZStack(alignment: .topLeading) {
-            Map(position: $mapPosition, selection: $selectedMarkerID) {
-                ForEach(mapMarkers) { pin in
-                    Marker(pin.mountain.localizedName, systemImage: pin.isVisited ? "checkmark.circle.fill" : "mappin", coordinate: pin.mountain.coordinate)
-                        .tint(pin.isVisited ? FrogTheme.orange : FrogTheme.moss)
-                        .tag(pin.id)
+        let projection = FreePhotoMapProjection(records: freePhotoStore.records)
+        return VStack(spacing: 10) {
+            Picker(AppText.value(zh: "地圖圖層", en: "Map Layer"), selection: Binding(
+                get: { homeMapLayerState.layer },
+                set: { homeMapLayerState.select($0) }
+            )) {
+                ForEach(HomeMapLayer.allCases) { layer in
+                    Text(layer.title).tag(layer)
                 }
             }
-            .mapStyle(mapStyleHybrid ? .hybrid : .standard)
-            .mapControlVisibility(.hidden)
-            .frame(height: 410)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .pickerStyle(.segmented)
 
-            HStack {
-                Label(AppText.value(zh: "山峰地圖", en: "Peak Map"), systemImage: "map.fill")
+            ZStack(alignment: .topLeading) {
+                if homeMapLayerState.showsPeakMarkers {
+                    Map(position: $mapPosition, selection: $selectedMarkerID) {
+                        ForEach(mapMarkers) { pin in
+                            Marker(pin.mountain.localizedName, systemImage: pin.isVisited ? "checkmark.circle.fill" : "mappin", coordinate: pin.mountain.coordinate)
+                                .tint(pin.isVisited ? FrogTheme.orange : FrogTheme.moss)
+                                .tag(pin.id)
+                        }
+                    }
+                    .mapStyle(mapStyleHybrid ? .hybrid : .standard)
+                    .mapControlVisibility(.hidden)
+                } else if projection.located.isEmpty {
+                    ZStack {
+                        LinearGradient(colors: [FreePhotoPalette.mist, .white], startPoint: .top, endPoint: .bottom)
+                        VStack(spacing: 12) {
+                            Image(systemName: "map.fill")
+                                .font(.system(size: 38, weight: .semibold))
+                                .foregroundStyle(FreePhotoPalette.blue)
+                            Text(AppText.value(zh: "你的自由拍地圖仍然係空白", en: "Your Free Photo map is empty"))
+                                .font(.frogTitle)
+                                .foregroundStyle(FreePhotoPalette.navy)
+                            NavigationLink(value: NativeRoute.freePhoto) {
+                                Text(AppText.value(zh: "開始自由拍", en: "Start Free Photo"))
+                                    .font(.frogCaption.weight(.bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 18)
+                                    .padding(.vertical, 11)
+                                    .background(FreePhotoPalette.navy, in: Capsule())
+                            }
+                        }
+                    }
+                } else {
+                    FreePhotoMapView(
+                        records: projection.located,
+                        thumbnailURL: { freePhotoStore.thumbnailURL(for: $0) },
+                        mapType: mapStyleHybrid ? .hybrid : .standard
+                    ) { records in
+                        selectedFreePhotoRecords = records
+                    }
+                }
+
+                HStack {
+                    Label(
+                        homeMapLayerState.showsPeakMarkers
+                            ? AppText.value(zh: "山峰地圖", en: "Peak Map")
+                            : AppText.value(zh: "我的自由拍", en: "My Free Photos"),
+                        systemImage: homeMapLayerState.showsPeakMarkers ? "mountain.2.fill" : "photo.on.rectangle.angled"
+                    )
                     .font(.frogCaption.weight(.bold))
-                    .foregroundStyle(FrogTheme.forest)
+                    .foregroundStyle(homeMapLayerState.showsPeakMarkers ? FrogTheme.forest : FreePhotoPalette.navy)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .background(Color.white.opacity(0.92), in: Capsule())
-                Spacer()
-                Text("\(mapMountains.count)")
-                    .font(.frogMicro.weight(.bold))
-                    .foregroundStyle(FrogTheme.forest)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(Color.white.opacity(0.86), in: Capsule())
-            }
-            .padding(12)
-
-            VStack {
-                Spacer()
-                HStack(alignment: .bottom) {
-                    Button {
-                        withAnimation {
-                            scrollProxy.scrollTo("directoryAnchor", anchor: .top)
-                        }
-                    } label: {
-                        Text(AppText.value(zh: "睇晒全部山峰", en: "All Peaks"))
-                            .font(.frogCaption.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Color.black.opacity(0.62), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-
                     Spacer()
+                    Text("\(homeMapLayerState.showsPeakMarkers ? mapMountains.count : projection.located.count)")
+                        .font(.frogMicro.weight(.bold))
+                        .foregroundStyle(FrogTheme.forest)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(Color.white.opacity(0.86), in: Capsule())
+                }
+                .padding(12)
 
-                    VStack(spacing: 10) {
-                        Button {
-                            withAnimation {
-                                mapPosition = .region(
-                                    MKCoordinateRegion(
-                                        center: CLLocationCoordinate2D(latitude: 22.34, longitude: 114.16),
-                                        span: MKCoordinateSpan(latitudeDelta: 0.36, longitudeDelta: 0.54)
-                                    )
-                                )
+                VStack {
+                    Spacer()
+                    HStack(alignment: .bottom) {
+                        if homeMapLayerState.showsPeakMarkers {
+                            Button {
+                                withAnimation { scrollProxy.scrollTo("directoryAnchor", anchor: .top) }
+                            } label: {
+                                Text(AppText.value(zh: "睇晒全部山峰", en: "All Peaks"))
+                                    .font(.frogCaption.weight(.bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .background(Color.black.opacity(0.62), in: Capsule())
                             }
-                        } label: {
-                            MapFloatingButton(systemImage: "location.north.fill")
+                            .buttonStyle(.plain)
+                        } else if !projection.needsLocation.isEmpty {
+                            Button { showNeedsLocation = true } label: {
+                                Label(
+                                    AppText.value(
+                                        zh: "\(projection.needsLocation.count) 張需要位置",
+                                        en: "\(projection.needsLocation.count) need a location"
+                                    ),
+                                    systemImage: "mappin.slash"
+                                )
+                                .font(.frogCaption.weight(.bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(FreePhotoPalette.navy.opacity(0.9), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(AppText.value(zh: "重置地圖", en: "Reset Map"))
 
-                        Button {
-                            mapStyleHybrid.toggle()
-                        } label: {
+                        Spacer()
+                        Button { mapStyleHybrid.toggle() } label: {
                             MapFloatingButton(systemImage: mapStyleHybrid ? "map.fill" : "square.3.layers.3d")
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(mapStyleHybrid ? AppText.value(zh: "標準地圖", en: "Standard Map") : AppText.value(zh: "衛星地圖", en: "Satellite Map"))
                     }
+                    .padding(12)
                 }
-                .padding(12)
-            }
 
-            // Callout card — shown when a pin is tapped.
-            if let markerID = selectedMarkerID,
-               let mountainID = markerID.split(separator: "|").first.map(String.init),
-               let mountain = MountainCatalog.mountains.first(where: { $0.id == mountainID }) {
-                VStack {
-                    Spacer()
-                    HStack(alignment: .bottom, spacing: 0) {
-                        MapPinCalloutCard(mountain: mountain) {
-                            selectedMarkerID = nil
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.bottom, 12)
+                if homeMapLayerState.showsPeakMarkers,
+                   let markerID = selectedMarkerID,
+                   let mountainID = markerID.split(separator: "|").first.map(String.init),
+                   let mountain = MountainCatalog.mountains.first(where: { $0.id == mountainID }) {
+                    VStack {
+                        Spacer()
+                        MapPinCalloutCard(mountain: mountain) { selectedMarkerID = nil }
+                            .padding(12)
                     }
                 }
             }
+            .frame(height: 410)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
+        .padding(10)
         .paperCardStyle()
     }
 
