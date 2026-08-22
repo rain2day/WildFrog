@@ -58,11 +58,19 @@ struct WildFrogNativeApp: App {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var checkInStore = CheckInStore()
     @StateObject private var cloudOutbox = CheckInCloudOutboxStore()
-    @StateObject private var trackRecorder = TrackRecorder()
+    @StateObject private var trackRecorder: TrackRecorder
     @StateObject private var freePhotoStore = FreePhotoStore()
+    @StateObject private var tripStore: TripStore
+    @StateObject private var tripSession: TripSessionCoordinator
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        let recorder = TrackRecorder()
+        let trips = TripStore()
         _authService = State(initialValue: ProfileAuthService(activateFirebase: false))
+        _trackRecorder = StateObject(wrappedValue: recorder)
+        _tripStore = StateObject(wrappedValue: trips)
+        _tripSession = StateObject(wrappedValue: TripSessionCoordinator(store: trips, recorder: recorder))
     }
 
     var body: some Scene {
@@ -74,6 +82,16 @@ struct WildFrogNativeApp: App {
                 .environmentObject(cloudOutbox)
                 .environmentObject(trackRecorder)
                 .environmentObject(freePhotoStore)
+                .environmentObject(tripStore)
+                .environmentObject(tripSession)
+                .task {
+                    try? tripSession.restoreCheckpointIfNeeded()
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase != .active, tripSession.activeTrip != nil {
+                        try? tripSession.checkpoint()
+                    }
+                }
                 .task { @MainActor in
                     authService.activate()
                 }
@@ -90,6 +108,7 @@ struct WildFrogNativeApp: App {
                         checkInStore.seedDemoData()
                     }
                     freePhotoStore.seedQARecordsIfRequested()
+                    tripStore.seedQADataIfRequested()
                 }
                 #endif
                 .onOpenURL { url in

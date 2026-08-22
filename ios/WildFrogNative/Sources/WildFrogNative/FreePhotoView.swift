@@ -29,24 +29,23 @@ struct FreePhotoView: View {
     @State private var recoveryRequest: FreePhotoSaveRequest?
     @State private var recoveryThumbnailData: Data?
     @State private var didAddToPrivateMap = false
-
-    private var altitudeText: Binding<String> {
-        Binding(
-            get: { draft.altitudeText },
-            set: { draft.setAltitudeText($0) }
-        )
-    }
+    @State private var showsMetadataEditor = false
+    @State private var cameraLoadTask: Task<Void, Never>?
+    @State private var photoLoadError: String?
 
     private var frameContent: FreePhotoFrameContent {
         frameContent(renderedAt: renderedAt)
     }
 
-    private func frameContent(renderedAt: Date) -> FreePhotoFrameContent {
+    private func frameContent(renderedAt _: Date) -> FreePhotoFrameContent {
         FreePhotoFrameContent(
             placeName: draft.validatedName,
             altitudeMetres: draft.altitudeMetres,
             altitudeSource: draft.altitudeSource,
-            date: renderedAt
+            date: draft.displayDate,
+            coordinate: draft.showsCoordinates ? draft.displayCoordinate : nil,
+            isDateEdited: draft.isDateEdited,
+            isCoordinateEdited: draft.isCoordinateEdited
         )
     }
 
@@ -61,29 +60,37 @@ struct FreePhotoView: View {
             altitudeMetres: draft.altitudeMetres,
             altitudeSource: draft.altitudeSource,
             cardStyle: cardStyle,
-            renderedAt: renderedAt
+            renderedAt: renderedAt,
+            frameDate: draft.frameDate,
+            showsDate: draft.showsDate,
+            latitudeText: draft.latitudeText,
+            longitudeText: draft.longitudeText,
+            showsCoordinates: draft.showsCoordinates
         )
     }
 
+    private var presentation: FreePhotoEditorPresentation {
+        FreePhotoEditorPresentation(hasPhoto: capturedImage != nil)
+    }
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                photoSection
-                detailsSection
-
-                if let capturedImage, draft.validationError == nil {
-                    previewSection(image: capturedImage)
+        Group {
+            switch presentation.mode {
+            case .studio:
+                if let capturedImage {
+                    studioEditor(image: capturedImage)
                 }
-
-                saveSection
+            case .capture:
+                captureEditor
             }
-            .padding(.horizontal, FrogSpace.screenPadding)
-            .padding(.top, 12)
-            .padding(.bottom, 36)
         }
         .background(FreePhotoPalette.paleMist.ignoresSafeArea())
         .navigationBarBackButtonHidden()
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if presentation.usesStickySave {
+                stickySaveAction
+            }
+        }
         .onAppear {
             draft.beginLocationPrefillSession(at: .now)
             #if DEBUG
@@ -91,6 +98,11 @@ struct FreePhotoView: View {
             if isQARender {
                 draft.placeName = AppText.value(zh: "大東山日落位", en: "Sunset Ridge")
                 draft.setAltitudeText("438")
+                draft.applyFrameMetadata(
+                    date: .now,
+                    coordinate: FreePhotoCoordinate(latitude: 22.4084, longitude: 114.1201)
+                )
+                draft.showsCoordinates = true
                 capturedImage = UIImage(named: "MountainTaiTungShan")
                     ?? UIImage(named: "MountainVioletHill")
             }
@@ -106,6 +118,8 @@ struct FreePhotoView: View {
         .onDisappear {
             photoLoadTask?.cancel()
             photoLoadTask = nil
+            cameraLoadTask?.cancel()
+            cameraLoadTask = nil
             photoSelectionState.invalidateForDismissal()
             locationManager.stopUpdating(for: locationConsumerID)
         }
@@ -118,27 +132,41 @@ struct FreePhotoView: View {
             let captureRequestRevision = captureRevision + 1
             let requestRevision = photoSelectionState.beginPhotosLoad()
             photoLoadTask = Task {
+                let acceptedAt = Date()
                 guard let data = try? await item.loadTransferable(type: Data.self),
-                      !Task.isCancelled,
-                      let image = UIImage(data: data) else { return }
-                let metadataLocation = await FreePhotoMetadataLocationReader.candidate(
+                      !Task.isCancelled else { return }
+                // Decoding runs off the main actor; only the state assignment
+                // below hops back onto it.
+                let image = await FreePhotoImagePreparer.prepare(data: data)
+                guard !Task.isCancelled else { return }
+                guard let image else {
+                    if photoSelectionState.acceptPhotosResult(requestRevision) {
+                        photoLoadError = Self.photoPreparationFailureMessage
+                        photoLoadTask = nil
+                    }
+                    return
+                }
+                let metadata = await FreePhotoMetadataReader.metadata(
                     from: data,
-                    photosIdentifier: item.itemIdentifier
+                    photosIdentifier: item.itemIdentifier,
+                    acceptedAt: acceptedAt
                 )
                 guard !Task.isCancelled,
                       photoSelectionState.acceptPhotosResult(requestRevision) else { return }
+                photoLoadError = nil
                 captureRevision = captureRequestRevision
                 capturedImage = image
-                selectedLocation = metadataLocation
+                selectedLocation = metadata.location
+                draft.applyFrameMetadata(
+                    date: metadata.creationDate,
+                    coordinate: metadata.location?.coordinate
+                )
                 showImportedLocationChoice = selectedLocation == nil
                 photoLoadTask = nil
                 resetSaveConfirmation()
             }
         }
-        .onChange(of: draft.placeName) { _, _ in
-            resetSaveConfirmation()
-        }
-        .onChange(of: draft.altitudeText) { _, _ in
+        .onChange(of: draft) { _, _ in
             resetSaveConfirmation()
         }
         .onChange(of: cardStyle) { _, _ in
@@ -148,10 +176,18 @@ struct FreePhotoView: View {
             resetSaveConfirmation()
         }
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPicker(capturedImage: $capturedImage) { _ in
-                finishCameraCapture()
+            // The binding would hand back the raw capture synchronously on the
+            // main actor; preparation is routed through `finishCameraCapture`
+            // instead so the decode happens off-main.
+            CameraPicker(capturedImage: .constant(nil)) { image in
+                finishCameraCapture(image: image, capturedAt: .now)
             }
-                .ignoresSafeArea()
+            .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showsMetadataEditor) {
+            FreePhotoMetadataEditorSheet(draft: $draft)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .confirmationDialog(
             AppText.value(zh: "呢張相片冇位置資料", en: "This photo has no location"),
@@ -159,8 +195,13 @@ struct FreePhotoView: View {
             titleVisibility: .visible
         ) {
             Button(AppText.value(zh: "使用目前位置", en: "Use Current Location")) {
-                selectedLocation = FreePhotoLocationResolver.currentLocationCandidate(
+                let candidate = FreePhotoLocationResolver.currentLocationCandidate(
                     locationManager.resolvedLocation ?? locationManager.currentLocation
+                )
+                selectedLocation = candidate
+                draft.applyFrameMetadata(
+                    date: draft.frameDate,
+                    coordinate: candidate?.coordinate
                 )
             }
             Button(AppText.value(zh: "稍後在地圖加位置", en: "Add Location Later")) {
@@ -173,6 +214,122 @@ struct FreePhotoView: View {
                 en: "Use the current GPS explicitly, or save now and place it on the map later."
             ))
         }
+    }
+
+    private var captureEditor: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: FreePhotoEditorMetrics.sectionGap) {
+                header
+                photoSection
+            }
+            .padding(.horizontal, FreePhotoEditorMetrics.pageInset)
+            .padding(.top, 12)
+            .padding(.bottom, 36)
+        }
+    }
+
+    private func studioEditor(image: UIImage) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: FreePhotoEditorMetrics.sectionGap) {
+                studioHeader
+                studioPreview(image: image)
+                frameStylePicker
+                FreePhotoMetadataSummaryCard(draft: $draft) {
+                    showsMetadataEditor = true
+                }
+                locationStatus
+                saveSupportingSection
+            }
+            .padding(.horizontal, FreePhotoEditorMetrics.pageInset)
+            .padding(.top, 12)
+            .padding(.bottom, 24)
+        }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var studioHeader: some View {
+        HStack(spacing: 12) {
+            backButton
+            VStack(alignment: .leading, spacing: 2) {
+                Text(AppText.value(zh: "自由拍照", en: "Free Photo"))
+                    .font(.frogTitle)
+                    .foregroundStyle(FreePhotoPalette.navy)
+                Text(AppText.value(zh: "即時預覽相框", en: "Live frame preview"))
+                    .font(.frogMicro.weight(.bold))
+                    .foregroundStyle(FreePhotoPalette.blue)
+            }
+            Spacer()
+            Menu {
+                if FreePhotoCaptureAvailability.sources(
+                    cameraAvailable: UIImagePickerController.isSourceTypeAvailable(.camera)
+                ).contains(.camera) {
+                    Button {
+                        beginCameraReplacement()
+                    } label: {
+                        Label(AppText.value(zh: "重新影相", en: "Take Another Photo"), systemImage: "camera.fill")
+                    }
+                }
+                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                    Label(AppText.value(zh: "由相簿更換", en: "Replace from Photos"), systemImage: "photo.on.rectangle")
+                }
+            } label: {
+                Label(AppText.value(zh: "更換", en: "Replace"), systemImage: "arrow.triangle.2.circlepath")
+                    .font(.frogCaption.weight(.bold))
+                    .foregroundStyle(FreePhotoPalette.blue)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 42)
+                    .background(.white, in: Capsule())
+            }
+        }
+    }
+
+    private var backButton: some View {
+        Button { dismiss() } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 16, weight: .black))
+                .foregroundStyle(FreePhotoPalette.navy)
+                .frame(width: 42, height: 42)
+                .background(FreePhotoPalette.mist, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppText.value(zh: "返回", en: "Back"))
+    }
+
+    private func studioPreview(image: UIImage) -> some View {
+        let previewLayout = FreePhotoPreviewLayout(style: cardStyle)
+        return GeometryReader { proxy in
+            frameView(image: image)
+                .scaleEffect(proxy.size.width / 1080, anchor: .topLeading)
+                .allowsHitTesting(FreePhotoPreviewInteractionContract.cardAllowsHitTesting)
+                .frame(
+                    width: proxy.size.width,
+                    height: previewLayout.height(forAvailableWidth: proxy.size.width),
+                    alignment: .topLeading
+                )
+                .clipped()
+        }
+        .aspectRatio(previewLayout.aspectRatio, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: FreePhotoEditorMetrics.previewRadius, style: .continuous))
+        .shadow(color: FreePhotoPalette.navy.opacity(0.14), radius: 16, y: 8)
+    }
+
+    private var frameStylePicker: some View {
+        Picker(AppText.value(zh: "相框款式", en: "Frame style"), selection: $cardStyle) {
+            ForEach(FreePhotoCardStyle.allCases) { style in
+                Text(style.label).tag(style)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(4)
+        .background(FreePhotoPalette.mist, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+    }
+
+    private func beginCameraReplacement() {
+        photoLoadTask?.cancel()
+        photoLoadTask = nil
+        photoSelectionState.invalidateForNewChoice()
+        pendingCameraRevision = captureRevision + 1
+        showCamera = true
     }
 
     private var header: some View {
@@ -203,7 +360,16 @@ struct FreePhotoView: View {
 
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle(AppText.value(zh: "1 · 選擇相片", en: "1 · Choose a photo"))
+            Text(AppText.value(zh: "選擇相片", en: "Choose a photo"))
+                .font(.frogTitle)
+                .foregroundStyle(FreePhotoPalette.navy)
+
+            if let photoLoadError {
+                Label(photoLoadError, systemImage: "exclamationmark.triangle.fill")
+                    .font(.frogCaption.weight(.semibold))
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             if let capturedImage {
                 Image(uiImage: capturedImage)
@@ -274,106 +440,41 @@ struct FreePhotoView: View {
         .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
     }
 
-    private var detailsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle(AppText.value(zh: "2 · 填寫相框資料", en: "2 · Frame details"))
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(AppText.value(zh: "山名／地名", en: "Mountain or place name"))
-                    .font(.frogCaption.weight(.bold))
-                    .foregroundStyle(FreePhotoPalette.navy)
-                TextField(AppText.value(zh: "例如：大東山日落位", en: "Example: Sunset Ridge"), text: $draft.placeName)
-                    .textInputAutocapitalization(.words)
-                    .padding(.horizontal, 14)
-                    .frame(height: 48)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                Text("\(draft.validatedName.count)/40")
-                    .font(.frogMicro)
-                    .foregroundStyle(draft.validatedName.count > 40 ? Color.red : FreePhotoPalette.navy.opacity(0.5))
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+    private var stickySaveAction: some View {
+        let hasCurrentSaveConfirmation = saveConfirmation.isCurrent(for: exportFingerprint)
+        return Button {
+            saveFramedPhoto()
+        } label: {
+            HStack(spacing: 10) {
+                if isSaving { ProgressView().tint(.white) }
+                Image(systemName: hasCurrentSaveConfirmation ? "checkmark.circle.fill" : "square.and.arrow.down.fill")
+                Text(hasCurrentSaveConfirmation
+                     ? AppText.value(zh: "已儲存並加入私人地圖", en: "Saved and added to private map")
+                     : AppText.value(zh: "儲存相框相片", en: "Save Framed Photo"))
             }
+            .font(.frogRow.weight(.black))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(FreePhotoPalette.navy, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(!draft.canExport(hasPhoto: capturedImage != nil) || isSaving)
+        .opacity(draft.canExport(hasPhoto: capturedImage != nil) ? 1 : 0.42)
+        .padding(.horizontal, FreePhotoEditorMetrics.pageInset)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(.ultraThinMaterial)
+    }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(AppText.value(zh: "海拔（米，可選）", en: "Altitude in metres (optional)"))
-                        .font(.frogCaption.weight(.bold))
-                    Spacer()
-                    if draft.altitudeSource == .gpsApproximate {
-                        Label(AppText.value(zh: "iPhone GPS 約數", en: "Approx. iPhone GPS"), systemImage: "location.fill")
-                            .font(.frogMicro.weight(.bold))
-                            .foregroundStyle(FreePhotoPalette.blue)
-                    }
-                }
-                .foregroundStyle(FreePhotoPalette.navy)
-
-                TextField(AppText.value(zh: "自動讀取後仍可修改或清除", en: "Auto-filled, editable, and removable"), text: altitudeText)
-                    .keyboardType(.numbersAndPunctuation)
-                    .padding(.horizontal, 14)
-                    .frame(height: 48)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-            }
-
-            if let error = draft.validationError {
-                Label(validationMessage(error), systemImage: "exclamationmark.circle.fill")
+    private var saveSupportingSection: some View {
+        VStack(spacing: 10) {
+            if let photoLoadError {
+                Text(photoLoadError)
                     .font(.frogCaption.weight(.semibold))
                     .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
             }
-        }
-    }
-
-    private func previewSection(image: UIImage) -> some View {
-        let previewLayout = FreePhotoPreviewLayout(style: cardStyle)
-        return VStack(alignment: .leading, spacing: 12) {
-            sectionTitle(AppText.value(zh: "3 · 預覽相框", en: "3 · Preview frame"))
-
-            Picker(AppText.value(zh: "相框款式", en: "Frame style"), selection: $cardStyle) {
-                ForEach(FreePhotoCardStyle.allCases) { style in
-                    Text(style.label).tag(style)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            GeometryReader { proxy in
-                ZStack(alignment: .topLeading) {
-                    frameView(image: image)
-                        .scaleEffect(proxy.size.width / 1080, anchor: .topLeading)
-                        .allowsHitTesting(FreePhotoPreviewInteractionContract.cardAllowsHitTesting)
-                }
-                .frame(
-                    width: proxy.size.width,
-                    height: previewLayout.height(forAvailableWidth: proxy.size.width),
-                    alignment: .topLeading
-                )
-                .clipped()
-            }
-            .aspectRatio(previewLayout.aspectRatio, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .shadow(color: FreePhotoPalette.navy.opacity(0.14), radius: 14, y: 7)
-        }
-    }
-
-    private var saveSection: some View {
-        let hasCurrentSaveConfirmation = saveConfirmation.isCurrent(for: exportFingerprint)
-        return VStack(spacing: 10) {
-            Button {
-                saveFramedPhoto()
-            } label: {
-                HStack(spacing: 10) {
-                    if isSaving { ProgressView().tint(.white) }
-                    Image(systemName: hasCurrentSaveConfirmation ? "checkmark.circle.fill" : "square.and.arrow.down.fill")
-                    Text(hasCurrentSaveConfirmation
-                         ? AppText.value(zh: "已儲存並加入私人地圖", en: "Saved and added to private map")
-                         : AppText.value(zh: "儲存相框相片", en: "Save Framed Photo"))
-                }
-                .font(.frogRow.weight(.black))
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(FreePhotoPalette.navy, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .disabled(!draft.canExport(hasPhoto: capturedImage != nil) || isSaving)
-            .opacity(draft.canExport(hasPhoto: capturedImage != nil) ? 1 : 0.42)
 
             if let saveError {
                 Text(saveError)
@@ -400,12 +501,6 @@ struct FreePhotoView: View {
         }
     }
 
-    private func sectionTitle(_ title: String) -> some View {
-        Text(title)
-            .font(.frogTitle)
-            .foregroundStyle(FreePhotoPalette.navy)
-    }
-
     @ViewBuilder
     private func frameView(image: UIImage) -> some View {
         switch cardStyle {
@@ -413,19 +508,6 @@ struct FreePhotoView: View {
             FreePhotoPolaroidCardView(content: frameContent, userPhoto: image)
         case .passport:
             FreePhotoPassportCardView(content: frameContent, userPhoto: image)
-        }
-    }
-
-    private func validationMessage(_ error: FreePhotoValidationError) -> String {
-        switch error {
-        case .missingPlaceName:
-            AppText.value(zh: "請輸入山名或地名。", en: "Enter a mountain or place name.")
-        case .placeNameTooLong:
-            AppText.value(zh: "名稱最多 40 個字。", en: "The name can contain up to 40 characters.")
-        case .invalidAltitude:
-            AppText.value(zh: "海拔請輸入整數。", en: "Altitude must be a whole number.")
-        case .altitudeOutOfRange:
-            AppText.value(zh: "海拔需介乎 -500 至 9,000 米。", en: "Altitude must be between -500 and 9,000 metres.")
         }
     }
 
@@ -438,16 +520,35 @@ struct FreePhotoView: View {
         )
     }
 
-    private func finishCameraCapture() {
+    private func finishCameraCapture(image: UIImage, capturedAt: Date) {
         guard let pendingCameraRevision else { return }
         captureRevision = pendingCameraRevision
-        selectedLocation = FreePhotoLocationResolver.cameraCandidate(
+        let candidate = FreePhotoLocationResolver.cameraCandidate(
             location: locationManager.resolvedLocation ?? locationManager.currentLocation,
             captureRevision: pendingCameraRevision,
-            activeRevision: pendingCameraRevision
+            activeRevision: pendingCameraRevision,
+            now: capturedAt
         )
+        selectedLocation = candidate
+        draft.applyFrameMetadata(date: capturedAt, coordinate: candidate?.coordinate)
         self.pendingCameraRevision = nil
         resetSaveConfirmation()
+
+        cameraLoadTask?.cancel()
+        cameraLoadTask = Task {
+            let prepared = await FreePhotoImagePreparer.prepare(image)
+            guard !Task.isCancelled else { return }
+            capturedImage = prepared
+            photoLoadError = prepared == nil ? Self.photoPreparationFailureMessage : nil
+            cameraLoadTask = nil
+        }
+    }
+
+    private static var photoPreparationFailureMessage: String {
+        AppText.value(
+            zh: "未能處理呢張相片，請再影一次或者揀第二張。",
+            en: "Could not process that photo. Take it again or choose another one."
+        )
     }
 
     @MainActor
@@ -474,6 +575,10 @@ struct FreePhotoView: View {
             altitudeMetres: draft.altitudeMetres,
             altitudeSource: draft.altitudeSource,
             cardStyle: cardStyle,
+            frameDate: draft.frameDate,
+            showsDate: draft.showsDate,
+            displayCoordinate: draft.displayCoordinate,
+            showsCoordinates: draft.showsCoordinates,
             location: selectedLocation
         )
         guard let thumbnailData = privateMapThumbnailData(from: image) else { return }

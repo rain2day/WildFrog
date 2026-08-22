@@ -93,6 +93,123 @@ import Testing
     #expect(draft.altitudeText.isEmpty)
 }
 
+@Test func frameMetadataDefaultsAndFormattingAreDisplayOnly() {
+    var draft = FreePhotoDraft()
+    let date = Date(timeIntervalSince1970: 1_777_777_777)
+    let gps = FreePhotoCoordinate(latitude: 22.4084, longitude: 114.1201)
+
+    draft.applyFrameMetadata(date: date, coordinate: gps)
+
+    #expect(draft.showsDate)
+    #expect(draft.frameDate == date)
+    // Prefilled, but printing them onto a shareable image stays opt-in.
+    #expect(!draft.showsCoordinates)
+    #expect(draft.displayCoordinate == gps)
+    #expect(draft.coordinateLabel == "22.40840° N · 114.12010° E")
+
+    draft.setLatitudeText("-22.50000")
+    draft.setLongitudeText("-114.25000")
+    #expect(draft.coordinateLabel == "22.50000° S · 114.25000° W")
+
+    draft.showsCoordinates = false
+    #expect(draft.latitudeText == "-22.50000")
+    #expect(draft.longitudeText == "-114.25000")
+}
+
+@Test func replacingThePhotoNeverFlipsTheCoordinatePrivacyToggle() {
+    var draft = FreePhotoDraft()
+    let gps = FreePhotoCoordinate(latitude: 22.4084, longitude: 114.1201)
+
+    draft.applyFrameMetadata(date: Date(timeIntervalSince1970: 1), coordinate: gps)
+    #expect(!draft.showsCoordinates)
+
+    draft.showsCoordinates = true
+    draft.applyFrameMetadata(
+        date: Date(timeIntervalSince1970: 2),
+        coordinate: FreePhotoCoordinate(latitude: 35, longitude: 139)
+    )
+    #expect(draft.showsCoordinates)
+    #expect(draft.latitudeText == "35.00000")
+
+    // A replacement without GPS clears the values but keeps the user's choice.
+    draft.applyFrameMetadata(date: Date(timeIntervalSince1970: 3), coordinate: nil)
+    #expect(draft.showsCoordinates)
+    #expect(draft.latitudeText.isEmpty)
+
+    draft.showsCoordinates = false
+    draft.applyFrameMetadata(date: Date(timeIntervalSince1970: 4), coordinate: gps)
+    #expect(!draft.showsCoordinates)
+}
+
+@Test func manualDateAndCoordinateEditsAreTrackedForTheFrameBadge() {
+    var draft = FreePhotoDraft()
+    let captured = Date(timeIntervalSince1970: 1_777_777_777)
+    draft.applyFrameMetadata(
+        date: captured,
+        coordinate: FreePhotoCoordinate(latitude: 22.4084, longitude: 114.1201)
+    )
+    #expect(!draft.isDateEdited)
+    #expect(!draft.isCoordinateEdited)
+
+    // Re-applying the same text is not an edit.
+    draft.setLatitudeText("22.40840")
+    #expect(!draft.isCoordinateEdited)
+
+    draft.frameDate = captured.addingTimeInterval(-86_400)
+    draft.setLongitudeText("114.20000")
+    #expect(draft.isDateEdited)
+    #expect(draft.isCoordinateEdited)
+
+    // A fresh capture resets both badges.
+    draft.applyFrameMetadata(date: captured, coordinate: nil)
+    #expect(!draft.isDateEdited)
+    #expect(!draft.isCoordinateEdited)
+}
+
+@Test func missingFrameGPSLeavesCoordinatesHiddenAndEditable() {
+    var draft = FreePhotoDraft()
+    let date = Date(timeIntervalSince1970: 1_777_777_777)
+
+    draft.applyFrameMetadata(date: date, coordinate: nil)
+
+    #expect(draft.showsDate)
+    #expect(!draft.showsCoordinates)
+    #expect(draft.latitudeText.isEmpty)
+    #expect(draft.longitudeText.isEmpty)
+
+    draft.setLatitudeText("22.4084")
+    draft.setLongitudeText("114.1201")
+    draft.showsCoordinates = true
+    #expect(draft.displayCoordinate == FreePhotoCoordinate(latitude: 22.4084, longitude: 114.1201))
+}
+
+@Test func coordinateValidationOnlyBlocksVisibleInvalidCoordinates() {
+    var draft = FreePhotoDraft()
+    draft.placeName = "獅子山"
+    draft.showsCoordinates = true
+    #expect(draft.validationError == .missingCoordinates)
+
+    draft.setLatitudeText("north")
+    draft.setLongitudeText("114")
+    #expect(draft.validationError == .invalidCoordinates)
+
+    draft.setLatitudeText("91")
+    draft.setLongitudeText("114")
+    #expect(draft.validationError == .coordinatesOutOfRange)
+    #expect(!draft.canExport(hasPhoto: true))
+
+    draft.setLatitudeText("90")
+    draft.setLongitudeText("-180")
+    #expect(draft.validationError == nil)
+
+    draft.setLatitudeText("nan")
+    #expect(draft.validationError == .invalidCoordinates)
+
+    draft.showsCoordinates = false
+    #expect(draft.validationError == nil)
+    #expect(draft.canExport(hasPhoto: true))
+}
+
 @Test func staleRetainedFixDoesNotConsumeTheFreshAltitudePrefill() {
     var draft = FreePhotoDraft()
     let presentedAt = Date(timeIntervalSince1970: 1_000)
@@ -177,6 +294,62 @@ import Testing
     #expect(draft.canExport(hasPhoto: true))
 }
 
+@Test func trailStudioUsesApprovedSpacingAndMetadataHierarchy() {
+    var draft = FreePhotoDraft()
+    draft.placeName = "大東山日落位"
+    draft.setAltitudeText("438")
+    draft.showsDate = false
+    draft.showsCoordinates = true
+    draft.setLatitudeText("22.4084")
+    draft.setLongitudeText("114.1201")
+
+    let summary = FreePhotoMetadataSummary(draft: draft)
+    #expect(summary.altitude.value.contains("438"))
+    #expect(summary.date.visibility == .hidden)
+    #expect(summary.coordinates.visibility == .shown)
+}
+
+@Test func trailStudioSummaryKeepsDenseMetadataConcise() {
+    var draft = FreePhotoDraft()
+    draft.placeName = "大東山日落位"
+    draft.setAltitudeText("438")
+    draft.showsCoordinates = true
+    draft.setLatitudeText("22.4084")
+    draft.setLongitudeText("114.1201")
+
+    let summary = FreePhotoMetadataSummary(draft: draft)
+    #expect(summary.altitude.value.count <= 12)
+    #expect(summary.coordinates.value.contains("22.40840"))
+    #expect(summary.coordinates.value.contains { $0.isNumber })
+    #expect(summary.coordinates.value != summary.coordinates.visibility.label)
+    #expect(summary.coordinates.visibility == .shown)
+
+    var hiddenDraft = draft
+    hiddenDraft.showsCoordinates = false
+    let hidden = FreePhotoMetadataSummary(draft: hiddenDraft)
+    #expect(hidden.coordinates.value.contains("22.40840"))
+    #expect(hidden.coordinates.visibility == .hidden)
+
+    let empty = FreePhotoMetadataSummary(draft: FreePhotoDraft())
+    #expect(empty.coordinates.value == AppText.value(zh: "未設定", en: "Not set"))
+    #expect(empty.coordinates.visibility == .notSet)
+
+    let content = FreePhotoFrameContent(
+        placeName: draft.validatedName,
+        altitudeMetres: 438,
+        altitudeSource: .gpsApproximate,
+        date: .now
+    )
+    #expect((content.altitudeLabel?.count ?? 100) <= 18)
+}
+
+@Test func freePhotoEditorShowsCaptureBeforePhotoAndStudioAfterPhoto() {
+    #expect(FreePhotoEditorPresentation(hasPhoto: false).mode == .capture)
+    #expect(FreePhotoEditorPresentation(hasPhoto: true).mode == .studio)
+    #expect(FreePhotoEditorPresentation(hasPhoto: true).usesStickySave)
+    #expect(!FreePhotoEditorPresentation(hasPhoto: true).showsExpandedMetadataOnCanvas)
+}
+
 @Test func previewHeightUsesTheSelectedRendererCanvasAspectRatio() {
     let availableWidth: CGFloat = 335
     let polaroid = FreePhotoPreviewLayout(style: .polaroid)
@@ -206,7 +379,14 @@ import Testing
         captureRevision: 1,
         placeName: "大東山",
         altitudeMetres: 869,
-        cardStyle: .passport
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: .distantPast,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )
     var confirmation = FreePhotoSaveConfirmation()
     confirmation.markSaved(for: saved)
@@ -216,25 +396,53 @@ import Testing
         captureRevision: 2,
         placeName: "大東山",
         altitudeMetres: 869,
-        cardStyle: .passport
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: .distantPast,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )))
     #expect(!confirmation.isCurrent(for: FreePhotoExportFingerprint(
         captureRevision: 1,
         placeName: "獅子山",
         altitudeMetres: 869,
-        cardStyle: .passport
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: .distantPast,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )))
     #expect(!confirmation.isCurrent(for: FreePhotoExportFingerprint(
         captureRevision: 1,
         placeName: "大東山",
         altitudeMetres: 900,
-        cardStyle: .passport
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: .distantPast,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )))
     #expect(!confirmation.isCurrent(for: FreePhotoExportFingerprint(
         captureRevision: 1,
         placeName: "大東山",
         altitudeMetres: 869,
-        cardStyle: .polaroid
+        altitudeSource: .none,
+        cardStyle: .polaroid,
+        renderedAt: .distantPast,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )))
 }
 
@@ -247,7 +455,12 @@ import Testing
         altitudeMetres: 869,
         altitudeSource: .gpsApproximate,
         cardStyle: .passport,
-        renderedAt: renderedAt
+        renderedAt: renderedAt,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )
     let manualSameValue = FreePhotoExportFingerprint(
         captureRevision: 1,
@@ -255,7 +468,12 @@ import Testing
         altitudeMetres: 869,
         altitudeSource: .manual,
         cardStyle: .passport,
-        renderedAt: renderedAt
+        renderedAt: renderedAt,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )
     let nextDay = FreePhotoExportFingerprint(
         captureRevision: 1,
@@ -263,11 +481,77 @@ import Testing
         altitudeMetres: 869,
         altitudeSource: .gpsApproximate,
         cardStyle: .passport,
-        renderedAt: nextDate
+        renderedAt: nextDate,
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )
 
     #expect(gps != manualSameValue)
     #expect(gps != nextDay)
+}
+
+@Test func saveFingerprintIncludesEditableDateCoordinatesAndSwitches() {
+    let renderedAt = Date(timeIntervalSince1970: 10)
+    let frameDate = Date(timeIntervalSince1970: 5)
+    let baseline = FreePhotoExportFingerprint(
+        captureRevision: 1,
+        placeName: "大東山",
+        altitudeMetres: 869,
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: renderedAt,
+        frameDate: frameDate,
+        showsDate: true,
+        latitudeText: "22.40840",
+        longitudeText: "114.12010",
+        showsCoordinates: true
+    )
+    let dateHidden = FreePhotoExportFingerprint(
+        captureRevision: 1,
+        placeName: "大東山",
+        altitudeMetres: 869,
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: renderedAt,
+        frameDate: frameDate,
+        showsDate: false,
+        latitudeText: "22.40840",
+        longitudeText: "114.12010",
+        showsCoordinates: true
+    )
+    let editedLatitude = FreePhotoExportFingerprint(
+        captureRevision: 1,
+        placeName: "大東山",
+        altitudeMetres: 869,
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: renderedAt,
+        frameDate: frameDate,
+        showsDate: true,
+        latitudeText: "22.50000",
+        longitudeText: "114.12010",
+        showsCoordinates: true
+    )
+    let coordinatesHidden = FreePhotoExportFingerprint(
+        captureRevision: 1,
+        placeName: "大東山",
+        altitudeMetres: 869,
+        altitudeSource: .none,
+        cardStyle: .passport,
+        renderedAt: renderedAt,
+        frameDate: frameDate,
+        showsDate: true,
+        latitudeText: "22.40840",
+        longitudeText: "114.12010",
+        showsCoordinates: false
+    )
+
+    #expect(baseline != dateHidden)
+    #expect(baseline != editedLatitude)
+    #expect(baseline != coordinatesHidden)
 }
 
 @Test func lateSaveSuccessAndErrorCannotUpdateChangedRenderedContent() {
@@ -277,7 +561,12 @@ import Testing
         altitudeMetres: 869,
         altitudeSource: .gpsApproximate,
         cardStyle: .passport,
-        renderedAt: Date(timeIntervalSince1970: 1_000)
+        renderedAt: Date(timeIntervalSince1970: 1_000),
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )
     let changed = FreePhotoExportFingerprint(
         captureRevision: 1,
@@ -285,7 +574,12 @@ import Testing
         altitudeMetres: 869,
         altitudeSource: .manual,
         cardStyle: .passport,
-        renderedAt: Date(timeIntervalSince1970: 1_000)
+        renderedAt: Date(timeIntervalSince1970: 1_000),
+        frameDate: .distantPast,
+        showsDate: true,
+        latitudeText: "",
+        longitudeText: "",
+        showsCoordinates: false
     )
     var request = FreePhotoSaveRequestState()
 

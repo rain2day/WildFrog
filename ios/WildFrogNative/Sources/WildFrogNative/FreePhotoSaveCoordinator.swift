@@ -9,7 +9,41 @@ struct FreePhotoSaveRequest: Equatable {
     let altitudeMetres: Int?
     let altitudeSource: FreePhotoAltitudeSource
     let cardStyle: FreePhotoCardStyle
+    let frameDate: Date
+    let showsDate: Bool
+    let displayCoordinate: FreePhotoCoordinate?
+    let showsCoordinates: Bool
     let location: FreePhotoLocationCandidate?
+
+    // No defaults: the frame date and coordinate visibility decide what is
+    // burned into the exported image, so every call site must state them.
+    init(
+        id: UUID,
+        captureRevision: Int,
+        renderedAt: Date,
+        placeName: String,
+        altitudeMetres: Int?,
+        altitudeSource: FreePhotoAltitudeSource,
+        cardStyle: FreePhotoCardStyle,
+        frameDate: Date,
+        showsDate: Bool,
+        displayCoordinate: FreePhotoCoordinate?,
+        showsCoordinates: Bool,
+        location: FreePhotoLocationCandidate?
+    ) {
+        self.id = id
+        self.captureRevision = captureRevision
+        self.renderedAt = renderedAt
+        self.placeName = placeName
+        self.altitudeMetres = altitudeMetres
+        self.altitudeSource = altitudeSource
+        self.cardStyle = cardStyle
+        self.frameDate = frameDate
+        self.showsDate = showsDate
+        self.displayCoordinate = displayCoordinate
+        self.showsCoordinates = showsCoordinates
+        self.location = location
+    }
 }
 
 enum FreePhotoSaveOutcome: Equatable {
@@ -134,6 +168,7 @@ final class FreePhotoSaveCoordinator {
             id: request.id,
             createdAt: request.renderedAt,
             renderedAt: request.renderedAt,
+            frameDate: request.showsDate ? request.frameDate : nil,
             placeName: request.placeName,
             altitudeMetres: request.altitudeMetres,
             altitudeSource: request.altitudeSource,

@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A82200000000000000000011 /* TripEnergyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000012 /* TripEnergyProvider.swift */; };
+		A8220000000000000000000F /* PackingChecklistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000010 /* PackingChecklistTests.swift */; };
+		A8220000000000000000000B /* TripSessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8220000000000000000000C /* TripSessionCoordinator.swift */; };
+		A82200000000000000000009 /* TripSessionCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8220000000000000000000A /* TripSessionCoordinatorTests.swift */; };
+		A82200000000000000000007 /* TripStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000008 /* TripStore.swift */; };
+		A82200000000000000000101 /* TripHubViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000102 /* TripHubViews.swift */; };
+		A82200000000000000000103 /* TripEditorViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000104 /* TripEditorViews.swift */; };
+		A82200000000000000000105 /* ActiveTripViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000106 /* ActiveTripViews.swift */; };
+		A82200000000000000000107 /* GearViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000108 /* GearViews.swift */; };
+		A82200000000000000000005 /* TripStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000006 /* TripStoreTests.swift */; };
+		A82200000000000000000003 /* TripModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000004 /* TripModels.swift */; };
+		A82200000000000000000001 /* TripModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82200000000000000000002 /* TripModelsTests.swift */; };
 		0E00D28CB7BC9BE04BE1A582 /* RecordsCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20B579DFF0F858858406436 /* RecordsCalendarView.swift */; };
 		16BCCC08E4F5B99CA7AF45A3 /* FreePhotoRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DC031D424303972109B8B3 /* FreePhotoRoutingTests.swift */; };
 		11F0A0000000000000000001 /* FreePhotoPrivateMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0A0000000000000000002 /* FreePhotoPrivateMapTests.swift */; };
@@ -21,6 +33,7 @@
 		467B69A9EB7AD4FB65936F64 /* LeaderboardParticipationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64E1DC3C543E263D57BBEBE3 /* LeaderboardParticipationTests.swift */; };
 		49EC6DAD3A9F2883C1CDD4E6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 52847F8A6EBB329550A69056 /* Assets.xcassets */; };
 		5E2AF80BA3159AB3BF3821B8 /* FreePhotoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26BFA2A247A88A20180710D2 /* FreePhotoView.swift */; };
+		A7C1E901A7C1E901A7C1E901 /* FreePhotoEditorUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C1E900A7C1E900A7C1E900 /* FreePhotoEditorUI.swift */; };
 		6FB23C4B0982417F8A3BD701 /* CheckInTypeChooserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB23C4B0982417F8A3BD700 /* CheckInTypeChooserView.swift */; };
 		5FA1338B0205A92820DCC516 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B69B929DEC4C88AFBADAA8C4 /* GoogleSignIn */; };
 		5FA58A3C2E152D0C0D96D2D9 /* PhotoLibrarySaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6316026AF31D24C25106FD7 /* PhotoLibrarySaver.swift */; };
@@ -104,6 +117,18 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A82200000000000000000012 /* TripEnergyProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripEnergyProvider.swift; sourceTree = "<group>"; };
+		A82200000000000000000010 /* PackingChecklistTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PackingChecklistTests.swift; sourceTree = "<group>"; };
+		A8220000000000000000000C /* TripSessionCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripSessionCoordinator.swift; sourceTree = "<group>"; };
+		A8220000000000000000000A /* TripSessionCoordinatorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripSessionCoordinatorTests.swift; sourceTree = "<group>"; };
+		A82200000000000000000008 /* TripStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripStore.swift; sourceTree = "<group>"; };
+		A82200000000000000000102 /* TripHubViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripHubViews.swift; sourceTree = "<group>"; };
+		A82200000000000000000104 /* TripEditorViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripEditorViews.swift; sourceTree = "<group>"; };
+		A82200000000000000000106 /* ActiveTripViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActiveTripViews.swift; sourceTree = "<group>"; };
+		A82200000000000000000108 /* GearViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GearViews.swift; sourceTree = "<group>"; };
+		A82200000000000000000006 /* TripStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripStoreTests.swift; sourceTree = "<group>"; };
+		A82200000000000000000004 /* TripModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripModels.swift; sourceTree = "<group>"; };
+		A82200000000000000000002 /* TripModelsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TripModelsTests.swift; sourceTree = "<group>"; };
 		003D8D71F930179F2AA39419 /* FreePhotoDraftTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoDraftTests.swift; sourceTree = "<group>"; };
 		11F0A0000000000000000002 /* FreePhotoPrivateMapTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoPrivateMapTests.swift; sourceTree = "<group>"; };
 		11F0A0000000000000000012 /* FreePhotoRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoRecord.swift; sourceTree = "<group>"; };
@@ -116,6 +141,7 @@
 		0B9426E0A37E8F9015ED3FF1 /* LeaderboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		26BFA2A247A88A20180710D2 /* FreePhotoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoView.swift; sourceTree = "<group>"; };
+		A7C1E900A7C1E900A7C1E900 /* FreePhotoEditorUI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FreePhotoEditorUI.swift; sourceTree = "<group>"; };
 		3BA652894396AFCB23BC3369 /* ProfileAuthService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileAuthService.swift; sourceTree = "<group>"; };
 		3D02939E06C6A095B22B2C82 /* HomeMapListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HomeMapListView.swift; sourceTree = "<group>"; };
 		4BEBB8EBCF6006B6694CEAD5 /* MountainDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MountainDetailView.swift; sourceTree = "<group>"; };
@@ -228,6 +254,10 @@
 		ADADAA3951A90C8CD576A953 /* WildFrogNativeTests */ = {
 			isa = PBXGroup;
 			children = (
+				A82200000000000000000010 /* PackingChecklistTests.swift */,
+				A8220000000000000000000A /* TripSessionCoordinatorTests.swift */,
+				A82200000000000000000006 /* TripStoreTests.swift */,
+				A82200000000000000000002 /* TripModelsTests.swift */,
 				11F0A0000000000000000002 /* FreePhotoPrivateMapTests.swift */,
 				003D8D71F930179F2AA39419 /* FreePhotoDraftTests.swift */,
 				6A6AFA486EFE6D1E0F13F82B /* FreePhotoFrameContentTests.swift */,
@@ -243,6 +273,14 @@
 		C03E06C409DD5430D0F57BF7 /* WildFrogNative */ = {
 			isa = PBXGroup;
 			children = (
+				A82200000000000000000012 /* TripEnergyProvider.swift */,
+				A8220000000000000000000C /* TripSessionCoordinator.swift */,
+				A82200000000000000000008 /* TripStore.swift */,
+				A82200000000000000000102 /* TripHubViews.swift */,
+				A82200000000000000000104 /* TripEditorViews.swift */,
+				A82200000000000000000106 /* ActiveTripViews.swift */,
+				A82200000000000000000108 /* GearViews.swift */,
+				A82200000000000000000004 /* TripModels.swift */,
 				11F0A0000000000000000012 /* FreePhotoRecord.swift */,
 				11F0A0000000000000000022 /* FreePhotoStore.swift */,
 				11F0A0000000000000000032 /* FreePhotoLocation.swift */,
@@ -287,6 +325,7 @@
 				FE0FBA1DA2E298BBA6C404BD /* WildFrogNative.entitlements */,
 				1E9347450816442E6FA8CFF8 /* GoogleService-Info.plist */,
 				F190DC0E0F98F30D53CA0862 /* FreePhotoDraft.swift */,
+				A7C1E900A7C1E900A7C1E900 /* FreePhotoEditorUI.swift */,
 				5E042684A872AD95C45317D4 /* FreePhotoFrameViews.swift */,
 				A6316026AF31D24C25106FD7 /* PhotoLibrarySaver.swift */,
 				26BFA2A247A88A20180710D2 /* FreePhotoView.swift */,
@@ -473,6 +512,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A82200000000000000000011 /* TripEnergyProvider.swift in Sources */,
+				A8220000000000000000000B /* TripSessionCoordinator.swift in Sources */,
+				A82200000000000000000007 /* TripStore.swift in Sources */,
+				A82200000000000000000101 /* TripHubViews.swift in Sources */,
+				A82200000000000000000103 /* TripEditorViews.swift in Sources */,
+				A82200000000000000000105 /* ActiveTripViews.swift in Sources */,
+				A82200000000000000000107 /* GearViews.swift in Sources */,
+				A82200000000000000000003 /* TripModels.swift in Sources */,
 				11F0A0000000000000000011 /* FreePhotoRecord.swift in Sources */,
 				11F0A0000000000000000021 /* FreePhotoStore.swift in Sources */,
 				11F0A0000000000000000031 /* FreePhotoLocation.swift in Sources */,
@@ -512,6 +559,7 @@
 				CF001A0000000041 /* CheckInMapPickerView.swift in Sources */,
 				6FB23C4B0982417F8A3BD701 /* CheckInTypeChooserView.swift in Sources */,
 				D9F8FDCFF3DD40803D5D983A /* FreePhotoDraft.swift in Sources */,
+				A7C1E901A7C1E901A7C1E901 /* FreePhotoEditorUI.swift in Sources */,
 				C7000A739B87D724086E8C81 /* FreePhotoFrameViews.swift in Sources */,
 				5FA58A3C2E152D0C0D96D2D9 /* PhotoLibrarySaver.swift in Sources */,
 				5E2AF80BA3159AB3BF3821B8 /* FreePhotoView.swift in Sources */,
@@ -523,6 +571,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A8220000000000000000000F /* PackingChecklistTests.swift in Sources */,
+				A82200000000000000000009 /* TripSessionCoordinatorTests.swift in Sources */,
+				A82200000000000000000005 /* TripStoreTests.swift in Sources */,
+				A82200000000000000000001 /* TripModelsTests.swift in Sources */,
 				11F0A0000000000000000001 /* FreePhotoPrivateMapTests.swift in Sources */,
 				CE852047184E50643AF81DFD /* FreePhotoDraftTests.swift in Sources */,
 				961F1344C500C4EF6641E735 /* FreePhotoFrameContentTests.swift in Sources */,
@@ -569,14 +621,14 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Sources/WildFrogNative/WildFrogNative.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -733,14 +785,14 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Sources/WildFrogNative/WildFrogNative.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/WildFrogNative/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -781,14 +833,14 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LiveActivityWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -809,14 +861,14 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = N6972VY494;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LiveActivityWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rainsday.WildFrogNative.LiveActivityWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

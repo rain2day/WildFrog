@@ -74,11 +74,18 @@ enum FreePhotoLocationResolver {
     }
 }
 
-enum FreePhotoMetadataLocationReader {
-    static func candidate(
+struct FreePhotoImportedMetadata: Equatable {
+    let location: FreePhotoLocationCandidate?
+    let creationDate: Date
+}
+
+enum FreePhotoMetadataReader {
+    static func metadata(
         from imageData: Data,
-        photosIdentifier: String?
-    ) async -> FreePhotoLocationCandidate? {
+        photosIdentifier: String?,
+        acceptedAt: Date = .now
+    ) async -> FreePhotoImportedMetadata {
+        let embedded = metadata(from: imageData, acceptedAt: acceptedAt)
         if let photosIdentifier {
             let status = await photosAuthorizationStatus()
             if status == .authorized || status == .limited {
@@ -86,31 +93,76 @@ enum FreePhotoMetadataLocationReader {
                     withLocalIdentifiers: [photosIdentifier],
                     options: nil
                 )
-                if let location = assets.firstObject?.location {
-                    let coordinate = FreePhotoCoordinate(
-                        latitude: location.coordinate.latitude,
-                        longitude: location.coordinate.longitude
-                    )
-                    if coordinate.isValid {
-                        return FreePhotoLocationCandidate(
-                            coordinate: coordinate,
-                            source: .sourcePhotoMetadata,
-                            horizontalAccuracy: location.horizontalAccuracy >= 0
-                                ? location.horizontalAccuracy
-                                : nil,
-                            timestamp: location.timestamp
+                if let asset = assets.firstObject {
+                    var preferredLocation = embedded.location
+                    if let location = asset.location {
+                        let coordinate = FreePhotoCoordinate(
+                            latitude: location.coordinate.latitude,
+                            longitude: location.coordinate.longitude
                         )
+                        if coordinate.isValid {
+                            preferredLocation = FreePhotoLocationCandidate(
+                                coordinate: coordinate,
+                                source: .sourcePhotoMetadata,
+                                horizontalAccuracy: location.horizontalAccuracy >= 0
+                                    ? location.horizontalAccuracy
+                                    : nil,
+                                timestamp: location.timestamp
+                            )
+                        }
                     }
+                    // EXIF DateTimeOriginal is the wall clock at the shutter.
+                    // `asset.creationDate` is an absolute instant that shifts a
+                    // cross-time-zone photo onto the wrong calendar day, so the
+                    // embedded value wins whenever the file carries one.
+                    return FreePhotoImportedMetadata(
+                        location: preferredLocation,
+                        creationDate: embeddedCreationDate(from: imageData)
+                            ?? asset.creationDate
+                            ?? embedded.creationDate
+                    )
                 }
             }
         }
-        return candidate(from: imageData)
+        return embedded
     }
 
-    static func candidate(from imageData: Data) -> FreePhotoLocationCandidate? {
+    /// Wall-clock EXIF timestamps carry no zone unless `OffsetTimeOriginal` is
+    /// present, so they are read in the app's Hong Kong convention by default —
+    /// the same zone the frame and the records calendar format with.
+    static let fallbackTimeZone = TimeZone(identifier: "Asia/Hong_Kong") ?? .current
+
+    static func embeddedCreationDate(
+        from imageData: Data,
+        timeZone: TimeZone = fallbackTimeZone
+    ) -> Date? {
         guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
-              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
-              let gps = properties[kCGImagePropertyGPSDictionary] as? [CFString: Any],
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else {
+            return nil
+        }
+        return creationDate(from: properties, timeZone: timeZone)
+    }
+
+    static func metadata(
+        from imageData: Data,
+        acceptedAt: Date,
+        timeZone: TimeZone = fallbackTimeZone
+    ) -> FreePhotoImportedMetadata {
+        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else {
+            return FreePhotoImportedMetadata(location: nil, creationDate: acceptedAt)
+        }
+
+        return FreePhotoImportedMetadata(
+            location: location(from: properties),
+            creationDate: creationDate(from: properties, timeZone: timeZone) ?? acceptedAt
+        )
+    }
+
+    private static func location(
+        from properties: [CFString: Any]
+    ) -> FreePhotoLocationCandidate? {
+        guard let gps = properties[kCGImagePropertyGPSDictionary] as? [CFString: Any],
               let latitude = number(gps[kCGImagePropertyGPSLatitude]),
               let longitude = number(gps[kCGImagePropertyGPSLongitude]) else { return nil }
 
@@ -127,6 +179,54 @@ enum FreePhotoMetadataLocationReader {
             horizontalAccuracy: nil,
             timestamp: nil
         )
+    }
+
+    private static func creationDate(
+        from properties: [CFString: Any],
+        timeZone: TimeZone
+    ) -> Date? {
+        let exif = properties[kCGImagePropertyExifDictionary] as? [CFString: Any]
+        let tiff = properties[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
+        let candidates: [(String?, TimeZone)] = [
+            (
+                exif?[kCGImagePropertyExifDateTimeOriginal] as? String,
+                offset(exif?[kCGImagePropertyExifOffsetTimeOriginal]) ?? timeZone
+            ),
+            (
+                exif?[kCGImagePropertyExifDateTimeDigitized] as? String,
+                offset(exif?[kCGImagePropertyExifOffsetTimeDigitized]) ?? timeZone
+            ),
+            (
+                tiff?[kCGImagePropertyTIFFDateTime] as? String,
+                offset(exif?[kCGImagePropertyExifOffsetTime]) ?? timeZone
+            )
+        ]
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+        return candidates.compactMap { value, zone -> Date? in
+            guard let value else { return nil }
+            formatter.timeZone = zone
+            return formatter.date(from: value)
+        }.first
+    }
+
+    /// Parses an EXIF offset string such as `+09:00` or `-05:00`.
+    private static func offset(_ value: Any?) -> TimeZone? {
+        guard let text = (value as? String)?.trimmingCharacters(in: .whitespaces),
+              text.count == 6,
+              let sign = text.first,
+              sign == "+" || sign == "-" else { return nil }
+        let parts = text.dropFirst().split(separator: ":")
+        guard parts.count == 2,
+              let hours = Int(parts[0]),
+              let minutes = Int(parts[1]),
+              (0...14).contains(hours),
+              (0...59).contains(minutes) else { return nil }
+        let seconds = (hours * 3_600 + minutes * 60) * (sign == "-" ? -1 : 1)
+        return TimeZone(secondsFromGMT: seconds)
     }
 
     private static func number(_ value: Any?) -> Double? {

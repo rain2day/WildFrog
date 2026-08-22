@@ -5,6 +5,7 @@ import UIKit
 
 struct RecordsCalendarView: View {
     @EnvironmentObject private var checkInStore: CheckInStore
+    @EnvironmentObject private var tripStore: TripStore
 
     @State private var selectedDay = Calendar.current.component(.day, from: Date())
     @State private var displayedMonth: Date = {
@@ -101,6 +102,7 @@ struct RecordsCalendarView: View {
                     passportCover(topInset: topInset)
 
                     VStack(alignment: .leading, spacing: FrogSpace.cardGap) {
+                        TripHubSection()
                         TripsSection()
                         calendarPanel
                         selectedRecordCard
@@ -643,7 +645,7 @@ private struct TripsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            RecordSectionHeader(title: AppText.value(zh: "我嘅行程 · TRIPS", en: "MY TRIPS")) {
+            RecordSectionHeader(title: AppText.value(zh: "正式打卡 · CHECK-INS", en: "OFFICIAL CHECK-INS")) {
                 Text("\(trips.count)")
                     .font(.frogNum(12, weight: .semibold))
                     .foregroundStyle(FrogTheme.moss)
@@ -664,7 +666,7 @@ private struct TripsSection: View {
                 if trips.count > previewLimit {
                     NavigationLink(value: NativeRoute.allTrips) {
                         HStack(spacing: 6) {
-                            Text(AppText.value(zh: "全部行程", en: "All Trips"))
+                            Text(AppText.value(zh: "全部正式打卡", en: "All Check-ins"))
                             Image(systemName: "arrow.right")
                                 .font(.system(size: 12, weight: .bold))
                         }
@@ -691,7 +693,7 @@ private struct TripsSection: View {
             Text(AppText.value(zh: "仲未有打卡，去打返座山！", en: "No check-ins yet. Pick a peak and go!"))
                 .font(.frogRow)
                 .foregroundStyle(FrogTheme.ink)
-            Text(AppText.value(zh: "完成打卡後，每次行程都會收錄喺呢度，有記軌跡仲會顯示路線同距離。", en: "Each completed check-in will appear here. Trips with recordings also show route, distance and time."))
+            Text(AppText.value(zh: "只有正式登頂打卡會收錄喺呢度，並計入印章及排行榜。", en: "Only official summit check-ins appear here and count toward stamps and rankings."))
                 .font(.frogCaption)
                 .foregroundStyle(FrogTheme.muted)
         }
@@ -715,7 +717,7 @@ struct AllTripsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                RecordSectionHeader(title: AppText.value(zh: "全部行程 · ALL TRIPS", en: "ALL TRIPS")) {
+                RecordSectionHeader(title: AppText.value(zh: "全部正式打卡", en: "ALL CHECK-INS")) {
                     Text("\(trips.count)")
                         .font(.frogNum(12, weight: .semibold))
                         .foregroundStyle(FrogTheme.moss)
@@ -733,7 +735,7 @@ struct AllTripsView: View {
             .padding(FrogSpace.screenPadding)
             .padding(.bottom, 110)
         }
-        .localizedNavigationTitle { AppText.value(zh: "我嘅行程", en: "My Trips") }
+        .localizedNavigationTitle { AppText.value(zh: "正式打卡", en: "Official Check-ins") }
         .nativeInlineTitle()
         .appPageBackground(FrogTheme.passport)
     }

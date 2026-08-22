@@ -3,6 +3,7 @@ import SwiftUI
 enum CheckInTypeChoice: Equatable {
     case ranked
     case freePhoto
+    case trip
 }
 
 struct CheckInTypeChooserState: Equatable {
@@ -50,10 +51,10 @@ struct CheckInTypeChooserView: View {
                 .padding(.top, 10)
 
             VStack(spacing: 5) {
-                Text(AppText.value(zh: "選擇打卡方式", en: "Choose check-in type"))
+                Text(AppText.value(zh: "今次想做咩？", en: "What are you doing today?"))
                     .font(.frogTitle.weight(.black))
                     .foregroundStyle(FrogTheme.ink)
-                Text(AppText.value(zh: "揀選最適合今次行程的方式", en: "Choose the best option for this outing"))
+                Text(AppText.value(zh: "打卡、自由拍照，或者淨係記錄行程", en: "Check in, take a free photo, or simply record a trip"))
                     .font(.frogCaption)
                     .foregroundStyle(FrogTheme.muted)
             }
@@ -88,6 +89,22 @@ struct CheckInTypeChooserView: View {
                         detailColor: FreePhotoPalette.navy.opacity(0.62),
                         backgroundColor: FreePhotoPalette.mist,
                         borderColor: FreePhotoPalette.blue.opacity(0.28)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    onSelect(.trip)
+                } label: {
+                    choiceRow(
+                        title: AppText.value(zh: "記錄行程", en: "Record a Trip"),
+                        detail: AppText.value(zh: "毋須打卡 · GPS 軌跡及裝備清單", en: "No check-in required · GPS route and packing list"),
+                        systemImage: "figure.hiking",
+                        iconColor: FrogTheme.moss,
+                        titleColor: FrogTheme.forest,
+                        detailColor: FrogTheme.muted,
+                        backgroundColor: FrogTheme.leaf.opacity(0.13),
+                        borderColor: FrogTheme.moss.opacity(0.25)
                     )
                 }
                 .buttonStyle(.plain)

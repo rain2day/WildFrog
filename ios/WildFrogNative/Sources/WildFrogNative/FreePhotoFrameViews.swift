@@ -1,3 +1,4 @@
+import ImageIO
 import SwiftUI
 import UIKit
 
@@ -16,10 +17,37 @@ enum FreePhotoCardStyle: String, Codable, CaseIterable, Identifiable {
 }
 
 struct FreePhotoFrameContent: Equatable {
+    /// Frames stamp a wall-clock date, so the formatter is pinned to the app's
+    /// Hong Kong convention instead of drifting with the device time zone.
+    static let displayTimeZone = TimeZone(identifier: "Asia/Hong_Kong") ?? .current
+
+    static var editedLabel: String { AppText.value(zh: "手動", en: "edited") }
+
     let placeName: String
     let altitudeMetres: Int?
     let altitudeSource: FreePhotoAltitudeSource
-    let date: Date
+    let date: Date?
+    let coordinate: FreePhotoCoordinate?
+    let isDateEdited: Bool
+    let isCoordinateEdited: Bool
+
+    init(
+        placeName: String,
+        altitudeMetres: Int?,
+        altitudeSource: FreePhotoAltitudeSource,
+        date: Date?,
+        coordinate: FreePhotoCoordinate? = nil,
+        isDateEdited: Bool = false,
+        isCoordinateEdited: Bool = false
+    ) {
+        self.placeName = placeName
+        self.altitudeMetres = altitudeMetres
+        self.altitudeSource = altitudeSource
+        self.date = date
+        self.coordinate = coordinate
+        self.isDateEdited = isDateEdited
+        self.isCoordinateEdited = isCoordinateEdited
+    }
 
     var modeLabel: String {
         AppText.value(zh: "FREE MOMENT · 自由足跡", en: "FREE MOMENT")
@@ -28,8 +56,8 @@ struct FreePhotoFrameContent: Equatable {
     var altitudeLabel: String? {
         altitudeMetres.map { altitude in
             altitudeSource == .gpsApproximate
-                ? AppText.value(zh: "GPS 海拔 · 約 \(altitude)m", en: "GPS altitude · approx. \(altitude)m")
-                : AppText.value(zh: "海拔 · 約 \(altitude)m", en: "Altitude · approx. \(altitude)m")
+                ? AppText.value(zh: "GPS · 約 \(altitude)m", en: "GPS · approx. \(altitude)m")
+                : AppText.value(zh: "海拔 · 約 \(altitude)m", en: "Alt. · approx. \(altitude)m")
         }
     }
 
@@ -37,11 +65,28 @@ struct FreePhotoFrameContent: Equatable {
     var verificationLabel: String? { nil }
     var stampAssetName: String? { nil }
 
-    var dateLabel: String {
+    var dateLabel: String? {
+        guard let date else { return nil }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = Self.displayTimeZone
         formatter.dateFormat = "yyyy.MM.dd"
         return formatter.string(from: date)
+    }
+
+    var coordinateLabel: String? {
+        guard let coordinate, coordinate.isValid else { return nil }
+        let latitudeDirection = coordinate.latitude < 0 ? "S" : "N"
+        let longitudeDirection = coordinate.longitude < 0 ? "W" : "E"
+        return String(
+            format: "%.5f° %@ · %.5f° %@",
+            locale: Locale(identifier: "en_US_POSIX"),
+            abs(coordinate.latitude),
+            latitudeDirection,
+            abs(coordinate.longitude),
+            longitudeDirection
+        )
     }
 }
 
@@ -69,6 +114,7 @@ struct FreePhotoRGB: Hashable {
 
 struct FreePhotoFrameRenderContract: Equatable {
     static let maximumPlaceNameCharacters = 40
+    static let safeInset: CGFloat = 88
 
     let style: FreePhotoCardStyle
 
@@ -82,22 +128,52 @@ struct FreePhotoFrameRenderContract: Equatable {
     var nameBounds: CGRect {
         switch style {
         case .polaroid:
-            CGRect(x: 64, y: 1050, width: 620, height: 170)
+            CGRect(x: 88, y: 1050, width: 600, height: 130)
         case .passport:
-            CGRect(x: 64, y: 811, width: 610, height: 176)
+            CGRect(x: 88, y: 787, width: 570, height: 130)
         }
     }
 
     var stampBounds: CGRect {
         switch style {
         case .polaroid:
-            CGRect(x: 706, y: 876, width: 280, height: 280)
+            CGRect(x: 724, y: 910, width: 236, height: 236)
         case .passport:
-            CGRect(x: 694, y: 540, width: 360, height: 360)
+            CGRect(x: 736, y: 748, width: 220, height: 220)
         }
     }
 
+    var metadataBounds: CGRect {
+        switch style {
+        case .polaroid:
+            CGRect(x: 88, y: 1_190, width: 600, height: 88)
+        case .passport:
+            CGRect(x: 88, y: 935, width: 570, height: 80)
+        }
+    }
+
+    var safeBounds: CGRect {
+        CGRect(
+            x: Self.safeInset,
+            y: Self.safeInset,
+            width: canvasSize.width - Self.safeInset * 2,
+            height: canvasSize.height - Self.safeInset * 2
+        )
+    }
+
     var approvedPalette: Set<FreePhotoRGB> { FreePhotoPalette.approvedRGB }
+
+    /// Inset applied inside `nameBounds` so glyph ink never touches the reserved box.
+    var nameInset: CGFloat { 10 }
+
+    /// Smallest shrink allowed before the place name clips. Sized so 40 CJK
+    /// characters wrap to two lines inside `nameBounds` minus `nameInset`.
+    var nameMinimumScaleFactor: CGFloat {
+        switch style {
+        case .polaroid: 0.42
+        case .passport: 0.36
+        }
+    }
 }
 
 struct FreePhotoPreviewLayout: Equatable {
@@ -114,6 +190,74 @@ struct FreePhotoPreviewLayout: Equatable {
     func height(forAvailableWidth width: CGFloat) -> CGFloat {
         guard width > 0, canvasSize.width > 0 else { return 0 }
         return width * canvasSize.height / canvasSize.width
+    }
+}
+
+enum FreePhotoImagePreparer {
+    static let maximumPixelDimension: CGFloat = 2_048
+
+    /// Full-resolution decode + redraw is CPU and memory heavy, so both entry
+    /// points are nonisolated and hop onto a detached task. Callers await the
+    /// result and assign it back on the main actor.
+    nonisolated static func prepare(data: Data) async -> UIImage? {
+        await Task.detached(priority: .userInitiated) {
+            downsample(data: data)
+        }.value
+    }
+
+    nonisolated static func prepare(_ image: UIImage) async -> UIImage? {
+        // `image.size` is the orientation-applied logical size; multiplying by
+        // `scale` gives the displayed pixel box. Using `cgImage.width/height`
+        // here would describe the pre-orientation buffer and squash portrait
+        // camera captures into landscape.
+        let orientedPixelSize = CGSize(
+            width: image.size.width * image.scale,
+            height: image.size.height * image.scale
+        )
+        guard orientedPixelSize.width > 0, orientedPixelSize.height > 0 else { return nil }
+
+        return await Task.detached(priority: .userInitiated) {
+            // Round-trip through JPEG so the bounded ImageIO thumbnail decode
+            // does the resampling instead of a full-size `draw(in:)` bitmap.
+            if let data = image.jpegData(compressionQuality: 0.95),
+               let downsampled = downsample(data: data) {
+                return downsampled
+            }
+            return redraw(image, orientedPixelSize: orientedPixelSize)
+        }.value
+    }
+
+    nonisolated static func downsample(data: Data) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateThumbnailAtIndex(
+                  source,
+                  0,
+                  [
+                      kCGImageSourceCreateThumbnailFromImageAlways: true,
+                      kCGImageSourceCreateThumbnailWithTransform: true,
+                      kCGImageSourceThumbnailMaxPixelSize: Int(maximumPixelDimension),
+                      kCGImageSourceShouldCacheImmediately: true
+                  ] as CFDictionary
+              ) else { return nil }
+        return UIImage(cgImage: image, scale: 1, orientation: .up)
+    }
+
+    nonisolated private static func redraw(
+        _ image: UIImage,
+        orientedPixelSize: CGSize
+    ) -> UIImage? {
+        let longestSide = max(orientedPixelSize.width, orientedPixelSize.height)
+        guard longestSide > 0 else { return nil }
+        let scale = min(1, maximumPixelDimension / longestSide)
+        let targetSize = CGSize(
+            width: max(1, (orientedPixelSize.width * scale).rounded()),
+            height: max(1, (orientedPixelSize.height * scale).rounded())
+        )
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
     }
 }
 
@@ -149,6 +293,20 @@ enum FreePhotoFrameRenderer {
     }
 }
 
+struct FreePhotoEditedTag: View {
+    var body: some View {
+        Text(FreePhotoFrameContent.editedLabel)
+            .font(.system(size: 18, weight: .heavy))
+            .foregroundStyle(FreePhotoPalette.blue)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(FreePhotoPalette.blue, lineWidth: 1.5)
+            )
+    }
+}
+
 struct FreePhotoStampSeal: View {
     let size: CGFloat
 
@@ -171,10 +329,11 @@ struct FreePhotoPolaroidCardView: View {
 
     private let contract = FreePhotoFrameRenderContract(style: .polaroid)
     private var width: CGFloat { contract.canvasSize.width }
-    private let padding: CGFloat = 64
+    private let photoPadding: CGFloat = 64
+    private let copyPadding: CGFloat = FreePhotoFrameRenderContract.safeInset
 
     var body: some View {
-        let photoSide = width - padding * 2
+        let photoSide = width - photoPadding * 2
 
         ZStack(alignment: .topLeading) {
             VStack(spacing: 0) {
@@ -188,15 +347,21 @@ struct FreePhotoPolaroidCardView: View {
                         freeMomentBadge
                             .padding(30)
                     }
-                    .padding(.top, padding)
+                    .padding(.top, photoPadding)
 
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(content.placeName)
                         .font(.system(size: 68, weight: .black))
                         .foregroundStyle(FreePhotoPalette.navy)
                         .lineLimit(2)
-                        .minimumScaleFactor(0.5)
+                        .minimumScaleFactor(contract.nameMinimumScaleFactor)
                         .allowsTightening(true)
+                        .frame(
+                            width: contract.nameBounds.width - contract.nameInset * 2,
+                            height: contract.nameBounds.height - contract.nameInset * 2,
+                            alignment: .topLeading
+                        )
+                        .padding(contract.nameInset)
                         .frame(
                             width: contract.nameBounds.width,
                             height: contract.nameBounds.height,
@@ -204,28 +369,56 @@ struct FreePhotoPolaroidCardView: View {
                         )
                         .clipped()
 
-                    HStack(alignment: .center, spacing: 18) {
-                        Label(content.dateLabel, systemImage: "calendar")
-                        if let altitudeLabel = content.altitudeLabel {
-                            Label(altitudeLabel, systemImage: "mountain.2")
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(FreePhotoPalette.blue)
+                    Spacer()
+                        .frame(height: 10)
 
-                    HStack(spacing: 12) {
-                        Image(systemName: "camera.aperture")
-                        Text("WILDFROG · FREE PHOTO")
-                            .tracking(2)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .center, spacing: 18) {
+                            if let dateLabel = content.dateLabel {
+                                HStack(spacing: 6) {
+                                    Label(dateLabel, systemImage: "calendar")
+                                    if content.isDateEdited { editedTag }
+                                }
+                            }
+                            if let altitudeLabel = content.altitudeLabel {
+                                Label(altitudeLabel, systemImage: "mountain.2")
+                            }
+                            Spacer(minLength: 0)
+                        }
+
+                        if let coordinateLabel = content.coordinateLabel {
+                            HStack(spacing: 6) {
+                                Label(coordinateLabel, systemImage: "location")
+                                if content.isCoordinateEdited { editedTag }
+                            }
+                        }
                     }
-                    .font(.system(size: 24, weight: .heavy))
-                    .foregroundStyle(FreePhotoPalette.navy.opacity(0.68))
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(FreePhotoPalette.blue)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .frame(
+                        width: contract.metadataBounds.width,
+                        height: contract.metadataBounds.height,
+                        alignment: .topLeading
+                    )
+                    .clipped()
+
+                    Spacer()
+                        .frame(height: 8)
+
+                    brandFooter
                 }
-                .padding(.horizontal, padding)
+                .frame(width: width - copyPadding * 2, alignment: .leading)
+                .padding(.horizontal, copyPadding)
                 .padding(.top, 34)
-                .padding(.bottom, 56)
+                .padding(.bottom, 88)
             }
+            .frame(
+                width: contract.canvasSize.width,
+                height: contract.canvasSize.height,
+                alignment: .top
+            )
 
             if showsStamp {
                 FreePhotoStampSeal(size: contract.stampBounds.width)
@@ -235,6 +428,18 @@ struct FreePhotoPolaroidCardView: View {
         .frame(width: width, height: contract.canvasSize.height, alignment: .top)
         .background(FreePhotoPalette.paleMist)
         .clipped()
+    }
+
+    private var brandFooter: some View {
+        Text("WILDFROG · FREE PHOTO")
+            .font(.system(size: 20, weight: .heavy))
+            .tracking(1.8)
+            .foregroundStyle(FreePhotoPalette.blue)
+            .frame(width: contract.nameBounds.width, height: 26, alignment: .leading)
+    }
+
+    private var editedTag: some View {
+        FreePhotoEditedTag()
     }
 
     private var freeMomentBadge: some View {
@@ -275,27 +480,25 @@ struct FreePhotoPassportCardView: View {
                             .padding(.horizontal, 20)
                             .padding(.vertical, 12)
                             .background(FreePhotoPalette.white.opacity(0.9), in: Capsule())
-                            .padding(34)
+                            .padding(FreePhotoFrameRenderContract.safeInset)
                     }
 
-                VStack(alignment: .leading, spacing: 22) {
-                    HStack {
-                        Label("WILDFROG · FREE PHOTO", systemImage: "camera.aperture")
-                            .font(.system(size: 23, weight: .heavy))
-                            .tracking(1.6)
-                            .foregroundStyle(FreePhotoPalette.blue)
-                        Spacer()
-                        Text(content.dateLabel)
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(FreePhotoPalette.navy.opacity(0.62))
-                    }
-
+                VStack(alignment: .leading, spacing: 0) {
+                    // The photo-overlay capsule is the single Free Photo identity
+                    // mark on this style; a second stub header competed with the
+                    // place name, so it was removed.
                     Text(content.placeName)
                         .font(.system(size: 74, weight: .black))
                         .foregroundStyle(FreePhotoPalette.navy)
                         .lineLimit(2)
-                        .minimumScaleFactor(0.5)
+                        .minimumScaleFactor(contract.nameMinimumScaleFactor)
                         .allowsTightening(true)
+                        .frame(
+                            width: contract.nameBounds.width - contract.nameInset * 2,
+                            height: contract.nameBounds.height - contract.nameInset * 2,
+                            alignment: .topLeading
+                        )
+                        .padding(contract.nameInset)
                         .frame(
                             width: contract.nameBounds.width,
                             height: contract.nameBounds.height,
@@ -303,24 +506,54 @@ struct FreePhotoPassportCardView: View {
                         )
                         .clipped()
 
+                    Spacer().frame(height: 8)
+
                     Rectangle()
                         .fill(FreePhotoPalette.blue.opacity(0.28))
-                        .frame(height: 2)
+                        .frame(width: contract.nameBounds.width, height: 2)
 
-                    if let altitudeLabel = content.altitudeLabel {
-                        HStack {
-                            Text(altitudeLabel)
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundStyle(FreePhotoPalette.blue)
-                            Spacer()
+                    Spacer().frame(height: 8)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 14) {
+                            if let dateLabel = content.dateLabel {
+                                HStack(spacing: 6) {
+                                    Label(dateLabel, systemImage: "calendar")
+                                    if content.isDateEdited { FreePhotoEditedTag() }
+                                }
+                            }
+                            if let altitudeLabel = content.altitudeLabel {
+                                Label(altitudeLabel, systemImage: "mountain.2")
+                            }
+                        }
+                        if let coordinateLabel = content.coordinateLabel {
+                            HStack(spacing: 6) {
+                                Label(coordinateLabel, systemImage: "location")
+                                if content.isCoordinateEdited { FreePhotoEditedTag() }
+                            }
                         }
                     }
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(FreePhotoPalette.blue)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .frame(
+                        width: contract.metadataBounds.width,
+                        height: contract.metadataBounds.height,
+                        alignment: .topLeading
+                    )
+                    .clipped()
                 }
-                .padding(.horizontal, 64)
-                .padding(.vertical, 40)
+                .padding(.horizontal, FreePhotoFrameRenderContract.safeInset)
+                .padding(.top, 67)
                 .frame(width: width, height: stubHeight, alignment: .topLeading)
                 .background(FreePhotoPalette.mist)
             }
+            .frame(
+                width: contract.canvasSize.width,
+                height: contract.canvasSize.height,
+                alignment: .top
+            )
 
             if showsStamp {
                 FreePhotoStampSeal(size: contract.stampBounds.width)

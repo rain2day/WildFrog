@@ -9,6 +9,12 @@ enum NativeRoute: Hashable {
     case allTrips
     case allStamps
     case freePhoto
+    case tripEditor(UUID?)
+    case packingChecklist(UUID)
+    case activeTrip
+    case standaloneTripDetail(UUID)
+    case allStandaloneTrips
+    case gearLibrary
 }
 
 enum AppTab: String, CaseIterable, Identifiable {
@@ -50,7 +56,9 @@ struct WildFrogRootView: View {
     @AppStorage(AppText.languagePreferenceKey) private var languageModeRaw = AppLanguageMode.system.rawValue
     // One navigation path per tab so the root can tell when a detail is pushed.
     @State private var homePath = NavigationPath()
-    @State private var recordsPath = NavigationPath()
+    // The standalone-trip flow pushes/replaces on this stack, so it lives in a
+    // router object the flow views can reach through the environment.
+    @StateObject private var recordsRouter = RecordsNavigationRouter()
     @State private var checkInPath = NavigationPath()
     @State private var leaderboardPath = NavigationPath()
     @State private var profilePath = NavigationPath()
@@ -58,6 +66,8 @@ struct WildFrogRootView: View {
     @State private var hasLoadedLeaderboardProfiles = false
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var recorder: TrackRecorder
+    @EnvironmentObject private var tripSession: TripSessionCoordinator
+    @EnvironmentObject private var tripStore: TripStore
 
     init() {
         #if DEBUG
@@ -105,6 +115,30 @@ struct WildFrogRootView: View {
             _checkInPath = State(initialValue: path)
             _selectedTab = State(initialValue: .checkIn)
         }
+        if arguments.contains("-qaTripEditor") {
+            var path = NavigationPath()
+            path.append(NativeRoute.tripEditor(nil))
+            _recordsRouter = StateObject(wrappedValue: RecordsNavigationRouter(path: path))
+            _selectedTab = State(initialValue: .records)
+        }
+        if arguments.contains("-qaActiveTrip") {
+            var path = NavigationPath()
+            path.append(NativeRoute.activeTrip)
+            _recordsRouter = StateObject(wrappedValue: RecordsNavigationRouter(path: path))
+            _selectedTab = State(initialValue: .records)
+        }
+        if arguments.contains("-qaAllTrips") {
+            var path = NavigationPath()
+            path.append(NativeRoute.allStandaloneTrips)
+            _recordsRouter = StateObject(wrappedValue: RecordsNavigationRouter(path: path))
+            _selectedTab = State(initialValue: .records)
+        }
+        if arguments.contains("-qaGearLibrary") {
+            var path = NavigationPath()
+            path.append(NativeRoute.gearLibrary)
+            _recordsRouter = StateObject(wrappedValue: RecordsNavigationRouter(path: path))
+            _selectedTab = State(initialValue: .records)
+        }
         #endif
     }
 
@@ -114,7 +148,7 @@ struct WildFrogRootView: View {
     private var isAtTabRoot: Bool {
         switch selectedTab {
         case .home: return homePath.isEmpty
-        case .records: return recordsPath.isEmpty
+        case .records: return recordsRouter.path.isEmpty
         case .checkIn: return checkInPath.isEmpty
         case .leaderboard: return leaderboardPath.isEmpty
         case .profile: return profilePath.isEmpty
@@ -138,7 +172,7 @@ struct WildFrogRootView: View {
                 case .home:
                     NavigationStack(path: $homePath) { HomeMapListView().withNativeRoutes() }
                 case .records:
-                    NavigationStack(path: $recordsPath) { RecordsCalendarView().withNativeRoutes() }
+                    NavigationStack(path: $recordsRouter.path) { RecordsCalendarView().withNativeRoutes() }
                 case .checkIn:
                     NavigationStack(path: $checkInPath) { CheckInPickerView() }
                 case .leaderboard:
@@ -184,14 +218,14 @@ struct WildFrogRootView: View {
             }
         }
         .overlay(alignment: .top) {
-            if shouldShowGlobalRecordingIsland, let activeRecordingMountain {
+            if shouldShowGlobalRecordingIsland, let activeRecordingTitle {
                 GlobalRecordingIsland(
-                    mountain: activeRecordingMountain,
+                    title: activeRecordingTitle,
                     elapsedSeconds: recorder.elapsedSeconds,
                     distanceMeters: recorder.distanceMeters,
                     isPaused: recorder.isPaused
                 ) {
-                    openActiveRecording(activeRecordingMountain.id)
+                    openActiveRecording()
                 }
                 .padding(.horizontal, FrogSpace.screenPadding)
                 .padding(.top, 8)
@@ -201,11 +235,42 @@ struct WildFrogRootView: View {
         .animation(.easeInOut(duration: 0.22), value: isAtTabRoot)
         .animation(.spring(response: 0.28, dampingFraction: 0.82), value: recorder.isRecording)
         .animation(.spring(response: 0.3, dampingFraction: 0.86), value: checkInTypeChooserState.isPresented)
+        .environmentObject(recordsRouter)
         .preferredColorScheme(.light)
         .background(FrogTheme.paper.ignoresSafeArea())
         .fullScreenCover(isPresented: $showFreePhoto) {
             FreePhotoView()
         }
+        #if DEBUG
+        .task { seedQAActiveTripIfRequested() }
+        #endif
+    }
+
+    #if DEBUG
+    /// `-qaActiveTrip` seeds a running standalone trip so the recording screen
+    /// can be screenshotted without walking the whole flow.
+    private func seedQAActiveTripIfRequested() {
+        guard ProcessInfo.processInfo.arguments.contains("-qaActiveTrip"),
+              tripSession.activeTrip == nil else { return }
+        let activity = tripStore.activityTypes.first { $0.id == TripActivityType.hiking.id }
+            ?? TripActivityType.hiking
+        let trip = StandaloneTrip(
+            name: AppText.value(zh: "城門水塘環走", en: "Shing Mun Reservoir Loop"),
+            activity: TripActivitySnapshot(activity),
+            scheduledAt: .now,
+            gear: [
+                TripGearEntry(name: AppText.value(zh: "山徑鞋", en: "Trail shoes"), category: AppText.value(zh: "穿著", en: "Worn"), unitWeightGrams: 620, priority: .required, isPacked: true),
+                TripGearEntry(name: AppText.value(zh: "水 1.5L", en: "Water 1.5L"), category: AppText.value(zh: "補給", en: "Fuel"), unitWeightGrams: 1_500, priority: .required, isPacked: true)
+            ]
+        )
+        try? tripStore.saveTrip(trip)
+        try? tripSession.start(tripID: trip.id)
+    }
+    #endif
+
+    private var activeRecordingTitle: String? {
+        if let trip = tripSession.activeTrip { return trip.name }
+        return activeRecordingMountain?.localizedName
     }
 
     private func handleCheckInTypeChoice(_ choice: CheckInTypeChoice) {
@@ -228,18 +293,27 @@ struct WildFrogRootView: View {
             checkInPath = NavigationPath()
         case .freePhoto:
             showFreePhoto = true
+        case .trip:
+            selectedTab = .records
+            recordsRouter.push(.tripEditor(nil))
         }
     }
 
-    private func openActiveRecording(_ mountainId: String) {
-        selectedTab = .checkIn
-        checkInPath = NavigationPath()
-        checkInPath.append(NativeRoute.checkIn(mountainId))
+    private func openActiveRecording() {
+        if tripSession.activeTrip != nil {
+            selectedTab = .records
+            recordsRouter.popToRoot()
+            recordsRouter.push(.activeTrip)
+        } else if let mountainId = activeRecordingMountain?.id {
+            selectedTab = .checkIn
+            checkInPath = NavigationPath()
+            checkInPath.append(NativeRoute.checkIn(mountainId))
+        }
     }
 }
 
 private struct GlobalRecordingIsland: View {
-    let mountain: Mountain
+    let title: String
     let elapsedSeconds: TimeInterval
     let distanceMeters: Double
     let isPaused: Bool
@@ -259,7 +333,7 @@ private struct GlobalRecordingIsland: View {
                         .font(.frogMicro.weight(.black))
                         .foregroundStyle(.white.opacity(0.72))
                         .lineLimit(1)
-                    Text(mountain.localizedName)
+                    Text(title)
                         .font(.frogCaption.weight(.black))
                         .foregroundStyle(.white)
                         .lineLimit(1)
@@ -294,7 +368,7 @@ private struct GlobalRecordingIsland: View {
             .shadow(color: Color.black.opacity(0.2), radius: 16, y: 6)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(AppText.value(zh: "返回進行中的 \(mountain.localizedName) 行程記錄", en: "Return to active \(mountain.localizedName) trip recording"))
+        .accessibilityLabel(AppText.value(zh: "返回進行中的 \(title) 行程記錄", en: "Return to active \(title) trip recording"))
     }
 }
 
@@ -394,6 +468,18 @@ extension View {
                 FullPassportStampsView()
             case .freePhoto:
                 FreePhotoView()
+            case .tripEditor(let id):
+                TripEditorView(tripID: id)
+            case .packingChecklist(let id):
+                PackingChecklistView(tripID: id)
+            case .activeTrip:
+                ActiveTripView()
+            case .standaloneTripDetail(let id):
+                StandaloneTripSummaryView(tripID: id)
+            case .allStandaloneTrips:
+                AllStandaloneTripsView()
+            case .gearLibrary:
+                GearLibraryView()
             }
         }
     }

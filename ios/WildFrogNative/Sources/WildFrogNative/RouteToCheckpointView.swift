@@ -253,7 +253,18 @@ struct RouteToCheckpointView: View {
     }
 
     private func startRecordingAndOpenMaps() {
-        recorder.start(mountainId: mountain.id, mountainName: mountain.localizedName, summitCoordinate: mountain.coordinate)
+        let started = recorder.start(
+            mountainId: mountain.id,
+            mountainName: mountain.localizedName,
+            summitCoordinate: mountain.coordinate
+        )
+        guard started else {
+            statusMessage = AppText.value(
+                zh: "已有行程記錄中，請先完成或取消進行中的記錄。",
+                en: "A trip is already recording. Finish or cancel it first."
+            )
+            return
+        }
         openInMaps()
     }
 }

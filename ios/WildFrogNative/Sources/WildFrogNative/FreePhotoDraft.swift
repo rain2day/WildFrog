@@ -9,6 +9,9 @@ enum FreePhotoAltitudeSource: String, Codable, Equatable {
 enum FreePhotoValidationError: Equatable {
     case missingPlaceName
     case placeNameTooLong
+    case missingCoordinates
+    case invalidCoordinates
+    case coordinatesOutOfRange
     case invalidAltitude
     case altitudeOutOfRange
 }
@@ -63,14 +66,26 @@ struct FreePhotoExportFingerprint: Equatable {
     let altitudeSource: FreePhotoAltitudeSource
     let cardStyle: FreePhotoCardStyle
     let renderedAt: Date
+    let frameDate: Date
+    let showsDate: Bool
+    let latitudeText: String
+    let longitudeText: String
+    let showsCoordinates: Bool
 
+    // Every field is required: a silent default here would let two visually
+    // different exports share a fingerprint and suppress a needed re-save.
     init(
         captureRevision: Int,
         placeName: String,
         altitudeMetres: Int?,
-        altitudeSource: FreePhotoAltitudeSource = .none,
+        altitudeSource: FreePhotoAltitudeSource,
         cardStyle: FreePhotoCardStyle,
-        renderedAt: Date = .distantPast
+        renderedAt: Date,
+        frameDate: Date,
+        showsDate: Bool,
+        latitudeText: String,
+        longitudeText: String,
+        showsCoordinates: Bool
     ) {
         self.captureRevision = captureRevision
         self.placeName = placeName
@@ -78,6 +93,11 @@ struct FreePhotoExportFingerprint: Equatable {
         self.altitudeSource = altitudeSource
         self.cardStyle = cardStyle
         self.renderedAt = renderedAt
+        self.frameDate = frameDate
+        self.showsDate = showsDate
+        self.latitudeText = latitudeText
+        self.longitudeText = longitudeText
+        self.showsCoordinates = showsCoordinates
     }
 }
 
@@ -130,8 +150,20 @@ struct FreePhotoSaveRequestState: Equatable {
 
 struct FreePhotoDraft: Equatable {
     var placeName = ""
+    var frameDate = Date() {
+        didSet {
+            guard frameDate != oldValue else { return }
+            isDateEdited = true
+        }
+    }
+    var showsDate = true
+    private(set) var latitudeText = ""
+    private(set) var longitudeText = ""
+    var showsCoordinates = false
     private(set) var altitudeText = ""
     private(set) var altitudeSource: FreePhotoAltitudeSource = .none
+    private(set) var isDateEdited = false
+    private(set) var isCoordinateEdited = false
     private var didResolveAltitude = false
     private var locationPrefillStartedAt: Date?
 
@@ -147,9 +179,44 @@ struct FreePhotoDraft: Equatable {
         altitudeText.isEmpty ? nil : Int(altitudeText)
     }
 
+    var displayDate: Date? {
+        showsDate ? frameDate : nil
+    }
+
+    var displayCoordinate: FreePhotoCoordinate? {
+        guard let latitude = Double(latitudeText),
+              let longitude = Double(longitudeText),
+              latitude.isFinite,
+              longitude.isFinite else { return nil }
+        let coordinate = FreePhotoCoordinate(latitude: latitude, longitude: longitude)
+        return coordinate.isValid ? coordinate : nil
+    }
+
+    /// The formatted coordinate value, independent of whether it is printed on
+    /// the frame. Visibility is a separate signal so the editor can show a real
+    /// value next to a hidden badge instead of claiming "not set".
+    var coordinateLabel: String? {
+        guard let displayCoordinate else { return nil }
+        return Self.coordinateLabel(for: displayCoordinate)
+    }
+
     var validationError: FreePhotoValidationError? {
         if validatedName.isEmpty { return .missingPlaceName }
         if validatedName.count > 40 { return .placeNameTooLong }
+        if showsCoordinates {
+            guard !latitudeText.isEmpty, !longitudeText.isEmpty else {
+                return .missingCoordinates
+            }
+            guard let latitude = Double(latitudeText),
+                  let longitude = Double(longitudeText),
+                  latitude.isFinite,
+                  longitude.isFinite else {
+                return .invalidCoordinates
+            }
+            guard FreePhotoCoordinate(latitude: latitude, longitude: longitude).isValid else {
+                return .coordinatesOutOfRange
+            }
+        }
         guard !altitudeText.isEmpty else { return nil }
         guard let altitude = Int(altitudeText) else { return .invalidAltitude }
         return (-500...9_000).contains(altitude) ? nil : .altitudeOutOfRange
@@ -159,6 +226,36 @@ struct FreePhotoDraft: Equatable {
         altitudeText = value.trimmingCharacters(in: .whitespacesAndNewlines)
         altitudeSource = altitudeText.isEmpty ? .none : .manual
         didResolveAltitude = true
+    }
+
+    /// Prefills the frame values captured with the photo. Printing coordinates
+    /// on an image the user may share is opt-in, so `showsCoordinates` is never
+    /// switched on here and an explicit user toggle survives a photo replace.
+    mutating func applyFrameMetadata(date: Date, coordinate: FreePhotoCoordinate?) {
+        frameDate = date
+        if let coordinate, coordinate.isValid {
+            latitudeText = Self.editableCoordinateString(coordinate.latitude)
+            longitudeText = Self.editableCoordinateString(coordinate.longitude)
+        } else {
+            latitudeText = ""
+            longitudeText = ""
+        }
+        isDateEdited = false
+        isCoordinateEdited = false
+    }
+
+    mutating func setLatitudeText(_ value: String) {
+        let next = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard next != latitudeText else { return }
+        latitudeText = next
+        isCoordinateEdited = true
+    }
+
+    mutating func setLongitudeText(_ value: String) {
+        let next = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard next != longitudeText else { return }
+        longitudeText = next
+        isCoordinateEdited = true
     }
 
     mutating func applyLocationSuggestion(
@@ -179,5 +276,22 @@ struct FreePhotoDraft: Equatable {
 
     func canExport(hasPhoto: Bool) -> Bool {
         hasPhoto && validationError == nil
+    }
+
+    private static func editableCoordinateString(_ value: Double) -> String {
+        String(format: "%.5f", locale: Locale(identifier: "en_US_POSIX"), value)
+    }
+
+    private static func coordinateLabel(for coordinate: FreePhotoCoordinate) -> String {
+        let latitudeDirection = coordinate.latitude < 0 ? "S" : "N"
+        let longitudeDirection = coordinate.longitude < 0 ? "W" : "E"
+        return String(
+            format: "%.5f° %@ · %.5f° %@",
+            locale: Locale(identifier: "en_US_POSIX"),
+            abs(coordinate.latitude),
+            latitudeDirection,
+            abs(coordinate.longitude),
+            longitudeDirection
+        )
     }
 }

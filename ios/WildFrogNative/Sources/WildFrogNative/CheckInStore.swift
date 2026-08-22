@@ -32,6 +32,9 @@ struct CheckInRecord: Codable, Identifiable, Equatable {
     var track: TrackSummary?
     /// Weather captured at check-in (WeatherKit); nil for older records.
     var weather: WeatherSnapshot?
+    /// Optional local-only link to a standalone trip. It is not uploaded and
+    /// does not change official check-in or leaderboard eligibility.
+    var standaloneTripID: UUID?
 
     init(
         id: UUID = UUID(),
@@ -39,7 +42,8 @@ struct CheckInRecord: Codable, Identifiable, Equatable {
         date: Date,
         photoFilename: String? = nil,
         track: TrackSummary? = nil,
-        weather: WeatherSnapshot? = nil
+        weather: WeatherSnapshot? = nil,
+        standaloneTripID: UUID? = nil
     ) {
         self.id = id
         self.mountainId = mountainId
@@ -47,6 +51,7 @@ struct CheckInRecord: Codable, Identifiable, Equatable {
         self.photoFilename = photoFilename
         self.track = track
         self.weather = weather
+        self.standaloneTripID = standaloneTripID
     }
 }
 
@@ -156,7 +161,8 @@ final class CheckInStore: ObservableObject {
         mountainId: String,
         photoFilename: String? = nil,
         track: TrackSummary? = nil,
-        expectedOwnerUID: String? = nil
+        expectedOwnerUID: String? = nil,
+        standaloneTripID: UUID? = nil
     ) -> CheckInRecord? {
         guard let currentUserId,
               expectedOwnerUID == nil || expectedOwnerUID == currentUserId else { return nil }
@@ -164,7 +170,8 @@ final class CheckInStore: ObservableObject {
             mountainId: mountainId,
             date: Date(),
             photoFilename: photoFilename,
-            track: track
+            track: track,
+            standaloneTripID: standaloneTripID
         )
         records.append(record)
         saveCache(for: currentUserId)

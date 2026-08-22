@@ -34,8 +34,12 @@ enum FreePhotoLocationSource: String, Codable, Equatable {
 
 struct FreePhotoRecord: Codable, Identifiable, Equatable {
     let id: UUID
+    /// Export time. This — not `frameDate` — is the private-map and calendar sort key.
     let createdAt: Date
     let renderedAt: Date
+    /// The date printed on the frame. Optional so envelopes written before this
+    /// field existed still decode.
+    var frameDate: Date?
     let placeName: String
     let altitudeMetres: Int?
     let altitudeSource: FreePhotoAltitudeSource

@@ -1,13 +1,41 @@
 import CoreLocation
 import Foundation
 
+@MainActor
+protocol TrackRecording: AnyObject {
+    var isRecording: Bool { get }
+    var isPaused: Bool { get }
+    var elapsedSeconds: TimeInterval { get }
+    var distanceMeters: Double { get }
+    var ascentMeters: Double { get }
+    var points: [TrackPoint] { get }
+
+    /// Returns false when a recording is already in flight (nothing is started).
+    @discardableResult
+    func start(
+        mountainId: String?,
+        mountainName: String,
+        summitCoordinate: CLLocationCoordinate2D?
+    ) -> Bool
+    func restore(
+        checkpoint: TripSessionCheckpoint,
+        mountainId: String?,
+        mountainName: String,
+        summitCoordinate: CLLocationCoordinate2D?
+    )
+    func pause()
+    func resume()
+    func stop() -> Track?
+    func cancel()
+}
+
 /// Records a live hike using its own `CLLocationManager` instance, accumulating
 /// haversine distance and positive-delta ascent as fixes arrive. Supports
 /// pause/resume — paused time never counts toward duration, and the position
 /// jump across a pause never counts toward distance — and drives the Live
 /// Activity (elapsed, distance, summit approach progress, paused state).
 @MainActor
-final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate {
+final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate, TrackRecording {
     @Published private(set) var isRecording = false
     @Published private(set) var isPaused = false
     @Published private(set) var elapsedSeconds: TimeInterval = 0
@@ -80,23 +108,19 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
 
     // MARK: - Control
 
+    /// Starts a fresh recording. Returns false (and changes nothing) when a
+    /// recording is already in flight, so callers can surface that to the user
+    /// instead of silently doing nothing.
+    @discardableResult
     func start(
         mountainId: String? = nil,
         mountainName: String = "",
         summitCoordinate: CLLocationCoordinate2D? = nil
-    ) {
-        guard !isRecording else { return }
+    ) -> Bool {
+        guard !isRecording else { return false }
 
         if manager.authorizationStatus == .notDetermined {
             manager.requestWhenInUseAuthorization()
-        }
-
-        // Keep recording with the screen off / app backgrounded. Only enable when
-        // the `location` background mode is declared, otherwise iOS raises.
-        if Self.backgroundLocationDeclared {
-            manager.allowsBackgroundLocationUpdates = true
-            manager.pausesLocationUpdatesAutomatically = false
-            manager.showsBackgroundLocationIndicator = true
         }
 
         distanceMeters = 0
@@ -117,11 +141,58 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         isPaused = false
         isRecording = true
 
-        manager.startUpdatingLocation()
-        startTimer()
+        beginSampling()
         #if canImport(ActivityKit)
         liveActivity.start(mountainName: activeMountainName, state: activityState())
         #endif
+        return true
+    }
+
+    /// Turns the sensors and the duration clock back on. Shared by `start()` and
+    /// `resume()` so a resumed (or relaunch-restored) session gets the exact same
+    /// background-location configuration a fresh one does.
+    private func beginSampling() {
+        // Keep recording with the screen off / app backgrounded. Only enable when
+        // the `location` background mode is declared, otherwise iOS raises.
+        if Self.backgroundLocationDeclared {
+            manager.allowsBackgroundLocationUpdates = true
+            manager.pausesLocationUpdatesAutomatically = false
+            manager.showsBackgroundLocationIndicator = true
+        }
+        manager.startUpdatingLocation()
+        startTimer()
+    }
+
+    /// Restores a persisted session as paused. Nothing is sampled and no Live
+    /// Activity is raised until the user explicitly resumes — resuming then
+    /// deliberately re-anchors the first new GPS fix so the unobserved relaunch
+    /// gap never adds distance.
+    func restore(
+        checkpoint: TripSessionCheckpoint,
+        mountainId: String? = nil,
+        mountainName: String = "",
+        summitCoordinate: CLLocationCoordinate2D? = nil
+    ) {
+        guard !isRecording else { return }
+
+        points = checkpoint.points
+        elapsedSeconds = checkpoint.elapsedSeconds
+        distanceMeters = checkpoint.distanceMeters
+        ascentMeters = checkpoint.ascentMeters
+        accumulatedSeconds = checkpoint.elapsedSeconds
+        startDate = checkpoint.points.first?.timestamp
+            ?? checkpoint.savedAt.addingTimeInterval(-checkpoint.elapsedSeconds)
+        segmentStart = nil
+        lastLocation = nil
+        lastElevation = nil
+        resumeGapPending = true
+        self.summitCoordinate = summitCoordinate
+        initialSummitDistance = nil
+        distanceToSummitMeters = nil
+        activeMountainId = mountainId
+        activeMountainName = mountainName.isEmpty ? "Recording Trip" : mountainName
+        isPaused = true
+        isRecording = true
     }
 
     /// Freezes the clock and the sensors; the hike can continue later with `resume()`.
@@ -141,7 +212,12 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
         segmentStart = Date()
         isPaused = false
         resumeGapPending = true
-        manager.startUpdatingLocation()
+        beginSampling()
+        #if canImport(ActivityKit)
+        // No-op when an activity is already live; raises one for a session that
+        // was restored from disk (restore deliberately leaves it dark).
+        liveActivity.start(mountainName: activeMountainName, state: activityState())
+        #endif
         pushActivityUpdate()
     }
 
@@ -268,6 +344,17 @@ final class TrackRecorder: NSObject, ObservableObject, CLLocationManagerDelegate
             summitProgress: summitProgress
         )
     }
+    #endif
+
+    #if DEBUG
+    // MARK: - Test seams
+
+    /// True while the 1 s duration timer is live (i.e. the session is sampling).
+    var isSamplingForTesting: Bool { timer != nil }
+    /// Mirrors the background-location flag the recorder pushed onto its manager.
+    var allowsBackgroundLocationUpdatesForTesting: Bool { manager.allowsBackgroundLocationUpdates }
+    /// Whether `UIBackgroundModes` declares `location` for the running bundle.
+    static var backgroundLocationDeclaredForTesting: Bool { backgroundLocationDeclared }
     #endif
 
     // MARK: - CLLocationManagerDelegate

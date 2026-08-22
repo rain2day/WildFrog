@@ -1,7 +1,9 @@
 import CoreLocation
 import Foundation
+import ImageIO
 import Testing
 import UIKit
+import UniformTypeIdentifiers
 @testable import WildFrogNative
 
 @MainActor
@@ -148,12 +150,75 @@ struct FreePhotoPrivateMapTests {
         #expect(FreePhotoLocationSelectionState.imported(metadata: nil).requiresFallbackChoice)
     }
 
+    @Test func imageMetadataReadsOriginalDateAndGPSTogether() throws {
+        let data = try fixtureJPEG(
+            latitude: 22.4084,
+            latitudeRef: "N",
+            longitude: 114.1201,
+            longitudeRef: "E",
+            dateTimeOriginal: "2026:08:20 09:30:00"
+        )
+        let fallback = Date(timeIntervalSince1970: 1)
+        let timeZone = try #require(TimeZone(identifier: "Asia/Hong_Kong"))
+        let metadata = FreePhotoMetadataReader.metadata(
+            from: data,
+            acceptedAt: fallback,
+            timeZone: timeZone
+        )
+
+        #expect(metadata.location?.coordinate == FreePhotoCoordinate(latitude: 22.4084, longitude: 114.1201))
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: metadata.creationDate)
+        #expect(components.year == 2026)
+        #expect(components.month == 8)
+        #expect(components.day == 20)
+        #expect(components.hour == 9)
+        #expect(components.minute == 30)
+    }
+
+    @Test func missingSourceDateFallsBackToAcceptedImportTime() {
+        let acceptedAt = Date(timeIntervalSince1970: 1_234)
+        let metadata = FreePhotoMetadataReader.metadata(from: Data(), acceptedAt: acceptedAt)
+        #expect(metadata.creationDate == acceptedAt)
+        #expect(metadata.location == nil)
+    }
+
     @Test func layerStateIsMutuallyExclusive() {
         var state = HomeMapLayerState()
         state.select(.freePhotos)
         #expect(state.layer == .freePhotos)
         #expect(!state.showsPeakMarkers)
         #expect(state.showsFreePhotoMarkers)
+    }
+
+    @Test func legacyRecordsWithoutAFrameDateStillDecode() throws {
+        let legacy = """
+        {
+          "id": "1E2E5C1A-0000-4000-8000-000000000001",
+          "createdAt": 1,
+          "renderedAt": 2,
+          "placeName": "大東山",
+          "altitudeSource": "manual",
+          "cardStyle": "passport",
+          "locationSource": "missing",
+          "thumbnailFilename": "thumb.jpg"
+        }
+        """
+        let decoded = try JSONDecoder().decode(
+            FreePhotoRecord.self,
+            from: Data(legacy.utf8)
+        )
+        #expect(decoded.frameDate == nil)
+        #expect(decoded.placeName == "大東山")
+        // `createdAt` is export time and stays the map/calendar sort key.
+        #expect(decoded.createdAt == Date(timeIntervalSinceReferenceDate: 1))
+
+        let roundTripped = try JSONDecoder().decode(
+            FreePhotoRecord.self,
+            from: JSONEncoder().encode(record(id: decoded.id))
+        )
+        #expect(roundTripped.frameDate == nil)
     }
 
     @Test @MainActor func retryAfterLocalFailureDoesNotDuplicatePhotosAsset() async {
@@ -168,6 +233,10 @@ struct FreePhotoPrivateMapTests {
             altitudeMetres: 869,
             altitudeSource: .gpsApproximate,
             cardStyle: .passport,
+            frameDate: .distantPast,
+            showsDate: true,
+            displayCoordinate: nil,
+            showsCoordinates: false,
             location: nil
         )
 
@@ -188,6 +257,66 @@ struct FreePhotoPrivateMapTests {
         #expect(retry == .completed)
         #expect(photos.saveCount == 1)
         #expect(persistence.records.first?.photosAssetIdentifier == "framed-output-1")
+    }
+
+    @Test @MainActor func printedCoordinateNeverBecomesPrivateMapCoordinate() async {
+        let printed = FreePhotoCoordinate(latitude: 35, longitude: 139)
+        let map = FreePhotoLocationCandidate(
+            coordinate: FreePhotoCoordinate(latitude: 22.3, longitude: 114.1),
+            source: .cameraGPS,
+            horizontalAccuracy: 8,
+            timestamp: nil
+        )
+        let request = FreePhotoSaveRequest(
+            id: UUID(),
+            captureRevision: 1,
+            renderedAt: Date(timeIntervalSince1970: 10),
+            placeName: "大東山",
+            altitudeMetres: 869,
+            altitudeSource: .gpsApproximate,
+            cardStyle: .passport,
+            frameDate: Date(timeIntervalSince1970: 5),
+            showsDate: true,
+            displayCoordinate: printed,
+            showsCoordinates: true,
+            location: map
+        )
+        let presentationChanged = FreePhotoSaveRequest(
+            id: request.id,
+            captureRevision: request.captureRevision,
+            renderedAt: request.renderedAt,
+            placeName: request.placeName,
+            altitudeMetres: request.altitudeMetres,
+            altitudeSource: request.altitudeSource,
+            cardStyle: request.cardStyle,
+            frameDate: request.frameDate,
+            showsDate: request.showsDate,
+            displayCoordinate: FreePhotoCoordinate(latitude: 51.5, longitude: -0.12),
+            showsCoordinates: request.showsCoordinates,
+            location: request.location
+        )
+
+        #expect(request != presentationChanged)
+        #expect(request.displayCoordinate == printed)
+        #expect(request.location?.coordinate == map.coordinate)
+
+        let photos = FakeFreePhotoLibrary()
+        let persistence = FailingOnceFreePhotoPersistence()
+        let coordinator = FreePhotoSaveCoordinator()
+        _ = await coordinator.save(
+            request: request,
+            renderedImage: UIImage(),
+            thumbnailData: Data([1]),
+            photos: photos,
+            store: persistence
+        )
+        #expect(coordinator.retry(
+            request: request,
+            thumbnailData: Data([1]),
+            store: persistence
+        ) == .completed)
+        #expect(persistence.records.first?.coordinate == map.coordinate)
+        #expect(persistence.records.first?.coordinate != printed)
     }
 
     @Test @MainActor func recordOnlyDeleteNeverCallsPhotos() async {
@@ -218,4 +347,42 @@ struct FreePhotoPrivateMapTests {
         #expect(outcome == .photosFailed)
         #expect(records.deletedIDs.isEmpty)
     }
+}
+
+private func fixtureJPEG(
+    latitude: Double,
+    latitudeRef: String,
+    longitude: Double,
+    longitudeRef: String,
+    dateTimeOriginal: String
+) throws -> Data {
+    let image = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { context in
+        UIColor.white.setFill()
+        context.fill(CGRect(x: 0, y: 0, width: 2, height: 2))
+    }
+    let data = NSMutableData()
+    let destination = try #require(CGImageDestinationCreateWithData(
+        data,
+        UTType.jpeg.identifier as CFString,
+        1,
+        nil
+    ))
+    let properties: [CFString: Any] = [
+        kCGImagePropertyGPSDictionary: [
+            kCGImagePropertyGPSLatitude: latitude,
+            kCGImagePropertyGPSLatitudeRef: latitudeRef,
+            kCGImagePropertyGPSLongitude: longitude,
+            kCGImagePropertyGPSLongitudeRef: longitudeRef
+        ],
+        kCGImagePropertyExifDictionary: [
+            kCGImagePropertyExifDateTimeOriginal: dateTimeOriginal
+        ]
+    ]
+    CGImageDestinationAddImage(
+        destination,
+        try #require(image.cgImage),
+        properties as CFDictionary
+    )
+    #expect(CGImageDestinationFinalize(destination))
+    return data as Data
 }

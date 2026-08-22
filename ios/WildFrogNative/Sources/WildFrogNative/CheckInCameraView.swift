@@ -46,6 +46,7 @@ struct CheckInCameraView: View {
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var checkInStore: CheckInStore
     @EnvironmentObject private var recorder: TrackRecorder
+    @EnvironmentObject private var tripSession: TripSessionCoordinator
 
     // MARK: - Flow state
     @State private var mode: CheckInMode = .choosing
@@ -155,6 +156,22 @@ struct CheckInCameraView: View {
         recorder.isRecording && recorder.activeMountainId == mountain.id
     }
 
+    /// A standalone trip owns the recorder: the check-in is welcome to ride
+    /// along on the same track, but must not pause / stop / discard it.
+    private var isSharingStandaloneTripRecording: Bool {
+        recorder.isRecording && tripSession.activeTrip != nil && recorder.activeMountainId == nil
+    }
+
+    /// A *different* peak's check-in recording is running — that one genuinely
+    /// blocks, because two peaks can't share one track.
+    private var otherPeakRecordingName: String? {
+        guard recorder.isRecording,
+              let activeId = recorder.activeMountainId,
+              activeId != mountain.id else { return nil }
+        return MountainCatalog.mountains.first { $0.id == activeId }?.localizedName
+            ?? recorder.activeMountainName
+    }
+
     var body: some View {
         GeometryReader { proxy in
             ZStack {
@@ -223,7 +240,7 @@ struct CheckInCameraView: View {
                 locationManager.requestAuthorization()
                 locationManager.startUpdating(for: locationConsumerID)
             }
-            if isRecordingThisMountain {
+            if isRecordingThisMountain || isSharingStandaloneTripRecording {
                 mode = .recording
             } else if recorder.isRecording {
                 mode = .directCheckIn
@@ -505,13 +522,16 @@ struct CheckInCameraView: View {
             HStack(spacing: 7) {
                 Image(systemName: recorder.isPaused ? "pause.circle.fill" : "record.circle.fill")
                     .foregroundStyle(recorder.isPaused ? FrogTheme.gold : FrogTheme.orange)
-                Text(recorder.isPaused ? AppText.value(zh: "已暫停 · 撳 ▶ 繼續記錄", en: "Paused · Tap ▶ to resume") : AppText.value(zh: "行程記錄中 · 行到\(mountain.nameZh)山頂影相即綁埋", en: "Recording · Check in at \(mountain.localizedName)'s summit"))
+                Text(recordingBannerStatusText)
                     .font(.frogCaption.weight(.bold))
                     .foregroundStyle(FrogTheme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Spacer(minLength: 0)
 
+                // The trip screen owns pause / stop / discard when the track
+                // belongs to a standalone trip — don't offer them twice.
+                if !isSharingStandaloneTripRecording {
                 // 取消 — discard the hike entirely (the escape hatch).
                 Button {
                     showCancelRecording = true
@@ -549,6 +569,7 @@ struct CheckInCameraView: View {
                         .background(FrogTheme.ink, in: Capsule())
                 }
                 .buttonStyle(.plain)
+                }
             }
         }
         .alert(AppText.value(zh: "取消呢次行程？", en: "Cancel this trip?"), isPresented: $showCancelRecording) {
@@ -566,6 +587,23 @@ struct CheckInCameraView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(FrogTheme.line, lineWidth: 1)
+        )
+    }
+
+    private var recordingBannerStatusText: String {
+        if isSharingStandaloneTripRecording {
+            let name = tripSession.activeTrip?.name ?? ""
+            return AppText.value(
+                zh: "行程「\(name)」記錄緊 · 共用同一條軌跡",
+                en: "Trip “\(name)” is recording · shared track"
+            )
+        }
+        if recorder.isPaused {
+            return AppText.value(zh: "已暫停 · 撳 ▶ 繼續記錄", en: "Paused · Tap ▶ to resume")
+        }
+        return AppText.value(
+            zh: "行程記錄中 · 行到\(mountain.nameZh)山頂影相即綁埋",
+            en: "Recording · Check in at \(mountain.localizedName)'s summit"
         )
     }
 
@@ -590,10 +628,20 @@ struct CheckInCameraView: View {
     }
 
     private func startRecordingMode() {
-        guard !recorder.isRecording || isRecordingThisMountain else {
+        // Riding along with a standalone trip's recording is fine — one track,
+        // two purposes. Only another *peak* recording is a genuine conflict.
+        if isSharingStandaloneTripRecording {
+            mode = .recording
             saveMessage = AppText.value(
-                zh: "已有行程記錄中，請先返回進行中的山峰。",
-                en: "A trip is already recording. Return to the active peak first."
+                zh: "行程「\(tripSession.activeTrip?.name ?? "")」記錄緊，今次打卡會共用同一條軌跡。",
+                en: "Trip “\(tripSession.activeTrip?.name ?? "")” is recording — this check-in shares the same track."
+            )
+            return
+        }
+        if let otherPeakRecordingName {
+            saveMessage = AppText.value(
+                zh: "\(otherPeakRecordingName) 嘅軌跡仲記錄緊，請先返去嗰座山完成。",
+                en: "\(otherPeakRecordingName) is still recording. Finish that peak first."
             )
             mode = .directCheckIn
             return
@@ -1285,8 +1333,10 @@ struct CheckInCameraView: View {
                     mountainId: mountain.id,
                     photoFilename: filename,
                     track: trackSummary,
-                    expectedOwnerUID: originatingSession.uid
+                    expectedOwnerUID: originatingSession.uid,
+                    standaloneTripID: tripSession.activeTrip?.id
                 )
+                if let record { try? tripSession.attachOfficialCheckIn(record.id) }
                 isSavingWatermark = false
                 if record != nil {
                     saveMessage = AppText.value(zh: "打卡成功！", en: "Check-in saved!")

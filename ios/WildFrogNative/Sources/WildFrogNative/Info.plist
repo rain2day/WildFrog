@@ -19,7 +19,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>13</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -42,6 +42,8 @@
 	<string>用於拍攝正式登頂打卡或自由拍照相片，並製作相框／水印圖片。 Used to capture official check-in or Free Photo images and create framed or watermarked photos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>用於確認正式打卡位置、計算路線及記錄你主動開始的行程；自由拍照亦可在拍攝時記錄 GPS，建立只儲存在本機的私人相片地圖及預填海拔。 Used for official check-in proximity, routes and started trip tracking; Free Photo can also record capture-time GPS for an on-device private photo map and approximate altitude.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>在你完成行程並選擇連接後，讀取該段時間的活動能量，與手動記錄的飲食作參考比較。 After you finish a trip and choose to connect, active energy for that time is read for comparison with your manually logged intake.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
